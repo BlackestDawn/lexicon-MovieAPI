@@ -1,6 +1,6 @@
 @MovieAPI.Api_HostAddress = http://localhost:5201
 
-GET {{MovieAPI.Api_HostAddress}}/weatherforecast/
+GET {{MovieAPI.Api_HostAddress}}/swagger
 Accept: application/json
 
 ###
