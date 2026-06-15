@@ -13,4 +13,8 @@ public class Movie
   // Navigation
   public ICollection<Person> People { get; set; } = [];
   public ICollection<Genre> Genres { get; set; } = [];
+  public ICollection<Review> Reviews { get; set; } = [];
+
+  // Computed
+  public decimal AverageRating => Reviews.Sum(r => r.Score) / Reviews.Count;
 }
