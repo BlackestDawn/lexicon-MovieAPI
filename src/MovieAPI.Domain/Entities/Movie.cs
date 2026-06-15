@@ -20,6 +20,7 @@ public class Movie
   public ICollection<CastCrew> CastCrews { get; set; } = [];
   public ICollection<MovieGenre> MovieGenres { get; set; } = [];
   public ICollection<Review> Reviews { get; set; } = [];
+  public MovieDetail Details { get; set; }
 
   // Computed
   [NotMapped]

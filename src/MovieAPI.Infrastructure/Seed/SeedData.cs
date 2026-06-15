@@ -142,6 +142,59 @@ public static class SeedData
       echoesOfTomorrow, midnightGarden, silentEngines, paperMoons, glassForest,
       wanderingStars, pancakeTuesdays, concreteSky, cartographersDaughter, staticHorizon);
 
+    // Movie details
+    context.MovieDetails.AddRange(
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = echoesOfTomorrow, Language = "English", Budget = 65000000,
+        Synopsis = "Dr. Aris Whitmore spends a decade perfecting a quantum relay capable of sending short messages backward through time. When she finally succeeds, each transmission ripples outward, rewriting fragments of the present she barely recognizes. As the changes accelerate, she must decide whether to send one final message that could undo everything she has built - including the people she loves."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = midnightGarden, Language = "Swedish", Budget = 18000000,
+        Synopsis = "Every year on the equinox, florist Margit Halvorsen closes her shop early and waits for the door at the back of the storeroom to appear. Behind it lies a garden suspended between memory and dream, where she can speak again with the people she has lost - if only for a single night. When a stranger follows her through the door, the garden's rules begin to change."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = silentEngines, Language = "English", Budget = 42000000,
+        Synopsis = "Investigative journalist Marco Reyes is pulled off a routine assignment when the cargo freighter Halcyon Star goes dark mid-voyage with its entire crew aboard. What begins as a missing-persons case unravels into a web of falsified manifests, offshore shell companies, and a shipping conglomerate willing to sink more than just one boat to keep its secrets."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = paperMoons, Language = "English", Budget = 8500000,
+        Synopsis = "After a clerical mix-up at a small-town post office, two strangers begin receiving letters meant for other people - and start writing back. Over a year of correspondence, Noor and Theo build an entire relationship out of borrowed words, never realizing the truth could end it before they ever meet face to face."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = glassForest, Language = "English", Budget = 12000000,
+        Synopsis = "A team of graduate researchers sets out to recover data from an abandoned climate station deep in an old-growth forest, only to find the equipment still running and the station's last log entry dated decades in the future. As night falls, the trees themselves seem to be counting down to something."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = wanderingStars, Language = "Japanese", Budget = 95000000,
+        Synopsis = "When young Mira befriends a comet spirit who has fallen from the night sky, the two set off across a world stitched together from constellations to find the one star that can grant a single wish before the comet's tail burns out forever."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = pancakeTuesdays, Language = "English", Budget = 6000000,
+        Synopsis = "Facing eviction notices and a health inspector who has it in for him, diner owner Walt Higgins bets everything on a wild idea: an all-you-can-eat pancake night hosted by his ragtag crew of regulars. What starts as a desperate gimmick turns into the only thing holding the neighborhood together."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = concreteSky, Language = "English", Budget = 22000000,
+        Synopsis = "Demolition foreman Eddie Ruiz has spent twenty years tearing down buildings for a living - until the wrecking ball turns toward the block he grew up on. As a backroom redevelopment deal threatens to erase his old neighborhood, Eddie rallies his crew and his neighbors for one last fight against the company that signs his paychecks."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = cartographersDaughter, Language = "English", Budget = 38000000,
+        Synopsis = "When Lina inherits her late father's dusty map shop, she finds a hand-drawn chart tucked inside an old atlas - a map to a place that does not appear on any other record. Following its faded lines leads her far from the shop and deep into the unfinished story her father left behind."
+      },
+      new MovieDetail
+      {
+        CreatedAt = now, UpdatedAt = now, Movie = staticHorizon, Language = "Spanish", Budget = 4500000,
+        Synopsis = "For six months, a small documentary crew lived alongside the staff of a remote radio observatory recording routine deep-space surveys. Their footage becomes something else entirely the night the array picks up a signal that should not exist - and keeps repeating."
+      });
+
     // Movie <-> Genre links
     context.MovieGenres.AddRange(
       new MovieGenre { CreatedAt = now, UpdatedAt = now, Movie = echoesOfTomorrow, Genre = sciFi },
