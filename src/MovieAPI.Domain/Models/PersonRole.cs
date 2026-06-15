@@ -8,7 +8,7 @@ public enum PersonRole
   Producer,
   Cinematographer,
   Costume,
-  EditororialDepartment,
+  EditorialDepartment,
   Composer,
   Makeup,
   Art,
