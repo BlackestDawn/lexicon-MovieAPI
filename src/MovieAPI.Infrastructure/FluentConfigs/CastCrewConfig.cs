@@ -8,9 +8,17 @@ public class CastCrewConfig : IEntityTypeConfiguration<CastCrew>
 {
   public void Configure(EntityTypeBuilder<CastCrew> builder)
   {
-    builder.Property(c => c.Id).ValueGeneratedOnAdd();
-    builder.Property(c => c.CreatedAt).ValueGeneratedOnAdd();
-    builder.Property(c => c.UpdatedAt).ValueGeneratedOnAddOrUpdate();
+    builder.Property(c => c.Id)
+      .ValueGeneratedOnAdd()
+      .HasDefaultValueSql("NEWID()");
+    builder.Property(c => c.CreatedAt)
+      .ValueGeneratedOnAdd()
+      .HasDefaultValueSql("SYSUTCDATETIME()");
+    builder.Property(c => c.UpdatedAt)
+      .ValueGeneratedOnAddOrUpdate()
+      .HasDefaultValueSql("SYSUTCDATETIME()");
+
+    builder.ToTable(tb => tb.HasTrigger("TR_CastCrews_UpdatedAt"));
 
     builder.HasKey(c => new { c.MovieId, c.PersonId });
 

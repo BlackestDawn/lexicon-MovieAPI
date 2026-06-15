@@ -8,9 +8,17 @@ public class MovieGenreConfig : IEntityTypeConfiguration<MovieGenre>
 {
   public void Configure(EntityTypeBuilder<MovieGenre> builder)
   {
-    builder.Property(m => m.Id).ValueGeneratedOnAdd();
-    builder.Property(m => m.CreatedAt).ValueGeneratedOnAdd();
-    builder.Property(m => m.UpdatedAt).ValueGeneratedOnAddOrUpdate();
+    builder.Property(m => m.Id)
+      .ValueGeneratedOnAdd()
+      .HasDefaultValueSql("NEWID()");
+    builder.Property(m => m.CreatedAt)
+      .ValueGeneratedOnAdd()
+      .HasDefaultValueSql("SYSUTCDATETIME()");
+    builder.Property(m => m.UpdatedAt)
+      .ValueGeneratedOnAddOrUpdate()
+      .HasDefaultValueSql("SYSUTCDATETIME()");
+
+    builder.ToTable(tb => tb.HasTrigger("TR_MovieGenres_UpdatedAt"));
 
     builder.HasKey(m => new { m.MovieId, m.GenreId });
 

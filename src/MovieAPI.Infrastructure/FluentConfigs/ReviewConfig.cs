@@ -8,9 +8,17 @@ public class ReviewConfig : IEntityTypeConfiguration<Review>
 {
   public void Configure(EntityTypeBuilder<Review> builder)
   {
-    builder.Property(r => r.Id).ValueGeneratedOnAdd();
-    builder.Property(r => r.CreatedAt).ValueGeneratedOnAdd();
-    builder.Property(r => r.UpdatedAt).ValueGeneratedOnAddOrUpdate();
+    builder.Property(r => r.Id)
+      .ValueGeneratedOnAdd()
+      .HasDefaultValueSql("NEWID()");
+    builder.Property(r => r.CreatedAt)
+      .ValueGeneratedOnAdd()
+      .HasDefaultValueSql("SYSUTCDATETIME()");
+    builder.Property(r => r.UpdatedAt)
+      .ValueGeneratedOnAddOrUpdate()
+      .HasDefaultValueSql("SYSUTCDATETIME()");
+
+    builder.ToTable(tb => tb.HasTrigger("TR_Reviews_UpdatedAt"));
 
     builder.HasOne(r => r.Movie).WithMany(m => m.Reviews).OnDelete(DeleteBehavior.Cascade);
   }
