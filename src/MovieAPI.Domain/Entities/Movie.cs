@@ -9,4 +9,8 @@ public class Movie
   public DateOnly ReleaseDate { get; set; }
   public string PlotSummery { get; set; } = string.Empty;
   public int RuntimeMinutes { get; set; }
+
+  // Navigation
+  public ICollection<Person> People { get; set; } = [];
+  public ICollection<Genre> Genres { get; set; } = [];
 }
