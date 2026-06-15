@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Infrastructure;
+using MovieAPI.Infrastructure.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,11 @@ if (app.Environment.IsDevelopment())
   app.MapOpenApi();
   app.UseSwagger();
   app.UseSwaggerUI();
+
+  using var scope = app.Services.CreateScope();
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+  db.Database.Migrate();
+  SeedData.Seed(db);
 }
 
 app.UseHttpsRedirection();
