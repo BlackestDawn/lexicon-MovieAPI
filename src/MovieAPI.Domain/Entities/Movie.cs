@@ -17,8 +17,8 @@ public class Movie
   public int RuntimeMinutes { get; set; }
 
   // Navigation
-  public ICollection<Person> People { get; set; } = [];
-  public ICollection<Genre> Genres { get; set; } = [];
+  public ICollection<CastCrew> CastCrews { get; set; } = [];
+  public ICollection<MovieGenre> MovieGenres { get; set; } = [];
   public ICollection<Review> Reviews { get; set; } = [];
 
   // Computed

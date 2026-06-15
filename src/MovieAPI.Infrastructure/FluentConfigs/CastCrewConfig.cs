@@ -13,5 +13,12 @@ public class CastCrewConfig : IEntityTypeConfiguration<CastCrew>
     builder.Property(c => c.UpdatedAt).ValueGeneratedOnAddOrUpdate();
 
     builder.HasKey(c => new { c.MovieId, c.PersonId });
+
+    builder.HasOne(c => c.Movie)
+      .WithMany(m => m.CastCrews)
+      .HasForeignKey(c => c.MovieId);
+    builder.HasOne(c => c.Person)
+      .WithMany(p => p.CastCrews)
+      .HasForeignKey(c => c.PersonId);
   }
 }

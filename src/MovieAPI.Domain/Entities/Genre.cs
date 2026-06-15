@@ -14,5 +14,5 @@ public class Genre
   public string Slug { get; set; } = string.Empty;
 
   // Navigation
-  public ICollection<Movie> Movies {get; set;} = [];
+  public ICollection<MovieGenre> MovieGenres { get; set; } = [];
 }

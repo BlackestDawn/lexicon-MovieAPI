@@ -15,5 +15,5 @@ public class Person
   public DateOnly DateOfBirth { get; set; }
 
   // Navigation
-  public ICollection<Movie> Movies { get; set; } = [];
+  public ICollection<CastCrew> CastCrews { get; set; } = [];
 }
