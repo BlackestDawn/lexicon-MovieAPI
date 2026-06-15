@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using MovieAPI.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,6 +10,10 @@ builder.Services.AddOpenApi();
 // Swagger service
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Database context
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("sqlserver")));
 
 var app = builder.Build();
 
