@@ -1,0 +1,19 @@
+using AutoMapper;
+using MovieAPI.Application.Models;
+using MovieAPI.Domain.Entities;
+
+namespace MovieAPI.Application.Profiles;
+
+public class PersonProfiles:Profile
+{
+  public PersonProfiles()
+  {
+    CreateMap<Person, PersonDto>();
+
+    CreateMap<CastCrew, CastCrewDto>()
+      .ForMember(dest => dest.PersonId, opt => opt.MapFrom(src => src.Person.Id))
+      .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Person.FirstName))
+      .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.Person.LastName));
+      // Role maps by convention: CastCrew.Role -> CastCrewDto.Role
+  }
+}
