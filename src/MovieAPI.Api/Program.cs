@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Infrastructure;
+using MovieAPI.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     builder.Configuration.GetConnectionString("sqlserver")
     ?? throw new InvalidProgramException()
   ));
+
+builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 
 var app = builder.Build();
 
