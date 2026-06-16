@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using MovieAPI.Application.Interfaces;
+using MovieAPI.Application.Services;
 using MovieAPI.Infrastructure;
 using MovieAPI.Infrastructure.Services;
 
@@ -20,6 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
   ));
 
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IMovieService, MovieService>();
 
 var app = builder.Build();
 
