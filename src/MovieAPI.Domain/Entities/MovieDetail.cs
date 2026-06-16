@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MovieAPI.Domain.Interfaces;
 
 namespace MovieAPI.Domain.Entities;
 
-public class MovieDetail
+public class MovieDetail : ITrackable
 {
   [Key]
   public Guid Id { get; set; }

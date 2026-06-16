@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MovieAPI.Domain.Interfaces;
 
 namespace MovieAPI.Domain.Entities;
 
 // Movie <-> Genre junction table
-public class MovieGenre
+public class MovieGenre : ITrackable
 {
   [Key]
   public Guid Id { get; set; }

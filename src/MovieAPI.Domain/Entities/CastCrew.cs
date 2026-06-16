@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MovieAPI.Domain.Interfaces;
 using MovieAPI.Domain.Models;
 
 namespace MovieAPI.Domain.Entities;
 
 // Movie <-> Person juction table
-public class CastCrew
+public class CastCrew : ITrackable
 {
   [Key]
   public Guid Id { get; set; }
