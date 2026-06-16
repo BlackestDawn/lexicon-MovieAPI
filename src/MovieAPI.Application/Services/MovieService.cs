@@ -19,7 +19,7 @@ public class MovieService(IMovieRepository repository, IMapper mapper) : IMovieS
     throw new NotImplementedException();
   }
 
-  public Task<MovieDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
+  public Task<MovieDetailDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
   {
     throw new NotImplementedException();
   }
