@@ -16,8 +16,7 @@ public class Review : ITrackable
   public string Body { get; set; } = string.Empty;
   public int Score { get; set; }
 
-  // Navigation
   public Guid MovieId { get; set; }
   [ForeignKey("MovieId")]
-  public Movie Movie { get; set; }
+  public Movie Movie { get; set; } = null!;
 }

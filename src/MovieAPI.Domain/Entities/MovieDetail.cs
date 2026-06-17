@@ -16,8 +16,7 @@ public class MovieDetail : ITrackable
   public string Language { get; set; } = string.Empty;
   public int Budget { get; set; }
 
-  // Navigation
   public Guid MovieId { get; set; }
   [ForeignKey("MovieId")]
-  public Movie Movie { get; set; }
+  public Movie Movie { get; set; } = null!;
 }

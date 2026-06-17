@@ -1,29 +1,36 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using MovieAPI.Application.Interfaces;
+using MovieAPI.Application.Models;
+using MovieAPI.Application.Services;
+using MovieAPI.Application.Validators;
 using MovieAPI.Infrastructure;
 using MovieAPI.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
-// Swagger service
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database context
 builder.Services.AddDbContext<AppDbContext>(options =>
   options.UseSqlServer(
     builder.Configuration.GetConnectionString("sqlserver")
     ?? throw new InvalidProgramException()
   ));
 
+builder.Services.AddAutoMapper(config => {},
+  AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddControllers();
+
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IMovieService, MovieService>();
+
+builder.Services.AddScoped<IValidator<MovieForCreationDto>, MovieCreationValidator>();
+builder.Services.AddScoped<IValidator<MovieForUpdateDto>, MovieUpdateValidator>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
   app.MapOpenApi();
@@ -34,5 +41,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapControllers();
 
 app.Run();

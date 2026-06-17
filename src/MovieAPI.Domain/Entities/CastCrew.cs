@@ -1,14 +1,12 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MovieAPI.Domain.Interfaces;
 using MovieAPI.Domain.Models;
 
 namespace MovieAPI.Domain.Entities;
 
-// Movie <-> Person juction table
+// Movie <-> Person junction table
 public class CastCrew : ITrackable
 {
-  [Key]
   public Guid Id { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
@@ -16,9 +14,9 @@ public class CastCrew : ITrackable
 
   public Guid MovieId { get; set; }
   [ForeignKey("MovieId")]
-  public Movie Movie { get; set; }
+  public Movie Movie { get; set; } = null!;
 
   public Guid PersonId { get; set; }
   [ForeignKey("PersonId")]
-  public Person Person { get; set; }
+  public Person Person { get; set; } = null!;
 }

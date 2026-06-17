@@ -14,6 +14,5 @@ public class Genre : ITrackable
   [MaxLength(50)]
   public string Slug { get; set; } = string.Empty;
 
-  // Navigation
   public ICollection<MovieGenre> MovieGenres { get; set; } = [];
 }
