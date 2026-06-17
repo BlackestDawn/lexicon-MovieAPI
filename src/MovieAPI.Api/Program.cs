@@ -33,6 +33,7 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 
 // Validators
 builder.Services.AddScoped<IValidator<MovieForCreationDto>, MovieCreationValidator>();
+builder.Services.AddScoped<IValidator<MovieForUpdateDto>, MovieUpdateValidator>();
 
 var app = builder.Build();
 

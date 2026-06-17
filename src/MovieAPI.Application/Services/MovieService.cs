@@ -13,7 +13,8 @@ namespace MovieAPI.Application.Services;
 public class MovieService(
   IMovieRepository repository,
   IMapper mapper,
-  IValidator<MovieForCreationDto> createValidator) : IMovieService
+  IValidator<MovieForCreationDto> createValidator,
+  IValidator<MovieForUpdateDto> updateValidator) : IMovieService
 {
   public async Task<MovieCreationResult> Create(MovieForCreationDto newMovie, CancellationToken token = default)
   {
@@ -95,13 +96,66 @@ public class MovieService(
     await repository.SaveChangesAsync(token);
   }
 
-  public Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetMovieAsync(id, true, token);
+    if (entity == null)
+      return (false, $"Movie '{id}' not found");
+
+    return await ApplyUpdateAsync(entity, updatedMovie, token);
   }
 
-  public Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForUpdateDto> patchDocument, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetMovieAsync(id, true, token);
+    if (entity == null)
+      return (false, $"Movie '{id}' not found");
+
+    var dto = mapper.Map<MovieForUpdateDto>(entity);
+    patchDocument.ApplyTo(dto);
+
+    return await ApplyUpdateAsync(entity, dto, token);
+  }
+
+  private async Task<(bool, string?)> ApplyUpdateAsync(Movie entity, MovieForUpdateDto updatedMovie, CancellationToken token)
+  {
+    var validationResult = updateValidator.Validate(updatedMovie);
+    if (!validationResult.IsValid)
+      return (false, new ValidationException(validationResult.Errors).Message);
+
+    var personIds = updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList();
+    var personExistsFlags = await Task.WhenAll(personIds.Select(id => repository.PersonExistsAsync(id, token)));
+    var invalidPersonIds = personIds.Where((_, i) => !personExistsFlags[i]).ToList();
+
+    var genreIds = updatedMovie.Genres.Distinct().ToList();
+    var genreExistsFlags = await Task.WhenAll(genreIds.Select(id => repository.GenreExistsAsync(id, token)));
+    var invalidGenreIds = genreIds.Where((_, i) => !genreExistsFlags[i]).ToList();
+
+    if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
+    {
+      var errors = invalidPersonIds.Select(id => $"Person '{id}' not found")
+        .Concat(invalidGenreIds.Select(id => $"Genre '{id}' not found"));
+      return (false, string.Join("; ", errors));
+    }
+
+    entity.Title = updatedMovie.Title;
+    entity.ReleaseDate = updatedMovie.ReleaseDate;
+    entity.PlotSummery = updatedMovie.PlotSummery;
+    entity.RuntimeMinutes = updatedMovie.RuntimeMinutes;
+
+    entity.CastCrews.Clear();
+    foreach (var cc in updatedMovie.CastCrews)
+      entity.CastCrews.Add(new CastCrew { PersonId = cc.PersonId, Role = cc.Role });
+
+    entity.MovieGenres.Clear();
+    foreach (var genreId in updatedMovie.Genres)
+      entity.MovieGenres.Add(new MovieGenre { GenreId = genreId });
+
+    entity.Details.Synopsis = updatedMovie.Synopsis;
+    entity.Details.Language = updatedMovie.Language;
+    entity.Details.Budget = updatedMovie.Budget;
+
+    await repository.SaveChangesAsync(token);
+    return (true, null);
   }
 }

@@ -31,5 +31,17 @@ public class MovieProfiles : Profile
       .ForMember(dest => dest.CastCrews, opt => opt.Ignore())
       .ForMember(dest => dest.MovieGenres, opt => opt.Ignore())
       .ForMember(dest => dest.Reviews, opt => opt.Ignore());
+
+    CreateMap<CastCrew, CastCrewForCreationDto>();
+
+    CreateMap<Movie, MovieForUpdateDto>()
+      .ForMember(dest => dest.Genres,
+        opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.GenreId)))
+      .ForMember(dest => dest.Synopsis,
+        opt => opt.MapFrom(src => src.Details.Synopsis))
+      .ForMember(dest => dest.Language,
+        opt => opt.MapFrom(src => src.Details.Language))
+      .ForMember(dest => dest.Budget,
+        opt => opt.MapFrom(src => src.Details.Budget));
   }
 }
