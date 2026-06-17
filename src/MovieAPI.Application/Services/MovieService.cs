@@ -31,9 +31,16 @@ public class MovieService(IMovieRepository repository, IMapper mapper) : IMovieS
     return (mapper.Map<IEnumerable<MovieDto>>(result), pagination);
   }
 
-  public Task<MovieDetailDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
+  public async Task<MovieExtendedDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var result = await repository.GetMovieAsync(id, includePeople, token);
+
+    if (result == null)
+    {
+      return null;
+    }
+
+    return mapper.Map<MovieExtendedDto>(result);
   }
 
   public Task Remove(Guid id, CancellationToken token = default)
