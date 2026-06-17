@@ -83,9 +83,16 @@ public class MovieService(
     return mapper.Map<MovieExtendedDto>(result);
   }
 
-  public Task Remove(Guid id, CancellationToken token = default)
+  public async Task Remove(Guid id, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetMovieAsync(id, false, token);
+    if (entity == null)
+    {
+      return;
+    }
+
+    repository.DeleteMovie(entity);
+    await repository.SaveChangesAsync(token);
   }
 
   public Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default)
