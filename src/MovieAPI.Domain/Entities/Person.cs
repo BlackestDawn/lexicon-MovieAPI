@@ -15,6 +15,5 @@ public class Person : ITrackable
   public string LastName { get; set; } = string.Empty;
   public DateOnly DateOfBirth { get; set; }
 
-  // Navigation
   public ICollection<CastCrew> CastCrews { get; set; } = [];
 }

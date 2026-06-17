@@ -1,5 +1,5 @@
 using MovieAPI.Application.Models;
-using MovieAPI.Application.validators;
+using MovieAPI.Application.Validators;
 using MovieAPI.Domain.Models;
 
 namespace MovieAPI.UnitTests;

@@ -17,13 +17,11 @@ public class Movie : ITrackable
   public string PlotSummery { get; set; } = string.Empty;
   public int RuntimeMinutes { get; set; }
 
-  // Navigation
   public ICollection<CastCrew> CastCrews { get; set; } = [];
   public ICollection<MovieGenre> MovieGenres { get; set; } = [];
   public ICollection<Review> Reviews { get; set; } = [];
-  public MovieDetail Details { get; set; }
+  public MovieDetail Details { get; set; } = null!;
 
-  // Computed
   [NotMapped]
   public decimal AverageRating => Reviews.Count > 0 ? Reviews.Sum(r => r.Score) / Reviews.Count : 0;
 }

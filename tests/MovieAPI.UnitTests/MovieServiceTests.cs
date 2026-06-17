@@ -25,7 +25,7 @@ public class MovieServiceTests
     _sut = new MovieService(_repo.Object, _mapper.Object, _createValidator.Object, _updateValidator.Object);
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // Helpers
 
   private static MovieForCreationDto MakeCreationDto(Guid? personId = null, Guid? genreId = null) => new()
   {
@@ -63,20 +63,23 @@ public class MovieServiceTests
   };
 
   private void SetupCreateValidatorValid() =>
-      _createValidator.Setup(v => v.Validate(It.IsAny<MovieForCreationDto>()))
-          .Returns(new ValidationResult());
+    _createValidator
+      .Setup(v => v.Validate(It.IsAny<MovieForCreationDto>()))
+      .Returns(new ValidationResult());
 
   private void SetupUpdateValidatorValid() =>
-      _updateValidator.Setup(v => v.Validate(It.IsAny<MovieForUpdateDto>()))
-          .Returns(new ValidationResult());
+    _updateValidator
+      .Setup(v => v.Validate(It.IsAny<MovieForUpdateDto>()))
+      .Returns(new ValidationResult());
 
-  // ── Create ───────────────────────────────────────────────────────────────
+  // Create
 
   [Fact]
   public async Task Create_WhenValidationFails_ReturnsFailed_WithValidationException()
   {
-    _createValidator.Setup(v => v.Validate(It.IsAny<MovieForCreationDto>()))
-        .Returns(new ValidationResult([new ValidationFailure("Title", "Required")]));
+    _createValidator
+      .Setup(v => v.Validate(It.IsAny<MovieForCreationDto>()))
+      .Returns(new ValidationResult([new ValidationFailure("Title", "Required")]));
 
     var result = await _sut.Create(MakeCreationDto());
 
@@ -137,14 +140,15 @@ public class MovieServiceTests
     Assert.Equal(entity.Id, result.Movie!.Id);
   }
 
-  // ── GetMany ──────────────────────────────────────────────────────────────
+  // GetMany
 
   [Fact]
   public async Task GetMany_WhenPageAndSizeAreNull_UsesDefaults()
   {
     var movies = Enumerable.Empty<Movie>();
-    _repo.Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
-        .ReturnsAsync((movies, null));
+    _repo
+      .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((movies, null));
     _mapper.Setup(m => m.Map<IEnumerable<MovieDto>>(movies)).Returns([]);
 
     await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), null, null);
@@ -156,8 +160,9 @@ public class MovieServiceTests
   public async Task GetMany_WhenPageIsZeroAndSizeIsNegative_UsesDefaults()
   {
     var movies = Enumerable.Empty<Movie>();
-    _repo.Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
-        .ReturnsAsync((movies, null));
+    _repo
+      .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((movies, null));
     _mapper.Setup(m => m.Map<IEnumerable<MovieDto>>(movies)).Returns([]);
 
     await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), 0, -5);
@@ -173,8 +178,9 @@ public class MovieServiceTests
     var movies = new[] { entity };
     var pagination = new PaginationMetadata(1, 10, 1);
 
-    _repo.Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
-        .ReturnsAsync((movies.AsEnumerable(), pagination));
+    _repo
+      .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((movies.AsEnumerable(), pagination));
     _mapper.Setup(m => m.Map<IEnumerable<MovieDto>>(movies.AsEnumerable())).Returns([movieDto]);
 
     var (result, meta) = await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), null, null);
@@ -183,13 +189,14 @@ public class MovieServiceTests
     Assert.NotNull(meta);
   }
 
-  // ── GetOne ───────────────────────────────────────────────────────────────
+  // GetOne
 
   [Fact]
   public async Task GetOne_WhenNotFound_ReturnsNull()
   {
-    _repo.Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
-        .ReturnsAsync((Movie?)null);
+    _repo
+      .Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((Movie?)null);
 
     var result = await _sut.GetOne(Guid.NewGuid());
 
@@ -211,13 +218,14 @@ public class MovieServiceTests
     Assert.Equal(entity.Id, result.Id);
   }
 
-  // ── Remove ───────────────────────────────────────────────────────────────
+  // Remove
 
   [Fact]
   public async Task Remove_WhenNotFound_DoesNotDeleteOrSave()
   {
-    _repo.Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
-        .ReturnsAsync((Movie?)null);
+    _repo
+      .Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((Movie?)null);
 
     await _sut.Remove(Guid.NewGuid());
 
@@ -238,7 +246,7 @@ public class MovieServiceTests
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
-  // ── Update (PUT) ─────────────────────────────────────────────────────────
+  // Update (PUT)
 
   [Fact]
   public async Task UpdatePut_WhenMovieNotFound_ReturnsFalse()
@@ -257,8 +265,9 @@ public class MovieServiceTests
   {
     var entity = MakeMovieEntity();
     _repo.Setup(r => r.GetMovieAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    _updateValidator.Setup(v => v.Validate(It.IsAny<MovieForUpdateDto>()))
-        .Returns(new ValidationResult([new ValidationFailure("Title", "Required")]));
+    _updateValidator
+      .Setup(v => v.Validate(It.IsAny<MovieForUpdateDto>()))
+      .Returns(new ValidationResult([new ValidationFailure("Title", "Required")]));
 
     var (success, error) = await _sut.Update(entity.Id, MakeUpdateDto());
 
@@ -320,7 +329,7 @@ public class MovieServiceTests
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
-  // ── Update (PATCH) ───────────────────────────────────────────────────────
+  // Update (PATCH)
 
   [Fact]
   public async Task UpdatePatch_WhenMovieNotFound_ReturnsFalse()

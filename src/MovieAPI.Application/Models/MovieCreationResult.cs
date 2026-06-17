@@ -8,6 +8,6 @@ public class MovieCreationResult
 
   public static MovieCreationResult Successful(MovieDto movie) =>
     new() { Success = true, Movie = movie };
-  public static MovieCreationResult Failed(Exception message) =>
-    new() { Success = false, Error = message };
+  public static MovieCreationResult Failed(Exception error) =>
+    new() { Success = false, Error = error };
 }

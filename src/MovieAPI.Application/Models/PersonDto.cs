@@ -1,5 +1,3 @@
-using MovieAPI.Domain.Models;
-
 namespace MovieAPI.Application.Models;
 
 public class PersonDto
@@ -10,5 +8,4 @@ public class PersonDto
   public string FirstName { get; set; } = string.Empty;
   public string LastName { get; set; } = string.Empty;
   public DateOnly DateOfBirth { get; set; }
-  public PersonRole Role { get; set; }
 }

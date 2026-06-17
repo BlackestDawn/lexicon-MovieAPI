@@ -4,7 +4,7 @@ using MovieAPI.Domain.Entities;
 
 namespace MovieAPI.Application.Profiles;
 
-public class ReviewProfiles:Profile
+public class ReviewProfiles : Profile
 {
   public ReviewProfiles()
   {

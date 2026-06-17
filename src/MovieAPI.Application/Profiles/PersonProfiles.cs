@@ -4,7 +4,7 @@ using MovieAPI.Domain.Entities;
 
 namespace MovieAPI.Application.Profiles;
 
-public class PersonProfiles:Profile
+public class PersonProfiles : Profile
 {
   public PersonProfiles()
   {
@@ -14,6 +14,5 @@ public class PersonProfiles:Profile
       .ForMember(dest => dest.PersonId, opt => opt.MapFrom(src => src.Person.Id))
       .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Person.FirstName))
       .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.Person.LastName));
-      // Role maps by convention: CastCrew.Role -> CastCrewDto.Role
   }
 }
