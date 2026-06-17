@@ -10,10 +10,7 @@ namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/movies")]
-public class MoviesController(
-  IMovieService service,
-  IMapper mapper
-) : ControllerBase
+public class MoviesController(IMovieService service) : ControllerBase
 {
   [HttpGet]
   public async Task<IActionResult> GetMovies(string? name, string? search, string? genre,
@@ -30,7 +27,7 @@ public class MoviesController(
       Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(pagination));
     }
 
-    return Ok(mapper.Map<IEnumerable<MovieDto>>(result));
+    return Ok(result);
   }
 
   [HttpGet("{id}", Name = "GetMovie")]

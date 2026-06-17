@@ -21,6 +21,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     ?? throw new InvalidProgramException()
   ));
 
+builder.Services.AddAutoMapper(config => {},
+  AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddControllers();
+
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 
@@ -37,5 +41,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapControllers();
 
 app.Run();

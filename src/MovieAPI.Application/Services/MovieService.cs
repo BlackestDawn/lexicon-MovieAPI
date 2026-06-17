@@ -1,5 +1,6 @@
 using AutoMapper;
 using Azure;
+using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
@@ -14,9 +15,20 @@ public class MovieService(IMovieRepository repository, IMapper mapper) : IMovieS
     throw new NotImplementedException();
   }
 
-  public Task<(IEnumerable<MovieDto>, PaginationMetadata?)> GetMany(MovieSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
+  public async Task<(IEnumerable<MovieDto>, PaginationMetadata?)> GetMany(MovieSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    if (page == null || page < DefaultValues.Page)
+    {
+      page = DefaultValues.Page;
+    }
+    if (pageSize == null || pageSize <= 0)
+    {
+      pageSize = DefaultValues.PageSize;
+    }
+
+    var (result, pagination) = await repository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
+
+    return (mapper.Map<IEnumerable<MovieDto>>(result), pagination);
   }
 
   public Task<MovieDetailDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
