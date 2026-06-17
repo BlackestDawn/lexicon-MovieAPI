@@ -25,6 +25,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
 
 builder.Services.AddScoped<IValidator<MovieForCreationDto>, MovieCreationValidator>();
 builder.Services.AddScoped<IValidator<MovieForUpdateDto>, MovieUpdateValidator>();
