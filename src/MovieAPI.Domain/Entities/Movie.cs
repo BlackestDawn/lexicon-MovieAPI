@@ -25,5 +25,5 @@ public class Movie : ITrackable
 
   // Computed
   [NotMapped]
-  public decimal AverageRating => Reviews.Sum(r => r.Score) / Reviews.Count;
+  public decimal AverageRating => Reviews.Count > 0 ? Reviews.Sum(r => r.Score) / Reviews.Count : 0;
 }

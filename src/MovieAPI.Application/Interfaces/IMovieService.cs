@@ -1,4 +1,4 @@
-using Azure;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
 
@@ -10,6 +10,6 @@ public interface IMovieService
   Task<MovieExtendedDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default);
   Task<MovieCreationResult> Create(MovieForCreationDto newMovie, CancellationToken token = default);
   Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default);
-  Task<(bool, string?)> Update(Guid id, JsonPatchDocument patchDocument, CancellationToken token = default);
+  Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForUpdateDto> patchDocument, CancellationToken token = default);
   Task Remove(Guid id, CancellationToken token = default);
 }

@@ -207,6 +207,11 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
     return await context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
   }
 
+  public async Task<bool> GenreExistsAsync(Guid id, CancellationToken cancellationToken)
+  {
+    return await context.Genres.AnyAsync(g => g.Id == id, cancellationToken);
+  }
+
   // Persistence
   public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken)
   {

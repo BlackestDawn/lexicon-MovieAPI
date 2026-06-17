@@ -1,6 +1,9 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Application.Interfaces;
+using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
+using MovieAPI.Application.validators;
 using MovieAPI.Infrastructure;
 using MovieAPI.Infrastructure.Services;
 
@@ -27,6 +30,9 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+
+// Validators
+builder.Services.AddScoped<IValidator<MovieForCreationDto>, MovieCreationValidator>();
 
 var app = builder.Build();
 

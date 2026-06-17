@@ -1,6 +1,6 @@
 using System.Text.Json;
-using AutoMapper;
-using Azure;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -52,7 +52,7 @@ public class MoviesController(IMovieService service) : ControllerBase
 
     if (!result.Success)
     {
-      return BadRequest(result.ErrorMessage);
+      return BadRequest(result.Error!.Message);
     }
 
     return CreatedAtRoute("GetMovie", new { result.Movie!.Id }, result.Movie);
@@ -73,7 +73,7 @@ public class MoviesController(IMovieService service) : ControllerBase
   }
 
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument patch,
+  public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<MovieForUpdateDto> patch,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);
