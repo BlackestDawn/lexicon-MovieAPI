@@ -7,7 +7,7 @@ namespace MovieAPI.Application.Interfaces;
 public interface IMovieService
 {
   Task<(IEnumerable<MovieDto>, PaginationMetadata?)> GetMany(MovieSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default);
-  Task<MovieDetailDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default);
+  Task<MovieExtendedDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default);
   Task<MovieCreationResult> Create(MovieForCreationDto newMovie, CancellationToken token = default);
   Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default);
   Task<(bool, string?)> Update(Guid id, JsonPatchDocument patchDocument, CancellationToken token = default);
