@@ -9,6 +9,8 @@ public class PersonProfiles : Profile
   public PersonProfiles()
   {
     CreateMap<Person, PersonDto>();
+    CreateMap<Person, PersonForUpdateDto>()
+      .ForMember(dest => dest.MovieRoles, opt => opt.MapFrom(src => src.CastCrews));
 
     CreateMap<CastCrew, CastCrewDto>()
       .ForMember(dest => dest.PersonId, opt => opt.MapFrom(src => src.Person.Id))
@@ -26,5 +28,6 @@ public class PersonProfiles : Profile
       .ForMember(dest => dest.CastCrews, opt => opt.Ignore());
 
     CreateMap<MovieRoleForCreationDto, CastCrew>();
+    CreateMap<CastCrew, MovieRoleForCreationDto>();
   }
 }

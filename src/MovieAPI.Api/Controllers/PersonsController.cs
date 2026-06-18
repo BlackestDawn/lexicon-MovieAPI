@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -49,5 +50,33 @@ public class PersonsController(IPersonService service) : ControllerBase
     }
 
     return CreatedAtRoute("GetPerson", new { result.Person!.Id }, result.Person);
+  }
+
+  [HttpPut("{id}")]
+  public async Task<IActionResult> UpdateMovie(Guid id, PersonForUpdateDto updatedPerson,
+    CancellationToken cancellationToken)
+  {
+    var (success, message) = await service.Update(id, updatedPerson, cancellationToken);
+
+    if (!success)
+    {
+      return BadRequest(message);
+    }
+
+    return NoContent();
+  }
+
+  [HttpPatch("{id}")]
+  public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<PersonForUpdateDto> patch,
+    CancellationToken cancellationToken)
+  {
+    var (success, message) = await service.Update(id, patch, cancellationToken);
+
+    if (!success)
+    {
+      return BadRequest(message);
+    }
+
+    return NoContent();
   }
 }

@@ -78,13 +78,58 @@ public class PersonService(
     throw new NotImplementedException();
   }
 
-  public Task<(bool, string?)> Update(Guid id, PersonForUpdateDto updatedPerson, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, PersonForUpdateDto updatedPerson, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetPersonAsync(id, true, token);
+    if (entity == null)
+    {
+      return (false, $"Person '{id}' not found");
+    }
+
+    return await ApplyUpdateAsync(entity, updatedPerson, token);
   }
 
-  public Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForUpdateDto> patchDocument, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetPersonAsync(id, true, token);
+    if (entity == null)
+    {
+      return (false, $"Person '{id}' not found");
+    }
+
+    var dto = mapper.Map<PersonForUpdateDto>(entity);
+    patchDocument.ApplyTo(dto);
+
+    return await ApplyUpdateAsync(entity, dto, token);
+  }
+
+  private async Task<(bool, string?)> ApplyUpdateAsync(Person entity, PersonForUpdateDto updatedPerson, CancellationToken token)
+  {
+    var validationResult = updateValidator.Validate(updatedPerson);
+
+    if (!validationResult.IsValid)
+    {
+      return (false, new ValidationException(validationResult.Errors).Message);
+    }
+
+    var movieIds = updatedPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
+    var invalidMovieIds = await repository.GetMissingMovieIdsAsync(movieIds, token);
+
+    if (invalidMovieIds.Count > 0)
+    {
+      var errors = invalidMovieIds.Select(id => $"Movie '{id}' not found");
+      return (false, string.Join("; ", errors));
+    }
+
+    entity.FirstName = updatedPerson.FirstName;
+    entity.LastName = updatedPerson.LastName;
+    entity.DateOfBirth = updatedPerson.DateOfBirth;
+
+    entity.CastCrews.Clear();
+    foreach (var cc in mapper.Map<ICollection<CastCrew>>(updatedPerson.MovieRoles))
+      entity.CastCrews.Add(cc);
+
+    await repository.SaveChangesAsync(token);
+    return (true, null);
   }
 }
