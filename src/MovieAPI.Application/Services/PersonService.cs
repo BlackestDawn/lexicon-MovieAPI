@@ -2,6 +2,7 @@ using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
+using MovieAPI.Domain.Entities;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
@@ -16,9 +17,33 @@ public class PersonService(
   IValidator<PersonForUpdateDto> updateValidator
 ) : IPersonService
 {
-  public Task<PersonCreationResult> Create(PersonForCreationDto newPerson, CancellationToken token)
+  public async Task<PersonCreationResult> Create(PersonForCreationDto newPerson, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var validationResult = createValidator.Validate(newPerson);
+
+    if (!validationResult.IsValid)
+    {
+      return PersonCreationResult.Failed(new ValidationException(validationResult.Errors));
+    }
+
+    var movieIds = newPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
+    var movieExistFlags = await Task.WhenAll(movieIds.Select(id => repository.MovieExistsAsync(id, token)));
+    var invalidMovieIds = movieIds.Where((_, i) => !movieExistFlags[i]).ToList();
+
+    if (invalidMovieIds.Count > 0)
+    {
+      var errors = invalidMovieIds.Select(id => $"Movie '{id}' not found").ToList();
+      return PersonCreationResult.Failed(new ArgumentException(string.Join("; ", errors)));
+    }
+
+    var personEntity = mapper.Map<Person>(newPerson);
+
+    personEntity.CastCrews = mapper.Map<ICollection<CastCrew>>(newPerson.MovieRoles);
+
+    await repository.AddPersonAsync(personEntity, token);
+    await repository.SaveChangesAsync(token);
+
+    return PersonCreationResult.Successful(mapper.Map<PersonDto>(personEntity));
   }
 
   public async Task<(IEnumerable<PersonDto>, PaginationMetadata?)> GetMany(PeopleSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)

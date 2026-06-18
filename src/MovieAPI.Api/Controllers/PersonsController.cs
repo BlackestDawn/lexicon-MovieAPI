@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
+using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Api.Controllers;
@@ -35,5 +36,18 @@ public class PersonsController(IPersonService service) : ControllerBase
     }
 
     return Ok(result);
+  }
+
+  [HttpPost]
+  public async Task<IActionResult> CreatePerson(PersonForCreationDto newPerson, CancellationToken cancellationToken = default)
+  {
+    var result = await service.Create(newPerson, cancellationToken);
+
+    if (!result.Success)
+    {
+      return BadRequest(result.Error!.Message);
+    }
+
+    return CreatedAtRoute("GetPerson", new { result.Person!.Id }, result.Person);
   }
 }

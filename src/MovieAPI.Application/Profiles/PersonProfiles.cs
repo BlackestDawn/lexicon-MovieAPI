@@ -21,5 +21,10 @@ public class PersonProfiles : Profile
     CreateMap<Person, PersonExtendedDto>()
       .ForMember(dest => dest.MovieRoles,
         opt => opt.MapFrom(src => src.CastCrews));
+
+    CreateMap<PersonForCreationDto, Person>()
+      .ForMember(dest => dest.CastCrews, opt => opt.Ignore());
+
+    CreateMap<MovieRoleForCreationDto, CastCrew>();
   }
 }
