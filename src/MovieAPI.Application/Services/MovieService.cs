@@ -43,8 +43,7 @@ public class MovieService(
 
     var movieEntity = mapper.Map<Movie>(newMovie);
 
-    movieEntity.CastCrews = [..newMovie.CastCrews
-      .Select(cc => new CastCrew { PersonId = cc.PersonId, Role = cc.Role })];
+    movieEntity.CastCrews = mapper.Map<ICollection<CastCrew>>(newMovie.CastCrews);
 
     movieEntity.MovieGenres = [..newMovie.Genres
       .Select(genreId => new MovieGenre { GenreId = genreId })];
@@ -52,6 +51,7 @@ public class MovieService(
     await repository.AddMovieAsync(movieEntity, token);
     await repository.SaveChangesAsync(token);
 
+    // refetch to properly populate genres
     var savedMovie = await repository.GetMovieAsync(movieEntity.Id, false, token);
     return MovieCreationResult.Successful(mapper.Map<MovieDto>(savedMovie));
   }
@@ -144,8 +144,8 @@ public class MovieService(
     entity.RuntimeMinutes = updatedMovie.RuntimeMinutes;
 
     entity.CastCrews.Clear();
-    foreach (var cc in updatedMovie.CastCrews)
-      entity.CastCrews.Add(new CastCrew { PersonId = cc.PersonId, Role = cc.Role });
+    foreach (var cc in mapper.Map<ICollection<CastCrew>>(updatedMovie.CastCrews))
+      entity.CastCrews.Add(cc);
 
     entity.MovieGenres.Clear();
     foreach (var genreId in updatedMovie.Genres)
