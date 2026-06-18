@@ -86,6 +86,15 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
     return await context.Movies.AnyAsync(m => m.Id == id, cancellationToken);
   }
 
+  public async Task<IList<Guid>> GetMissingMovieIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    var found = await context.Movies
+      .Where(m => ids.Contains(m.Id))
+      .Select(m => m.Id)
+      .ToListAsync(cancellationToken);
+    return [..ids.Except(found)];
+  }
+
   public async Task AddMovieAsync(Movie movie, CancellationToken cancellationToken)
   {
     await context.Movies.AddAsync(movie, cancellationToken);
@@ -186,6 +195,15 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
     return await context.Persons.AnyAsync(p => p.Id == id, cancellationToken);
   }
 
+  public async Task<IList<Guid>> GetMissingPersonIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    var found = await context.Persons
+      .Where(p => ids.Contains(p.Id))
+      .Select(p => p.Id)
+      .ToListAsync(cancellationToken);
+    return [..ids.Except(found)];
+  }
+
   public async Task AddPersonAsync(Person person, CancellationToken cancellationToken)
   {
     await context.Persons.AddAsync(person, cancellationToken);
@@ -210,6 +228,15 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
   public async Task<bool> GenreExistsAsync(Guid id, CancellationToken cancellationToken)
   {
     return await context.Genres.AnyAsync(g => g.Id == id, cancellationToken);
+  }
+
+  public async Task<IList<Guid>> GetMissingGenreIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    var found = await context.Genres
+      .Where(g => ids.Contains(g.Id))
+      .Select(g => g.Id)
+      .ToListAsync(cancellationToken);
+    return [..ids.Except(found)];
   }
 
   // Persistence

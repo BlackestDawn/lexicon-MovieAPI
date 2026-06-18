@@ -27,12 +27,11 @@ public class PersonService(
     }
 
     var movieIds = newPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
-    var movieExistFlags = await Task.WhenAll(movieIds.Select(id => repository.MovieExistsAsync(id, token)));
-    var invalidMovieIds = movieIds.Where((_, i) => !movieExistFlags[i]).ToList();
+    var invalidMovieIds = await repository.GetMissingMovieIdsAsync(movieIds, token);
 
     if (invalidMovieIds.Count > 0)
     {
-      var errors = invalidMovieIds.Select(id => $"Movie '{id}' not found").ToList();
+      var errors = invalidMovieIds.Select(id => $"Movie '{id}' not found");
       return PersonCreationResult.Failed(new ArgumentException(string.Join("; ", errors)));
     }
 

@@ -26,13 +26,10 @@ public class MovieService(
       return MovieCreationResult.Failed(error);
     }
 
-    var personIds = newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList();
-    var personExistsFlags = await Task.WhenAll(personIds.Select(id => repository.PersonExistsAsync(id, token)));
-    var invalidPersonIds = personIds.Where((_, i) => !personExistsFlags[i]).ToList();
-
-    var genreIds = newMovie.Genres.Distinct().ToList();
-    var genreExistsFlags = await Task.WhenAll(genreIds.Select(id => repository.GenreExistsAsync(id, token)));
-    var invalidGenreIds = genreIds.Where((_, i) => !genreExistsFlags[i]).ToList();
+    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+      newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
+    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+      newMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
     {
@@ -123,13 +120,10 @@ public class MovieService(
     if (!validationResult.IsValid)
       return (false, new ValidationException(validationResult.Errors).Message);
 
-    var personIds = updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList();
-    var personExistsFlags = await Task.WhenAll(personIds.Select(id => repository.PersonExistsAsync(id, token)));
-    var invalidPersonIds = personIds.Where((_, i) => !personExistsFlags[i]).ToList();
-
-    var genreIds = updatedMovie.Genres.Distinct().ToList();
-    var genreExistsFlags = await Task.WhenAll(genreIds.Select(id => repository.GenreExistsAsync(id, token)));
-    var invalidGenreIds = genreIds.Where((_, i) => !genreExistsFlags[i]).ToList();
+    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+      updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
+    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+      updatedMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
     {
