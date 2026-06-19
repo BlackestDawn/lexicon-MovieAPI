@@ -73,9 +73,16 @@ public class PersonService(
     return mapper.Map<PersonExtendedDto>(result);
   }
 
-  public Task Remove(Guid id, CancellationToken token = default)
+  public async Task Remove(Guid id, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetPersonAsync(id, false, token);
+    if (entity == null)
+    {
+      return;
+    }
+
+    repository.DeletePerson(entity);
+    await repository.SaveChangesAsync(token);
   }
 
   public async Task<(bool, string?)> Update(Guid id, PersonForUpdateDto updatedPerson, CancellationToken token = default)

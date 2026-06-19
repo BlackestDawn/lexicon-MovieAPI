@@ -79,4 +79,11 @@ public class PersonsController(IPersonService service) : ControllerBase
 
     return NoContent();
   }
+
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> DeletePerson(Guid id, CancellationToken cancellationToken)
+  {
+    await service.Remove(id, cancellationToken);
+    return NoContent();
+  }
 }
