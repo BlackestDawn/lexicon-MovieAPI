@@ -53,7 +53,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpPut("{id}")]
-  public async Task<IActionResult> UpdateMovie(Guid id, PersonForUpdateDto updatedPerson,
+  public async Task<IActionResult> UpdatePerson(Guid id, PersonForUpdateDto updatedPerson,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, updatedPerson, cancellationToken);
@@ -67,7 +67,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<PersonForUpdateDto> patch,
+  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForUpdateDto> patch,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);
