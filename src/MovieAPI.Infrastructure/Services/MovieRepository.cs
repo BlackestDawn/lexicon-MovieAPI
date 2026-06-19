@@ -106,18 +106,52 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
   }
 
   // Reviews
-  public async Task<IEnumerable<Review>> GetReviewsForMovieAsync(Guid movieId, CancellationToken cancellationToken)
+  public async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await context.Reviews
-      .Where(r => r.MovieId == movieId)
-      .AsNoTracking()
+    var query = context.Reviews.AsQueryable();
+    query = query.Where(r => r.MovieId == movieId);
+
+    if (!string.IsNullOrWhiteSpace(searchParams.Search))
+    {
+      query = query.Where(r => r.Body.Contains(searchParams.Search));
+    }
+
+    if (searchParams.MinScore.HasValue)
+    {
+      query = query.Where(r => r.Score >= (int)searchParams.MinScore);
+    }
+
+    if (searchParams.MaxScore.HasValue)
+    {
+      query = query.Where(r => r.Score <= (int)searchParams.MaxScore);
+    }
+
+    var totalCount = await query.CountAsync(cancellationToken);
+    var pagination = new PaginationMetadata(totalCount, pageSize, page);
+
+    var reviews = await query
+      .OrderBy(r => r.CreatedAt)
+      .Skip((page - 1) * pageSize)
+      .Take(pageSize)
       .ToListAsync(cancellationToken);
+
+    return (reviews, pagination);
   }
 
   public async Task<Review?> GetReviewAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
   {
     return await context.Reviews
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
+  }
+
+  public Task<bool> ReviewExistsAsync(Guid id, CancellationToken token)
+  {
+    throw new NotImplementedException();
+  }
+
+  public Task<IList<Guid>> GetMissingReviewIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    throw new NotImplementedException();
   }
 
   public async Task AddReviewAsync(Guid movieId, Review review, CancellationToken cancellationToken)

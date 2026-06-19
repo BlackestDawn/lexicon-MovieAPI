@@ -15,8 +15,10 @@ public interface IMovieRepository
   void DeleteMovie(Movie movie);
 
   // Reviews
-  Task<IEnumerable<Review>> GetReviewsForMovieAsync(Guid movieId, CancellationToken cancellationToken);
+  Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken);
   Task<Review?> GetReviewAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken);
+  Task <bool> ReviewExistsAsync(Guid id, CancellationToken token);
+  Task<IList<Guid>> GetMissingReviewIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken);
   Task AddReviewAsync(Guid movieId, Review review, CancellationToken cancellationToken);
   void DeleteReview(Review review);
 
