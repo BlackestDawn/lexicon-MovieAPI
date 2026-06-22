@@ -3,9 +3,9 @@ using MovieAPI.Application.Models;
 
 namespace MovieAPI.Application.validators;
 
-public class PersonCreationValidator : AbstractValidator<PersonForCreationDto>
+public class PersonChangeValidator : AbstractValidator<PersonForChangeDto>
 {
-  public PersonCreationValidator()
+  public PersonChangeValidator()
   {
     RuleFor(p => p.FirstName).NotEmpty();
     RuleFor(p => p.LastName).NotEmpty();

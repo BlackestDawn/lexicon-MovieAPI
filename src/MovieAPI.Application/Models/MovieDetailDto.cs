@@ -1,6 +1,6 @@
 namespace MovieAPI.Application.Models;
 
-public record class MovieDetailDto
+public class MovieDetailDto
 {
   public Guid Id { get; set; }
   public string Synopsis { get; set; } = string.Empty;

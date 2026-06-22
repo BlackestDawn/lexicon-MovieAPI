@@ -1,6 +1,6 @@
 namespace MovieAPI.Application.Models;
 
-public class PersonForCreationDto
+public class PersonForChangeDto
 {
   public string FirstName { get; set; } = string.Empty;
   public string LastName { get; set; } = string.Empty;

@@ -1,14 +1,14 @@
 using MovieAPI.Application.Models;
-using MovieAPI.Application.Validators;
+using MovieAPI.Application.validators;
 using MovieAPI.Domain.Models;
 
 namespace MovieAPI.UnitTests;
 
-public class MovieCreationValidatorTests
+public class MovieChangeValidatorTests
 {
-  private readonly MovieCreationValidator _sut = new();
+  private readonly MovieChangeValidator _sut = new();
 
-  private static MovieForCreationDto ValidDto() => new()
+  private static MovieForChangeDto ValidDto() => new()
   {
     Title = "Inception",
     Language = "English",

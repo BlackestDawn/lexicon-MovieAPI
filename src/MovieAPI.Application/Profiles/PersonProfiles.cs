@@ -9,7 +9,7 @@ public class PersonProfiles : Profile
   public PersonProfiles()
   {
     CreateMap<Person, PersonDto>();
-    CreateMap<Person, PersonForUpdateDto>()
+    CreateMap<Person, PersonForChangeDto>()
       .ForMember(dest => dest.MovieRoles, opt => opt.MapFrom(src => src.CastCrews));
 
     CreateMap<CastCrew, CastCrewDto>()
@@ -24,7 +24,7 @@ public class PersonProfiles : Profile
       .ForMember(dest => dest.MovieRoles,
         opt => opt.MapFrom(src => src.CastCrews));
 
-    CreateMap<PersonForCreationDto, Person>()
+    CreateMap<PersonForChangeDto, Person>()
       .ForMember(dest => dest.CastCrews, opt => opt.Ignore());
 
     CreateMap<MovieRoleForCreationDto, CastCrew>();

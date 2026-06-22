@@ -3,7 +3,7 @@ using MovieAPI.Domain.Interfaces;
 
 namespace MovieAPI.Domain.Entities;
 
-public class Genre : ITrackable
+public class Genre : ITrackable, IEntity
 {
   [Key]
   public Guid Id { get; set; }

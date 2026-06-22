@@ -22,7 +22,7 @@ public static class DbSeeder
 
     // --- Genres ---
     Genre G(string name, string slug) =>
-        new() { Id = Guid.NewGuid(), Name = name, Slug = slug, CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), Name = name, Slug = slug, CreatedAt = now, UpdatedAt = now };
 
     var action = G("Action", "action");
     var drama = G("Drama", "drama");
@@ -39,7 +39,7 @@ public static class DbSeeder
 
     // --- People ---
     Person P(string first, string last, int year, int month, int day) =>
-        new() { Id = Guid.NewGuid(), FirstName = first, LastName = last, DateOfBirth = new DateOnly(year, month, day), CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), FirstName = first, LastName = last, DateOfBirth = new DateOnly(year, month, day), CreatedAt = now, UpdatedAt = now };
 
     // Directors
     var nolan = P("Christopher", "Nolan", 1970, 7, 30);
@@ -100,19 +100,19 @@ public static class DbSeeder
 
     // --- Helpers ---
     Movie M(string title, int y, int mo, int d, string plot, int runtime) =>
-        new() { Id = Guid.NewGuid(), Title = title, ReleaseDate = new DateOnly(y, mo, d), PlotSummery = plot, RuntimeMinutes = runtime, CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), Title = title, ReleaseDate = new DateOnly(y, mo, d), PlotSummery = plot, RuntimeMinutes = runtime, CreatedAt = now, UpdatedAt = now };
 
     MovieDetail D(Guid movieId, string synopsis, string lang, int budget) =>
-        new() { Id = Guid.NewGuid(), MovieId = movieId, Synopsis = synopsis, Language = lang, Budget = budget, CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), MovieId = movieId, Synopsis = synopsis, Language = lang, Budget = budget, CreatedAt = now, UpdatedAt = now };
 
     CastCrew CC(Guid movieId, Guid personId, PersonRole role) =>
-        new() { Id = Guid.NewGuid(), MovieId = movieId, PersonId = personId, Role = role, CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), MovieId = movieId, PersonId = personId, Role = role, CreatedAt = now, UpdatedAt = now };
 
     MovieGenre MG(Guid movieId, Genre genre) =>
-        new() { Id = Guid.NewGuid(), MovieId = movieId, GenreId = genre.Id, CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), MovieId = movieId, GenreId = genre.Id, CreatedAt = now, UpdatedAt = now };
 
     Review Rev(Guid movieId, string author, string body, int score) =>
-        new() { Id = Guid.NewGuid(), MovieId = movieId, AuthorName = author, Body = body, Score = score, CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), MovieId = movieId, AuthorName = author, Body = body, Score = score, CreatedAt = now, UpdatedAt = now };
 
     var movies = new List<Movie>();
     var details = new List<MovieDetail>();

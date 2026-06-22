@@ -3,11 +3,11 @@ using MovieAPI.Application.validators;
 
 namespace MovieAPI.UnitTests;
 
-public class PersonCreationValidatorTests
+public class PersonChangeValidatorTests
 {
-  private readonly PersonCreationValidator _sut = new();
+  private readonly PersonChangeValidator _sut = new();
 
-  private static PersonForCreationDto ValidDto() => new()
+  private static PersonForChangeDto ValidDto() => new()
   {
     FirstName = "Leonardo",
     LastName = "DiCaprio",

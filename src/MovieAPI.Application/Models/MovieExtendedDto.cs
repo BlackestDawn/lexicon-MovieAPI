@@ -1,6 +1,6 @@
 namespace MovieAPI.Application.Models;
 
-public record class MovieExtendedDto
+public class MovieExtendedDto
 {
   public Guid Id { get; set; }
   public DateTime CreatedAt { get; set; }

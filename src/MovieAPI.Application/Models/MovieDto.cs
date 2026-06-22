@@ -1,6 +1,6 @@
 namespace MovieAPI.Application.Models;
 
-public record class MovieDto
+public class MovieDto
 {
   public Guid Id { get; set; }
   public DateTime CreatedAt { get; set; }

@@ -1,40 +1,39 @@
-using System.Runtime.CompilerServices;
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
-using MovieAPI.Application.validators;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.Application.Services;
 
 public class ReviewService(
-  IMovieRepository repository,
+  IReviewRepository repository,
+  IMovieRepository movieRepository,
   IMapper mapper,
-  IValidator<ReviewForCreationDto> createValidator,
-  IValidator<ReviewForUpdateDto> updateValidator) : IReviewService
+  IValidator<ReviewForChangeDto> validator) : IReviewService
 {
-  public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForCreationDto newReview, CancellationToken token = default)
+  public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForChangeDto newReview, CancellationToken token = default)
   {
-    var validationResult = createValidator.Validate(newReview);
+    var validationResult = validator.Validate(newReview);
 
     if (!validationResult.IsValid)
     {
       return ReviewCreationResult.Failed(new ValidationException(validationResult.Errors));
     }
 
-    if (!await repository.MovieExistsAsync(movieId, token))
+    if (!await movieRepository.ExistsAsync(movieId, token))
     {
       return ReviewCreationResult.Failed(new ArgumentException($"Movie '{movieId}' not found"));
     }
 
     var reviewEntity = mapper.Map<Review>(newReview);
+    reviewEntity.MovieId = movieId;
 
-    await repository.AddReviewAsync(movieId, reviewEntity, token);
+    await repository.AddAsync(reviewEntity, token);
     await repository.SaveChangesAsync(token);
 
     return ReviewCreationResult.Successful(mapper.Map<ReviewDto>(reviewEntity));
@@ -52,14 +51,14 @@ public class ReviewService(
       pageSize = DefaultValues.PageSize;
     }
 
-    var (result, pagination) = await repository.GetReviewsForMovieAsync(movieId, searchParams, (int)page, (int)pageSize, token);
+    var (result, pagination) = await repository.GetReviewsForMovieReadOnlyAsync(movieId, searchParams, (int)page, (int)pageSize, token);
 
     return (mapper.Map<IEnumerable<ReviewDto>>(result), pagination);
   }
 
   public async Task<ReviewDto?> GetOne(Guid movieId, Guid id, CancellationToken token = default)
   {
-    var result = await repository.GetReviewAsync(movieId, id, token);
+    var result = await repository.GetReviewReadOnlyAsync(movieId, id, token);
 
     if (result == null)
     {
@@ -77,13 +76,13 @@ public class ReviewService(
       return;
     }
 
-    repository.DeleteReview(entity);
+    repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForChangeDto updatedReview, CancellationToken token = default)
   {
-    if (!await repository.MovieExistsAsync(movieId, token))
+    if (!await movieRepository.ExistsAsync(movieId, token))
     {
       return (false, $"Movie '{movieId}' not found");
     }
@@ -97,9 +96,9 @@ public class ReviewService(
     return await ApplyUpdateAsync(entity, updatedReview, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patchDocument, CancellationToken token = default)
   {
-    if (!await repository.MovieExistsAsync(movieId, token))
+    if (!await movieRepository.ExistsAsync(movieId, token))
     {
       return (false, $"Movie '{movieId}' not found");
     }
@@ -110,15 +109,15 @@ public class ReviewService(
       return (false, $"Review '{id}' not found");
     }
 
-    var dto = mapper.Map<ReviewForUpdateDto>(entity);
+    var dto = mapper.Map<ReviewForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     return await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Review entity, ReviewForUpdateDto updatedReview, CancellationToken token)
+  private async Task<(bool, string?)> ApplyUpdateAsync(Review entity, ReviewForChangeDto updatedReview, CancellationToken token)
   {
-    var validationResult = updateValidator.Validate(updatedReview);
+    var validationResult = validator.Validate(updatedReview);
 
     if (!validationResult.IsValid)
     {

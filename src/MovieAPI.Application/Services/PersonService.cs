@@ -2,24 +2,24 @@ using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
-using MovieAPI.Domain.Entities;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.Application.Services;
 
 public class PersonService(
-  IMovieRepository repository,
+  IPersonRepository repository,
+  IMovieRepository movieRepository,
   IMapper mapper,
-  IValidator<PersonForCreationDto> createValidator,
-  IValidator<PersonForUpdateDto> updateValidator
+  IValidator<PersonForChangeDto> validator
 ) : IPersonService
 {
-  public async Task<PersonCreationResult> Create(PersonForCreationDto newPerson, CancellationToken token = default)
+  public async Task<PersonCreationResult> Create(PersonForChangeDto newPerson, CancellationToken token = default)
   {
-    var validationResult = createValidator.Validate(newPerson);
+    var validationResult = validator.Validate(newPerson);
 
     if (!validationResult.IsValid)
     {
@@ -27,7 +27,7 @@ public class PersonService(
     }
 
     var movieIds = newPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
-    var invalidMovieIds = await repository.GetMissingMovieIdsAsync(movieIds, token);
+    var invalidMovieIds = await movieRepository.GetMissingIdsAsync(movieIds, token);
 
     if (invalidMovieIds.Count > 0)
     {
@@ -39,7 +39,7 @@ public class PersonService(
 
     personEntity.CastCrews = mapper.Map<ICollection<CastCrew>>(newPerson.MovieRoles);
 
-    await repository.AddPersonAsync(personEntity, token);
+    await repository.AddAsync(personEntity, token);
     await repository.SaveChangesAsync(token);
 
     return PersonCreationResult.Successful(mapper.Map<PersonDto>(personEntity));
@@ -63,7 +63,7 @@ public class PersonService(
 
   public async Task<PersonExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
   {
-    var result = await repository.GetPersonAsync(id, includeMovies, token);
+    var result = await repository.GetPersonReadOnlyAsync(id, includeMovies, token);
 
     if (result == null)
     {
@@ -81,11 +81,11 @@ public class PersonService(
       return;
     }
 
-    repository.DeletePerson(entity);
+    repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, PersonForUpdateDto updatedPerson, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, PersonForChangeDto updatedPerson, CancellationToken token = default)
   {
     var entity = await repository.GetPersonAsync(id, true, token);
     if (entity == null)
@@ -96,7 +96,7 @@ public class PersonService(
     return await ApplyUpdateAsync(entity, updatedPerson, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForChangeDto> patchDocument, CancellationToken token = default)
   {
     var entity = await repository.GetPersonAsync(id, true, token);
     if (entity == null)
@@ -104,15 +104,15 @@ public class PersonService(
       return (false, $"Person '{id}' not found");
     }
 
-    var dto = mapper.Map<PersonForUpdateDto>(entity);
+    var dto = mapper.Map<PersonForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     return await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Person entity, PersonForUpdateDto updatedPerson, CancellationToken token)
+  private async Task<(bool, string?)> ApplyUpdateAsync(Person entity, PersonForChangeDto updatedPerson, CancellationToken token)
   {
-    var validationResult = updateValidator.Validate(updatedPerson);
+    var validationResult = validator.Validate(updatedPerson);
 
     if (!validationResult.IsValid)
     {
@@ -120,7 +120,7 @@ public class PersonService(
     }
 
     var movieIds = updatedPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
-    var invalidMovieIds = await repository.GetMissingMovieIdsAsync(movieIds, token);
+    var invalidMovieIds = await movieRepository.GetMissingIdsAsync(movieIds, token);
 
     if (invalidMovieIds.Count > 0)
     {

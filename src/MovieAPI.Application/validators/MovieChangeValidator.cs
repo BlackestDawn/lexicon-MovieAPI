@@ -1,11 +1,11 @@
 using FluentValidation;
 using MovieAPI.Application.Models;
 
-namespace MovieAPI.Application.Validators;
+namespace MovieAPI.Application.validators;
 
-public class MovieUpdateValidator : AbstractValidator<MovieForUpdateDto>
+public class MovieChangeValidator : AbstractValidator<MovieForChangeDto>
 {
-  public MovieUpdateValidator()
+  public MovieChangeValidator()
   {
     RuleFor(m => m.Title).NotEmpty();
     RuleFor(m => m.Language).NotEmpty();

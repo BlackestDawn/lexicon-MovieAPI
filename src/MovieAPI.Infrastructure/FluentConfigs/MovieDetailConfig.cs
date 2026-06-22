@@ -8,13 +8,13 @@ public class MovieDetailConfig : IEntityTypeConfiguration<MovieDetail>
 {
   public void Configure(EntityTypeBuilder<MovieDetail> builder)
   {
-    builder.Property(m => m.Id)
+    builder.Property(d => d.Id)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("NEWID()");
-    builder.Property(m => m.CreatedAt)
+    builder.Property(d => d.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
-    builder.Property(m => m.UpdatedAt)
+    builder.Property(d => d.UpdatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
 

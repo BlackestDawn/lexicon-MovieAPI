@@ -5,20 +5,21 @@ using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.Application.Services;
 
 public class MovieService(
   IMovieRepository repository,
+  IPersonRepository personRepository,
+  IGenreRepository genreRepository,
   IMapper mapper,
-  IValidator<MovieForCreationDto> createValidator,
-  IValidator<MovieForUpdateDto> updateValidator) : IMovieService
+  IValidator<MovieForChangeDto> validator) : IMovieService
 {
-  public async Task<MovieCreationResult> Create(MovieForCreationDto newMovie, CancellationToken token = default)
+  public async Task<MovieCreationResult> Create(MovieForChangeDto newMovie, CancellationToken token = default)
   {
-    var validationResult = createValidator.Validate(newMovie);
+    var validationResult = validator.Validate(newMovie);
 
     if (!validationResult.IsValid)
     {
@@ -26,9 +27,9 @@ public class MovieService(
       return MovieCreationResult.Failed(error);
     }
 
-    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+    var invalidPersonIds = await personRepository.GetMissingIdsAsync(
       newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
-    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+    var invalidGenreIds = await genreRepository.GetMissingIdsAsync(
       newMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
@@ -45,7 +46,7 @@ public class MovieService(
     movieEntity.MovieGenres = [..newMovie.Genres
       .Select(genreId => new MovieGenre { GenreId = genreId })];
 
-    await repository.AddMovieAsync(movieEntity, token);
+    await repository.AddAsync(movieEntity, token);
     await repository.SaveChangesAsync(token);
 
     // refetch to properly populate genres
@@ -71,7 +72,7 @@ public class MovieService(
 
   public async Task<MovieExtendedDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
   {
-    var result = await repository.GetMovieAsync(id, includePeople, token);
+    var result = await repository.GetMovieReadOnlyAsync(id, includePeople, token);
 
     if (result == null)
     {
@@ -89,11 +90,11 @@ public class MovieService(
       return;
     }
 
-    repository.DeleteMovie(entity);
+    repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, MovieForChangeDto updatedMovie, CancellationToken token = default)
   {
     var entity = await repository.GetMovieAsync(id, true, token);
     if (entity == null)
@@ -102,27 +103,27 @@ public class MovieService(
     return await ApplyUpdateAsync(entity, updatedMovie, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForChangeDto> patchDocument, CancellationToken token = default)
   {
     var entity = await repository.GetMovieAsync(id, true, token);
     if (entity == null)
       return (false, $"Movie '{id}' not found");
 
-    var dto = mapper.Map<MovieForUpdateDto>(entity);
+    var dto = mapper.Map<MovieForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     return await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Movie entity, MovieForUpdateDto updatedMovie, CancellationToken token)
+  private async Task<(bool, string?)> ApplyUpdateAsync(Movie entity, MovieForChangeDto updatedMovie, CancellationToken token)
   {
-    var validationResult = updateValidator.Validate(updatedMovie);
+    var validationResult = validator.Validate(updatedMovie);
     if (!validationResult.IsValid)
       return (false, new ValidationException(validationResult.Errors).Message);
 
-    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+    var invalidPersonIds = await personRepository.GetMissingIdsAsync(
       updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
-    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+    var invalidGenreIds = await genreRepository.GetMissingIdsAsync(
       updatedMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)

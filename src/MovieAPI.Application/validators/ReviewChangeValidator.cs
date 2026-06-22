@@ -3,9 +3,9 @@ using MovieAPI.Application.Models;
 
 namespace MovieAPI.Application.validators;
 
-public class ReviewCreationValidator : AbstractValidator<ReviewForCreationDto>
+public class ReviewChangeValidator : AbstractValidator<ReviewForChangeDto>
 {
-  public ReviewCreationValidator()
+  public ReviewChangeValidator()
   {
     RuleFor(r => r.AuthorName).NotEmpty();
     RuleFor(r => r.Body).NotEmpty();

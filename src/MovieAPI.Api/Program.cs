@@ -4,8 +4,8 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Application.validators;
-using MovieAPI.Application.Validators;
 using MovieAPI.Infrastructure;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,17 +25,18 @@ builder.Services.AddAutoMapper(config => {},
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IPersonService, PersonService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
-builder.Services.AddScoped<IValidator<MovieForCreationDto>, MovieCreationValidator>();
-builder.Services.AddScoped<IValidator<MovieForUpdateDto>, MovieUpdateValidator>();
-builder.Services.AddScoped<IValidator<PersonForCreationDto>, PersonCreationValidator>();
-builder.Services.AddScoped<IValidator<PersonForUpdateDto>, PersonUpdateValidator>();
-builder.Services.AddScoped<IValidator<ReviewForCreationDto>, ReviewCreationValidator>();
-builder.Services.AddScoped<IValidator<ReviewForUpdateDto>, ReviewUpdateValidator>();
+builder.Services.AddScoped<IValidator<MovieForChangeDto>, MovieChangeValidator>();
+builder.Services.AddScoped<IValidator<PersonForChangeDto>, PersonChangeValidator>();
+builder.Services.AddScoped<IValidator<ReviewForChangeDto>, ReviewChangeValidator>();
+builder.Services.AddScoped<IValidator<GenreForChangeDto>, GenreChangeValidator>();
 
 var app = builder.Build();
 
