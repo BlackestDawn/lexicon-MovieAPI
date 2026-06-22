@@ -1,8 +1,10 @@
 using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
 
@@ -10,11 +12,29 @@ namespace MovieAPI.Application.Services;
 
 public class ReviewService(
   IMovieRepository repository,
-  IMapper mapper) : IReviewService
+  IMapper mapper,
+  IValidator<ReviewForCreationDto> createValidator) : IReviewService
 {
-  public Task<ReviewCreationResult> Create(ReviewForCreationDto newReview, CancellationToken token = default)
+  public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForCreationDto newReview, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var validationResult = createValidator.Validate(newReview);
+
+    if (!validationResult.IsValid)
+    {
+      return ReviewCreationResult.Failed(new ValidationException(validationResult.Errors));
+    }
+
+    if (!await repository.MovieExistsAsync(movieId, token))
+    {
+      return ReviewCreationResult.Failed(new ArgumentException($"Movie '{movieId}' not found"));
+    }
+
+    var reviewEntity = mapper.Map<Review>(newReview);
+
+    await repository.AddReviewAsync(movieId, reviewEntity, token);
+    await repository.SaveChangesAsync(token);
+
+    return ReviewCreationResult.Successful(mapper.Map<ReviewDto>(reviewEntity));
   }
 
   public async Task<(IEnumerable<ReviewDto>, PaginationMetadata?)> GetMany(Guid movieId, ReviewSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)

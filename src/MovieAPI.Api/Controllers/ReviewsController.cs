@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
+using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Api.Controllers;
@@ -28,7 +29,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   }
 
   [HttpGet("{id}", Name = "GetReview")]
-  public async Task<IActionResult> GetReview(Guid movieId, Guid id, CancellationToken cancellationToken)
+  public async Task<IActionResult> GetReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(movieId, id, cancellationToken);
 
@@ -38,5 +39,19 @@ public class ReviewsController(IReviewService service) : ControllerBase
     }
 
     return Ok(result);
+  }
+
+  [HttpPost]
+  public async Task<IActionResult> CreateReview(Guid movieId, ReviewForCreationDto newReview,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await service.Create(movieId, newReview, cancellationToken);
+
+    if (!result.Success)
+    {
+      return BadRequest(result.Error!.Message);
+    }
+
+    return CreatedAtRoute("GetReview", new {movieId, result.Review!.Id}, result.Review);
   }
 }

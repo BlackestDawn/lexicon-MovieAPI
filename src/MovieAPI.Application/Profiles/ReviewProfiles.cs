@@ -9,5 +9,6 @@ public class ReviewProfiles : Profile
   public ReviewProfiles()
   {
     CreateMap<Review, ReviewDto>();
+    CreateMap<ReviewForCreationDto, Review>();
   }
 }
