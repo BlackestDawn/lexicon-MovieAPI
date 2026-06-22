@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
+using MovieAPI.Application.validators;
 using MovieAPI.Application.Validators;
 using MovieAPI.Infrastructure;
 using MovieAPI.Infrastructure.Services;
@@ -25,9 +26,16 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IPersonService, PersonService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddScoped<IValidator<MovieForCreationDto>, MovieCreationValidator>();
 builder.Services.AddScoped<IValidator<MovieForUpdateDto>, MovieUpdateValidator>();
+builder.Services.AddScoped<IValidator<PersonForCreationDto>, PersonCreationValidator>();
+builder.Services.AddScoped<IValidator<PersonForUpdateDto>, PersonUpdateValidator>();
+builder.Services.AddScoped<IValidator<ReviewForCreationDto>, ReviewCreationValidator>();
+builder.Services.AddScoped<IValidator<ReviewForUpdateDto>, ReviewUpdateValidator>();
 
 var app = builder.Build();
 

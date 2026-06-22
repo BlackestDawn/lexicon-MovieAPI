@@ -86,6 +86,15 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
     return await context.Movies.AnyAsync(m => m.Id == id, cancellationToken);
   }
 
+  public async Task<IList<Guid>> GetMissingMovieIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    var found = await context.Movies
+      .Where(m => ids.Contains(m.Id))
+      .Select(m => m.Id)
+      .ToListAsync(cancellationToken);
+    return [..ids.Except(found)];
+  }
+
   public async Task AddMovieAsync(Movie movie, CancellationToken cancellationToken)
   {
     await context.Movies.AddAsync(movie, cancellationToken);
@@ -97,18 +106,52 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
   }
 
   // Reviews
-  public async Task<IEnumerable<Review>> GetReviewsForMovieAsync(Guid movieId, CancellationToken cancellationToken)
+  public async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await context.Reviews
-      .Where(r => r.MovieId == movieId)
-      .AsNoTracking()
+    var query = context.Reviews.AsQueryable();
+    query = query.Where(r => r.MovieId == movieId);
+
+    if (!string.IsNullOrWhiteSpace(searchParams.Search))
+    {
+      query = query.Where(r => r.Body.Contains(searchParams.Search));
+    }
+
+    if (searchParams.MinScore.HasValue)
+    {
+      query = query.Where(r => r.Score >= (int)searchParams.MinScore);
+    }
+
+    if (searchParams.MaxScore.HasValue)
+    {
+      query = query.Where(r => r.Score <= (int)searchParams.MaxScore);
+    }
+
+    var totalCount = await query.CountAsync(cancellationToken);
+    var pagination = new PaginationMetadata(totalCount, pageSize, page);
+
+    var reviews = await query
+      .OrderBy(r => r.CreatedAt)
+      .Skip((page - 1) * pageSize)
+      .Take(pageSize)
       .ToListAsync(cancellationToken);
+
+    return (reviews, pagination);
   }
 
   public async Task<Review?> GetReviewAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
   {
     return await context.Reviews
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
+  }
+
+  public Task<bool> ReviewExistsAsync(Guid id, CancellationToken token)
+  {
+    throw new NotImplementedException();
+  }
+
+  public Task<IList<Guid>> GetMissingReviewIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    throw new NotImplementedException();
   }
 
   public async Task AddReviewAsync(Guid movieId, Review review, CancellationToken cancellationToken)
@@ -186,6 +229,15 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
     return await context.Persons.AnyAsync(p => p.Id == id, cancellationToken);
   }
 
+  public async Task<IList<Guid>> GetMissingPersonIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    var found = await context.Persons
+      .Where(p => ids.Contains(p.Id))
+      .Select(p => p.Id)
+      .ToListAsync(cancellationToken);
+    return [..ids.Except(found)];
+  }
+
   public async Task AddPersonAsync(Person person, CancellationToken cancellationToken)
   {
     await context.Persons.AddAsync(person, cancellationToken);
@@ -210,6 +262,15 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
   public async Task<bool> GenreExistsAsync(Guid id, CancellationToken cancellationToken)
   {
     return await context.Genres.AnyAsync(g => g.Id == id, cancellationToken);
+  }
+
+  public async Task<IList<Guid>> GetMissingGenreIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)
+  {
+    var found = await context.Genres
+      .Where(g => ids.Contains(g.Id))
+      .Select(g => g.Id)
+      .ToListAsync(cancellationToken);
+    return [..ids.Except(found)];
   }
 
   // Persistence

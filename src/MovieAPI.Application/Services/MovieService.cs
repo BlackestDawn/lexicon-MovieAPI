@@ -26,13 +26,10 @@ public class MovieService(
       return MovieCreationResult.Failed(error);
     }
 
-    var personIds = newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList();
-    var personExistsFlags = await Task.WhenAll(personIds.Select(id => repository.PersonExistsAsync(id, token)));
-    var invalidPersonIds = personIds.Where((_, i) => !personExistsFlags[i]).ToList();
-
-    var genreIds = newMovie.Genres.Distinct().ToList();
-    var genreExistsFlags = await Task.WhenAll(genreIds.Select(id => repository.GenreExistsAsync(id, token)));
-    var invalidGenreIds = genreIds.Where((_, i) => !genreExistsFlags[i]).ToList();
+    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+      newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
+    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+      newMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
     {
@@ -43,8 +40,7 @@ public class MovieService(
 
     var movieEntity = mapper.Map<Movie>(newMovie);
 
-    movieEntity.CastCrews = [..newMovie.CastCrews
-      .Select(cc => new CastCrew { PersonId = cc.PersonId, Role = cc.Role })];
+    movieEntity.CastCrews = mapper.Map<ICollection<CastCrew>>(newMovie.CastCrews);
 
     movieEntity.MovieGenres = [..newMovie.Genres
       .Select(genreId => new MovieGenre { GenreId = genreId })];
@@ -52,6 +48,7 @@ public class MovieService(
     await repository.AddMovieAsync(movieEntity, token);
     await repository.SaveChangesAsync(token);
 
+    // refetch to properly populate genres
     var savedMovie = await repository.GetMovieAsync(movieEntity.Id, false, token);
     return MovieCreationResult.Successful(mapper.Map<MovieDto>(savedMovie));
   }
@@ -123,13 +120,10 @@ public class MovieService(
     if (!validationResult.IsValid)
       return (false, new ValidationException(validationResult.Errors).Message);
 
-    var personIds = updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList();
-    var personExistsFlags = await Task.WhenAll(personIds.Select(id => repository.PersonExistsAsync(id, token)));
-    var invalidPersonIds = personIds.Where((_, i) => !personExistsFlags[i]).ToList();
-
-    var genreIds = updatedMovie.Genres.Distinct().ToList();
-    var genreExistsFlags = await Task.WhenAll(genreIds.Select(id => repository.GenreExistsAsync(id, token)));
-    var invalidGenreIds = genreIds.Where((_, i) => !genreExistsFlags[i]).ToList();
+    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+      updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
+    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+      updatedMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
     {
@@ -144,8 +138,8 @@ public class MovieService(
     entity.RuntimeMinutes = updatedMovie.RuntimeMinutes;
 
     entity.CastCrews.Clear();
-    foreach (var cc in updatedMovie.CastCrews)
-      entity.CastCrews.Add(new CastCrew { PersonId = cc.PersonId, Role = cc.Role });
+    foreach (var cc in mapper.Map<ICollection<CastCrew>>(updatedMovie.CastCrews))
+      entity.CastCrews.Add(cc);
 
     entity.MovieGenres.Clear();
     foreach (var genreId in updatedMovie.Genres)
