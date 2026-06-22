@@ -65,4 +65,11 @@ public class GenresController(IGenreService service) : ControllerBase
 
     return NoContent();
   }
+
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> DeleteGenre(Guid id, CancellationToken cancellationToken = default)
+  {
+    await service.Remove(id, cancellationToken);
+    return NoContent();
+  }
 }

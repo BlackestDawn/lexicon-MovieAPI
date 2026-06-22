@@ -10,4 +10,5 @@ public interface IGenreService
   Task<GenreCreationResult> Create(GenreForChangeDto newGenre, CancellationToken token);
   Task<(bool, string?)> Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token);
   Task<(bool, string?)> Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token);
+  Task Remove(Guid id, CancellationToken token = default);
 }

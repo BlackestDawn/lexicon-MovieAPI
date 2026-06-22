@@ -48,6 +48,18 @@ public class GenreService
     return mapper.Map<GenreExtendedDto>(result);
   }
 
+  public async Task Remove(Guid id, CancellationToken token = default)
+  {
+    var entity = await repository.GetGenreAsync(id, false, token);
+    if (entity == null)
+    {
+      return;
+    }
+
+    repository.Delete(entity);
+    await repository.SaveChangesAsync(token);
+  }
+
   public async Task<(bool, string?)> Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token)
   {
     var entity = await repository.GetGenreAsync(id, false, token);
