@@ -6,6 +6,7 @@ using Moq;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
 
@@ -13,7 +14,8 @@ namespace MovieAPI.UnitTests;
 
 public class ReviewServiceTests
 {
-  private readonly Mock<IMovieRepository> _repo = new();
+  private readonly Mock<IReviewRepository> _repo = new();
+  private readonly Mock<IMovieRepository> _movieRepo = new();
   private readonly Mock<IMapper> _mapper = new();
   private readonly Mock<IValidator<ReviewForCreationDto>> _createValidator = new();
   private readonly Mock<IValidator<ReviewForUpdateDto>> _updateValidator = new();
@@ -21,7 +23,7 @@ public class ReviewServiceTests
 
   public ReviewServiceTests()
   {
-    _sut = new ReviewService(_repo.Object, _mapper.Object, _createValidator.Object, _updateValidator.Object);
+    _sut = new ReviewService(_repo.Object, _movieRepo.Object, _mapper.Object, _createValidator.Object, _updateValidator.Object);
   }
 
   // Helpers
@@ -79,7 +81,7 @@ public class ReviewServiceTests
   {
     var movieId = Guid.NewGuid();
     SetupCreateValidatorValid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
     var result = await _sut.Create(movieId, MakeCreationDto());
 
@@ -97,8 +99,8 @@ public class ReviewServiceTests
     var reviewDto = new ReviewDto { Id = entity.Id, AuthorName = dto.AuthorName, Body = dto.Body, Score = dto.Score };
 
     SetupCreateValidatorValid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
-    _repo.Setup(r => r.AddReviewAsync(movieId, It.IsAny<Review>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _repo.Setup(r => r.AddAsync(It.IsAny<Review>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _mapper.Setup(m => m.Map<Review>(dto)).Returns(entity);
     _mapper.Setup(m => m.Map<ReviewDto>(entity)).Returns(reviewDto);
@@ -118,15 +120,15 @@ public class ReviewServiceTests
     var entity = MakeReviewEntity(movieId: movieId);
 
     SetupCreateValidatorValid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
-    _repo.Setup(r => r.AddReviewAsync(movieId, It.IsAny<Review>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _repo.Setup(r => r.AddAsync(It.IsAny<Review>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _mapper.Setup(m => m.Map<Review>(dto)).Returns(entity);
     _mapper.Setup(m => m.Map<ReviewDto>(entity)).Returns(new ReviewDto { Id = entity.Id });
 
     await _sut.Create(movieId, dto);
 
-    _repo.Verify(r => r.AddReviewAsync(movieId, entity, It.IsAny<CancellationToken>()), Times.Once);
+    _repo.Verify(r => r.AddAsync(entity, It.IsAny<CancellationToken>()), Times.Once);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
@@ -239,7 +241,7 @@ public class ReviewServiceTests
 
     await _sut.Remove(movieId, Guid.NewGuid());
 
-    _repo.Verify(r => r.DeleteReview(It.IsAny<Review>()), Times.Never);
+    _repo.Verify(r => r.Delete(It.IsAny<Review>()), Times.Never);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
   }
 
@@ -253,7 +255,7 @@ public class ReviewServiceTests
 
     await _sut.Remove(movieId, entity.Id);
 
-    _repo.Verify(r => r.DeleteReview(entity), Times.Once);
+    _repo.Verify(r => r.Delete(entity), Times.Once);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
@@ -263,7 +265,7 @@ public class ReviewServiceTests
   public async Task UpdatePut_WhenMovieNotFound_ReturnsFalse()
   {
     var movieId = Guid.NewGuid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
     var (success, error) = await _sut.Update(movieId, Guid.NewGuid(), MakeUpdateDto());
 
@@ -276,7 +278,7 @@ public class ReviewServiceTests
   {
     var movieId = Guid.NewGuid();
     var id = Guid.NewGuid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, id, It.IsAny<CancellationToken>())).ReturnsAsync((Review?)null);
 
     var (success, error) = await _sut.Update(movieId, id, MakeUpdateDto());
@@ -290,7 +292,7 @@ public class ReviewServiceTests
   {
     var movieId = Guid.NewGuid();
     var entity = MakeReviewEntity(movieId: movieId);
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _updateValidator
       .Setup(v => v.Validate(It.IsAny<ReviewForUpdateDto>()))
@@ -308,7 +310,7 @@ public class ReviewServiceTests
     var movieId = Guid.NewGuid();
     var entity = MakeReviewEntity(movieId: movieId);
 
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     SetupUpdateValidatorValid();
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -330,7 +332,7 @@ public class ReviewServiceTests
   public async Task UpdatePatch_WhenMovieNotFound_ReturnsFalse()
   {
     var movieId = Guid.NewGuid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
     var (success, error) = await _sut.Update(movieId, Guid.NewGuid(), new JsonPatchDocument<ReviewForUpdateDto>());
 
@@ -343,7 +345,7 @@ public class ReviewServiceTests
   {
     var movieId = Guid.NewGuid();
     var id = Guid.NewGuid();
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, id, It.IsAny<CancellationToken>())).ReturnsAsync((Review?)null);
 
     var (success, error) = await _sut.Update(movieId, id, new JsonPatchDocument<ReviewForUpdateDto>());
@@ -359,7 +361,7 @@ public class ReviewServiceTests
     var entity = MakeReviewEntity(movieId: movieId);
     var updateDto = MakeUpdateDto();
 
-    _repo.Setup(r => r.MovieExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<ReviewForUpdateDto>(entity)).Returns(updateDto);
     SetupUpdateValidatorValid();

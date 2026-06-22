@@ -5,6 +5,7 @@ using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
 
@@ -12,6 +13,8 @@ namespace MovieAPI.Application.Services;
 
 public class MovieService(
   IMovieRepository repository,
+  IPersonRepository personRepository,
+  IGenreRepository genreRepository,
   IMapper mapper,
   IValidator<MovieForCreationDto> createValidator,
   IValidator<MovieForUpdateDto> updateValidator) : IMovieService
@@ -26,9 +29,9 @@ public class MovieService(
       return MovieCreationResult.Failed(error);
     }
 
-    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+    var invalidPersonIds = await personRepository.GetMissingIdsAsync(
       newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
-    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+    var invalidGenreIds = await genreRepository.GetMissingIdsAsync(
       newMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
@@ -45,7 +48,7 @@ public class MovieService(
     movieEntity.MovieGenres = [..newMovie.Genres
       .Select(genreId => new MovieGenre { GenreId = genreId })];
 
-    await repository.AddMovieAsync(movieEntity, token);
+    await repository.AddAsync(movieEntity, token);
     await repository.SaveChangesAsync(token);
 
     // refetch to properly populate genres
@@ -89,7 +92,7 @@ public class MovieService(
       return;
     }
 
-    repository.DeleteMovie(entity);
+    repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
@@ -120,9 +123,9 @@ public class MovieService(
     if (!validationResult.IsValid)
       return (false, new ValidationException(validationResult.Errors).Message);
 
-    var invalidPersonIds = await repository.GetMissingPersonIdsAsync(
+    var invalidPersonIds = await personRepository.GetMissingIdsAsync(
       updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
-    var invalidGenreIds = await repository.GetMissingGenreIdsAsync(
+    var invalidGenreIds = await genreRepository.GetMissingIdsAsync(
       updatedMovie.Genres.Distinct().ToList(), token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)

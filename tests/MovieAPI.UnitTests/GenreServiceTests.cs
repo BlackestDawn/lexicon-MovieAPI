@@ -3,13 +3,14 @@ using Moq;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.UnitTests;
 
 public class GenreServiceTests
 {
-  private readonly Mock<IMovieRepository> _repo = new();
+  private readonly Mock<IGenreRepository> _repo = new();
   private readonly Mock<IMapper> _mapper = new();
   private readonly GenreService _sut;
 

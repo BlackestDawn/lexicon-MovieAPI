@@ -7,6 +7,7 @@ using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Domain.Models;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
 
@@ -14,7 +15,8 @@ namespace MovieAPI.UnitTests;
 
 public class PersonServiceTests
 {
-  private readonly Mock<IMovieRepository> _repo = new();
+  private readonly Mock<IPersonRepository> _repo = new();
+  private readonly Mock<IMovieRepository> _movieRepo = new();
   private readonly Mock<IMapper> _mapper = new();
   private readonly Mock<IValidator<PersonForCreationDto>> _createValidator = new();
   private readonly Mock<IValidator<PersonForUpdateDto>> _updateValidator = new();
@@ -22,7 +24,7 @@ public class PersonServiceTests
 
   public PersonServiceTests()
   {
-    _sut = new PersonService(_repo.Object, _mapper.Object, _createValidator.Object, _updateValidator.Object);
+    _sut = new PersonService(_repo.Object, _movieRepo.Object, _mapper.Object, _createValidator.Object, _updateValidator.Object);
   }
 
   // Helpers
@@ -82,8 +84,8 @@ public class PersonServiceTests
   {
     var movieId = Guid.NewGuid();
     SetupCreateValidatorValid();
-    _repo
-      .Setup(r => r.GetMissingMovieIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
+    _movieRepo
+      .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([movieId]);
 
     var result = await _sut.Create(MakeCreationDto(movieId: movieId));
@@ -101,10 +103,10 @@ public class PersonServiceTests
     var personDto = new PersonDto { Id = entity.Id, FirstName = dto.FirstName, LastName = dto.LastName };
 
     SetupCreateValidatorValid();
-    _repo
-      .Setup(r => r.GetMissingMovieIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
+    _movieRepo
+      .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
-    _repo.Setup(r => r.AddPersonAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+    _repo.Setup(r => r.AddAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _mapper.Setup(m => m.Map<Person>(It.IsAny<PersonForCreationDto>())).Returns(entity);
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<MovieRoleForCreationDto>>())).Returns([]);
@@ -206,7 +208,7 @@ public class PersonServiceTests
 
     await _sut.Remove(Guid.NewGuid());
 
-    _repo.Verify(r => r.DeletePerson(It.IsAny<Person>()), Times.Never);
+    _repo.Verify(r => r.Delete(It.IsAny<Person>()), Times.Never);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
   }
 
@@ -219,7 +221,7 @@ public class PersonServiceTests
 
     await _sut.Remove(entity.Id);
 
-    _repo.Verify(r => r.DeletePerson(entity), Times.Once);
+    _repo.Verify(r => r.Delete(entity), Times.Once);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
@@ -260,8 +262,8 @@ public class PersonServiceTests
 
     _repo.Setup(r => r.GetPersonAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     SetupUpdateValidatorValid();
-    _repo
-      .Setup(r => r.GetMissingMovieIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
+    _movieRepo
+      .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([movieId]);
 
     var (success, error) = await _sut.Update(entity.Id, MakeUpdateDto(movieId: movieId));
@@ -278,8 +280,8 @@ public class PersonServiceTests
 
     _repo.Setup(r => r.GetPersonAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     SetupUpdateValidatorValid();
-    _repo
-      .Setup(r => r.GetMissingMovieIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
+    _movieRepo
+      .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<MovieRoleForCreationDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -315,8 +317,8 @@ public class PersonServiceTests
     _repo.Setup(r => r.GetPersonAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<PersonForUpdateDto>(entity)).Returns(updateDto);
     SetupUpdateValidatorValid();
-    _repo
-      .Setup(r => r.GetMissingMovieIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
+    _movieRepo
+      .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<MovieRoleForCreationDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);

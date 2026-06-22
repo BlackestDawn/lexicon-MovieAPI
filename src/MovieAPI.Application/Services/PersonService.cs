@@ -7,11 +7,13 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
+using MovieAPI.Infrastructure.Interfaces;
 
 namespace MovieAPI.Application.Services;
 
 public class PersonService(
-  IMovieRepository repository,
+  IPersonRepository repository,
+  IMovieRepository movieRepository,
   IMapper mapper,
   IValidator<PersonForCreationDto> createValidator,
   IValidator<PersonForUpdateDto> updateValidator
@@ -27,7 +29,7 @@ public class PersonService(
     }
 
     var movieIds = newPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
-    var invalidMovieIds = await repository.GetMissingMovieIdsAsync(movieIds, token);
+    var invalidMovieIds = await movieRepository.GetMissingIdsAsync(movieIds, token);
 
     if (invalidMovieIds.Count > 0)
     {
@@ -39,7 +41,7 @@ public class PersonService(
 
     personEntity.CastCrews = mapper.Map<ICollection<CastCrew>>(newPerson.MovieRoles);
 
-    await repository.AddPersonAsync(personEntity, token);
+    await repository.AddAsync(personEntity, token);
     await repository.SaveChangesAsync(token);
 
     return PersonCreationResult.Successful(mapper.Map<PersonDto>(personEntity));
@@ -81,7 +83,7 @@ public class PersonService(
       return;
     }
 
-    repository.DeletePerson(entity);
+    repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
@@ -120,7 +122,7 @@ public class PersonService(
     }
 
     var movieIds = updatedPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
-    var invalidMovieIds = await repository.GetMissingMovieIdsAsync(movieIds, token);
+    var invalidMovieIds = await movieRepository.GetMissingIdsAsync(movieIds, token);
 
     if (invalidMovieIds.Count > 0)
     {

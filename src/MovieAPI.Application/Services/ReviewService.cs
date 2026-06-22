@@ -7,13 +7,15 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.validators;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.Application.Services;
 
 public class ReviewService(
-  IMovieRepository repository,
+  IReviewRepository repository,
+  IMovieRepository movieRepository,
   IMapper mapper,
   IValidator<ReviewForCreationDto> createValidator,
   IValidator<ReviewForUpdateDto> updateValidator) : IReviewService
@@ -27,14 +29,15 @@ public class ReviewService(
       return ReviewCreationResult.Failed(new ValidationException(validationResult.Errors));
     }
 
-    if (!await repository.MovieExistsAsync(movieId, token))
+    if (!await movieRepository.ExistsAsync(movieId, token))
     {
       return ReviewCreationResult.Failed(new ArgumentException($"Movie '{movieId}' not found"));
     }
 
     var reviewEntity = mapper.Map<Review>(newReview);
+    reviewEntity.MovieId = movieId;
 
-    await repository.AddReviewAsync(movieId, reviewEntity, token);
+    await repository.AddAsync(reviewEntity, token);
     await repository.SaveChangesAsync(token);
 
     return ReviewCreationResult.Successful(mapper.Map<ReviewDto>(reviewEntity));
@@ -77,13 +80,13 @@ public class ReviewService(
       return;
     }
 
-    repository.DeleteReview(entity);
+    repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
   public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default)
   {
-    if (!await repository.MovieExistsAsync(movieId, token))
+    if (!await movieRepository.ExistsAsync(movieId, token))
     {
       return (false, $"Movie '{movieId}' not found");
     }
@@ -99,7 +102,7 @@ public class ReviewService(
 
   public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patchDocument, CancellationToken token = default)
   {
-    if (!await repository.MovieExistsAsync(movieId, token))
+    if (!await movieRepository.ExistsAsync(movieId, token))
     {
       return (false, $"Movie '{movieId}' not found");
     }

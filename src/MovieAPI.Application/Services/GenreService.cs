@@ -1,12 +1,12 @@
 using AutoMapper;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
-using MovieAPI.Infrastructure.Services;
+using MovieAPI.Infrastructure.Interfaces;
 
 namespace MovieAPI.Application.Services;
 
 public class GenreService
-  (IMovieRepository repository,
+  (IGenreRepository repository,
   IMapper mapper) : IGenreService
 {
   public async Task<IEnumerable<GenreDto>> GetMany(CancellationToken token)

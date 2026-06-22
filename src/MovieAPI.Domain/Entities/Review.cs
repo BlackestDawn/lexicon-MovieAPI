@@ -4,7 +4,7 @@ using MovieAPI.Domain.Interfaces;
 
 namespace MovieAPI.Domain.Entities;
 
-public class Review : ITrackable
+public class Review : ITrackable, IEntity
 {
   [Key]
   public Guid Id { get; set; }

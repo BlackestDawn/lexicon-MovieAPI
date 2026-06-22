@@ -6,6 +6,7 @@ using MovieAPI.Application.Services;
 using MovieAPI.Application.validators;
 using MovieAPI.Application.Validators;
 using MovieAPI.Infrastructure;
+using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,9 @@ builder.Services.AddAutoMapper(config => {},
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+builder.Services.AddScoped<IGenreRepository, GenreRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IPersonService, PersonService>();
