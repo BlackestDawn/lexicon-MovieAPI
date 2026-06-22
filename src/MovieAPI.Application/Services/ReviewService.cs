@@ -55,7 +55,7 @@ public class ReviewService(
       pageSize = DefaultValues.PageSize;
     }
 
-    var (result, pagination) = await repository.GetReviewsForMovieAsync(movieId, searchParams, (int)page, (int)pageSize, token);
+    var (result, pagination) = await repository.GetReviewsForMovieReadOnlyAsync(movieId, searchParams, (int)page, (int)pageSize, token);
 
     return (mapper.Map<IEnumerable<ReviewDto>>(result), pagination);
   }
