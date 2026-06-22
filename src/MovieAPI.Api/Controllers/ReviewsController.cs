@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -53,5 +54,33 @@ public class ReviewsController(IReviewService service) : ControllerBase
     }
 
     return CreatedAtRoute("GetReview", new {movieId, result.Review!.Id}, result.Review);
+  }
+
+  [HttpPut("{id}")]
+  public async Task<IActionResult> UpdateReview(Guid movieId, Guid id, ReviewForUpdateDto updatedReview,
+    CancellationToken cancellationToken = default)
+  {
+    var (success, message) = await service.Update(movieId, id, updatedReview, cancellationToken);
+
+    if (!success)
+    {
+      return BadRequest(message);
+    }
+
+    return NoContent();
+  }
+
+  [HttpPatch("{id}")]
+  public async Task<IActionResult> PatchReview(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patch,
+    CancellationToken cancellationToken)
+  {
+    var (success, message) = await service.Update(movieId, id, patch, cancellationToken);
+
+    if (!success)
+    {
+      return BadRequest(message);
+    }
+
+    return NoContent();
   }
 }

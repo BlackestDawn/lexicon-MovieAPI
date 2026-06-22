@@ -1,9 +1,11 @@
+using System.Runtime.CompilerServices;
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.validators;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Models;
 using MovieAPI.Infrastructure.Services;
@@ -13,7 +15,8 @@ namespace MovieAPI.Application.Services;
 public class ReviewService(
   IMovieRepository repository,
   IMapper mapper,
-  IValidator<ReviewForCreationDto> createValidator) : IReviewService
+  IValidator<ReviewForCreationDto> createValidator,
+  IValidator<ReviewForUpdateDto> updateValidator) : IReviewService
 {
   public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForCreationDto newReview, CancellationToken token = default)
   {
@@ -71,13 +74,55 @@ public class ReviewService(
     throw new NotImplementedException();
   }
 
-  public Task<(bool, string?)> Update(Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    if (!await repository.MovieExistsAsync(movieId, token))
+    {
+      return (false, $"Movie '{movieId}' not found");
+    }
+
+    var entity = await repository.GetReviewAsync(movieId, id, token);
+    if (entity == null)
+    {
+      return (false, $"Review '{id}' not found");
+    }
+
+    return await ApplyUpdateAsync(entity, updatedReview, token);
   }
 
-  public Task<(bool, string?)> Update(Guid id, JsonPatchDocument<ReviewForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patchDocument, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    if (!await repository.MovieExistsAsync(movieId, token))
+    {
+      return (false, $"Movie '{movieId}' not found");
+    }
+
+    var entity = await repository.GetReviewAsync(movieId, id, token);
+    if (entity == null)
+    {
+      return (false, $"Review '{id}' not found");
+    }
+
+    var dto = mapper.Map<ReviewForUpdateDto>(entity);
+    patchDocument.ApplyTo(dto);
+
+    return await ApplyUpdateAsync(entity, dto, token);
+  }
+
+  private async Task<(bool, string?)> ApplyUpdateAsync(Review entity, ReviewForUpdateDto updatedReview, CancellationToken token)
+  {
+    var validationResult = updateValidator.Validate(updatedReview);
+
+    if (!validationResult.IsValid)
+    {
+      return (false, new ValidationException(validationResult.Errors).Message);
+    }
+
+    entity.AuthorName = updatedReview.AuthorName;
+    entity.Body = updatedReview.Body;
+    entity.Score = updatedReview.Score;
+
+    await repository.SaveChangesAsync(token);
+    return (true, null);
   }
 }

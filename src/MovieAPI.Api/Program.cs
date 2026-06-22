@@ -35,6 +35,7 @@ builder.Services.AddScoped<IValidator<MovieForUpdateDto>, MovieUpdateValidator>(
 builder.Services.AddScoped<IValidator<PersonForCreationDto>, PersonCreationValidator>();
 builder.Services.AddScoped<IValidator<PersonForUpdateDto>, PersonUpdateValidator>();
 builder.Services.AddScoped<IValidator<ReviewForCreationDto>, ReviewCreationValidator>();
+builder.Services.AddScoped<IValidator<ReviewForUpdateDto>, ReviewUpdateValidator>();
 
 var app = builder.Build();
 
