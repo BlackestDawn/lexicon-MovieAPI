@@ -174,7 +174,7 @@ public class PersonServiceTests
   public async Task GetOne_WhenNotFound_ReturnsNull()
   {
     _repo
-      .Setup(r => r.GetPersonAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetPersonReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Person?)null);
 
     var result = await _sut.GetOne(Guid.NewGuid(), false);
@@ -188,7 +188,7 @@ public class PersonServiceTests
     var entity = MakePersonEntity();
     var dto = new PersonExtendedDto { Id = entity.Id, FirstName = entity.FirstName };
 
-    _repo.Setup(r => r.GetPersonAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetPersonReadOnlyAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<PersonExtendedDto>(entity)).Returns(dto);
 
     var result = await _sut.GetOne(entity.Id, false);

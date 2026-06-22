@@ -48,7 +48,7 @@ public class GenreServiceTests
   public async Task GetMany_WhenRepositoryReturnsEmpty_ReturnsEmptyCollection()
   {
     var genres = Enumerable.Empty<Genre>();
-    _repo.Setup(r => r.GetGenresAsync(It.IsAny<CancellationToken>())).ReturnsAsync(genres);
+    _repo.Setup(r => r.GetGenresReadOnlyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(genres);
     _mapper.Setup(m => m.Map<IEnumerable<GenreDto>>(genres)).Returns([]);
 
     var result = await _sut.GetMany(CancellationToken.None);
@@ -64,7 +64,7 @@ public class GenreServiceTests
     var entities = new[] { entity1, entity2 };
     var dtos = new[] { MakeGenreDto(entity1), MakeGenreDto(entity2) };
 
-    _repo.Setup(r => r.GetGenresAsync(It.IsAny<CancellationToken>())).ReturnsAsync(entities.AsEnumerable());
+    _repo.Setup(r => r.GetGenresReadOnlyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(entities.AsEnumerable());
     _mapper.Setup(m => m.Map<IEnumerable<GenreDto>>(entities.AsEnumerable())).Returns(dtos);
 
     var result = await _sut.GetMany(CancellationToken.None);
@@ -76,12 +76,12 @@ public class GenreServiceTests
   public async Task GetMany_CallsRepositoryExactlyOnce()
   {
     var genres = Enumerable.Empty<Genre>();
-    _repo.Setup(r => r.GetGenresAsync(It.IsAny<CancellationToken>())).ReturnsAsync(genres);
+    _repo.Setup(r => r.GetGenresReadOnlyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(genres);
     _mapper.Setup(m => m.Map<IEnumerable<GenreDto>>(genres)).Returns([]);
 
     await _sut.GetMany(CancellationToken.None);
 
-    _repo.Verify(r => r.GetGenresAsync(It.IsAny<CancellationToken>()), Times.Once);
+    _repo.Verify(r => r.GetGenresReadOnlyAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
   // GetOne
@@ -90,7 +90,7 @@ public class GenreServiceTests
   public async Task GetOne_WhenNotFound_ReturnsNull()
   {
     _repo
-      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
     var result = await _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None);
@@ -104,7 +104,7 @@ public class GenreServiceTests
     var entity = MakeGenreEntity();
     var dto = MakeGenreExtendedDto(entity);
 
-    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
 
     var result = await _sut.GetOne(entity.Id, false, CancellationToken.None);
@@ -119,7 +119,7 @@ public class GenreServiceTests
   public async Task GetOne_WhenNotFound_DoesNotCallMapper()
   {
     _repo
-      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
     await _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None);

@@ -65,7 +65,7 @@ public class PersonService(
 
   public async Task<PersonExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
   {
-    var result = await repository.GetPersonAsync(id, includeMovies, token);
+    var result = await repository.GetPersonReadOnlyAsync(id, includeMovies, token);
 
     if (result == null)
     {

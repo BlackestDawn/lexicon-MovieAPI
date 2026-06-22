@@ -63,4 +63,11 @@ public class ReviewRepository(AppDbContext context) : RepositoryBase<Review>(con
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
   }
 
+  public async Task<Review?> GetReviewReadOnlyAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
+  {
+    return await Context.Reviews
+      .AsNoTracking()
+      .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
+  }
+
 }

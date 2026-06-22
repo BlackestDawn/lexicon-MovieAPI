@@ -62,7 +62,7 @@ public class ReviewService(
 
   public async Task<ReviewDto?> GetOne(Guid movieId, Guid id, CancellationToken token = default)
   {
-    var result = await repository.GetReviewAsync(movieId, id, token);
+    var result = await repository.GetReviewReadOnlyAsync(movieId, id, token);
 
     if (result == null)
     {

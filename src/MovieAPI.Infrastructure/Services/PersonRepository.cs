@@ -57,7 +57,22 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
 
   public async Task<Person?> GetPersonAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
   {
+    return await GetPersonInternalAsync(id, includeMovies, false, cancellationToken);
+  }
+
+  public async Task<Person?> GetPersonReadOnlyAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
+  {
+    return await GetPersonInternalAsync(id, includeMovies, true, cancellationToken);
+  }
+
+  private async Task<Person?> GetPersonInternalAsync(Guid id, bool includeMovies, bool readOnly, CancellationToken cancellationToken)
+  {
     var query = Context.Persons.AsQueryable();
+
+    if (readOnly)
+    {
+      query = query.AsNoTracking();
+    }
 
     if (includeMovies)
     {

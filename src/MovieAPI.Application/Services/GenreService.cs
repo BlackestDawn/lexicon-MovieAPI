@@ -31,14 +31,14 @@ public class GenreService
 
   public async Task<IEnumerable<GenreDto>> GetMany(CancellationToken token)
   {
-    var result = await repository.GetGenresAsync(token);
+    var result = await repository.GetGenresReadOnlyAsync(token);
 
     return mapper.Map<IEnumerable<GenreDto>>(result);
   }
 
   public async Task<GenreExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token)
   {
-    var result = await repository.GetGenreAsync(id, includeMovies, token);
+    var result = await repository.GetGenreReadOnlyAsync(id, includeMovies, token);
 
     if (result == null)
     {

@@ -69,11 +69,26 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
 
   public async Task<Movie?> GetMovieAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
   {
+    return await GetMovieInternalAsync(id, includePeople, false, cancellationToken);
+  }
+
+  public async Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
+  {
+    return await GetMovieInternalAsync(id, includePeople, true, cancellationToken);
+  }
+
+  private async Task<Movie?> GetMovieInternalAsync(Guid id, bool includePeople, bool readOnly, CancellationToken cancellationToken)
+  {
     var query = Context.Movies
       .Include(m => m.Details)
       .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
       .Include(m => m.Reviews)
       .AsQueryable();
+
+    if (readOnly)
+    {
+      query = query.AsNoTracking();
+    }
 
     if (includePeople)
     {

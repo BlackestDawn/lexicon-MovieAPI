@@ -10,12 +10,32 @@ public class GenreRepository(AppDbContext context) : RepositoryBase<Genre>(conte
 
   public async Task<IEnumerable<Genre>> GetGenresAsync(CancellationToken cancellationToken)
   {
+    return await Context.Genres.ToListAsync(cancellationToken);
+  }
+
+  public async Task<IEnumerable<Genre>> GetGenresReadOnlyAsync(CancellationToken cancellationToken)
+  {
     return await Context.Genres.AsNoTracking().ToListAsync(cancellationToken);
   }
 
   public async Task<Genre?> GetGenreAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
   {
+    return await GetGenreInternalAsync(id, includeMovies, false, cancellationToken);
+  }
+
+  public async Task<Genre?> GetGenreReadOnlyAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
+  {
+    return await GetGenreInternalAsync(id, includeMovies, true, cancellationToken);
+  }
+
+  private async Task<Genre?> GetGenreInternalAsync(Guid id, bool includeMovies, bool readOnly, CancellationToken cancellationToken)
+  {
     var query = Context.Genres.AsQueryable();
+
+    if (readOnly)
+    {
+      query = query.AsNoTracking();
+    }
 
     if (includeMovies)
     {

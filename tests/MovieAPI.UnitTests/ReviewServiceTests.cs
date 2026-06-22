@@ -191,7 +191,7 @@ public class ReviewServiceTests
   {
     var movieId = Guid.NewGuid();
     _repo
-      .Setup(r => r.GetReviewAsync(movieId, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetReviewReadOnlyAsync(movieId, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Review?)null);
 
     var result = await _sut.GetOne(movieId, Guid.NewGuid());
@@ -206,7 +206,7 @@ public class ReviewServiceTests
     var entity = MakeReviewEntity(movieId: movieId);
     var dto = new ReviewDto { Id = entity.Id, AuthorName = entity.AuthorName, Body = entity.Body, Score = entity.Score };
 
-    _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetReviewReadOnlyAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<ReviewDto>(entity)).Returns(dto);
 
     var result = await _sut.GetOne(movieId, entity.Id);
@@ -221,7 +221,7 @@ public class ReviewServiceTests
   {
     var movieId = Guid.NewGuid();
     _repo
-      .Setup(r => r.GetReviewAsync(movieId, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetReviewReadOnlyAsync(movieId, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Review?)null);
 
     await _sut.GetOne(movieId, Guid.NewGuid());

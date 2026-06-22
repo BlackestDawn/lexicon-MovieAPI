@@ -198,7 +198,7 @@ public class MovieServiceTests
   public async Task GetOne_WhenNotFound_ReturnsNull()
   {
     _repo
-      .Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetMovieReadOnlyAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
       .ReturnsAsync((Movie?)null);
 
     var result = await _sut.GetOne(Guid.NewGuid());
@@ -212,7 +212,7 @@ public class MovieServiceTests
     var entity = MakeMovieEntity();
     var dto = new MovieExtendedDto { Id = entity.Id, Title = entity.Title };
 
-    _repo.Setup(r => r.GetMovieAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetMovieReadOnlyAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<MovieExtendedDto>(entity)).Returns(dto);
 
     var result = await _sut.GetOne(entity.Id);

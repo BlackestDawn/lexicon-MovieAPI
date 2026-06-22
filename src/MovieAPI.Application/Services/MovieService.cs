@@ -74,7 +74,7 @@ public class MovieService(
 
   public async Task<MovieExtendedDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
   {
-    var result = await repository.GetMovieAsync(id, includePeople, token);
+    var result = await repository.GetMovieReadOnlyAsync(id, includePeople, token);
 
     if (result == null)
     {
