@@ -40,6 +40,7 @@ builder.Services.AddScoped<IValidator<PersonForCreationDto>, PersonCreationValid
 builder.Services.AddScoped<IValidator<PersonForUpdateDto>, PersonUpdateValidator>();
 builder.Services.AddScoped<IValidator<ReviewForCreationDto>, ReviewCreationValidator>();
 builder.Services.AddScoped<IValidator<ReviewForUpdateDto>, ReviewUpdateValidator>();
+builder.Services.AddScoped<IValidator<GenreForChangeDto>, GenreChangeValidator>();
 
 var app = builder.Build();
 
