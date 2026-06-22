@@ -33,7 +33,7 @@ public interface IMovieRepository
 
   // Genres
   Task<IEnumerable<Genre>> GetGenresAsync(CancellationToken cancellationToken);
-  Task<Genre?> GetGenreAsync(Guid id, CancellationToken cancellationToken);
+  Task<Genre?> GetGenreAsync(Guid id, bool includeMovies, CancellationToken cancellationToken);
   Task<bool> GenreExistsAsync(Guid id, CancellationToken cancellationToken);
   Task<IList<Guid>> GetMissingGenreIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken);
 

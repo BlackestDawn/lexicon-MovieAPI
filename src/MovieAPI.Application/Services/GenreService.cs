@@ -16,15 +16,15 @@ public class GenreService
     return mapper.Map<IEnumerable<GenreDto>>(result);
   }
 
-  public async Task<GenreDto?> GetOne(Guid id, CancellationToken token)
+  public async Task<GenreExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token)
   {
-    var result = await repository.GetGenreAsync(id, token);
+    var result = await repository.GetGenreAsync(id, includeMovies, token);
 
     if (result == null)
     {
       return null;
     }
 
-    return mapper.Map<GenreDto>(result);
+    return mapper.Map<GenreExtendedDto>(result);
   }
 }

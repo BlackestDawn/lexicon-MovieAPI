@@ -9,5 +9,9 @@ public class GenreProfiles : Profile
   public GenreProfiles()
   {
     CreateMap<Genre, GenreDto>();
+
+    CreateMap<Genre, GenreExtendedDto>()
+      .ForMember(dest => dest.Movies,
+        opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.Movie)));
   }
 }

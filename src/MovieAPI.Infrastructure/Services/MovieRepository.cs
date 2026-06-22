@@ -254,9 +254,16 @@ public class MovieRepository(AppDbContext context) : IMovieRepository
     return await context.Genres.AsNoTracking().ToListAsync(cancellationToken);
   }
 
-  public async Task<Genre?> GetGenreAsync(Guid id, CancellationToken cancellationToken)
+  public async Task<Genre?> GetGenreAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
   {
-    return await context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
+    var query = context.Genres.AsQueryable();
+
+    if (includeMovies)
+    {
+      query = query.Include(g => g.MovieGenres).ThenInclude(gm => gm.Movie);
+    }
+
+    return await query.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
   }
 
   public async Task<bool> GenreExistsAsync(Guid id, CancellationToken cancellationToken)

@@ -15,9 +15,9 @@ public class GenresController(IGenreService service) : ControllerBase
   }
 
   [HttpGet("{id}")]
-  public async Task<IActionResult> GetGenre(Guid id, CancellationToken cancellationToken)
+  public async Task<IActionResult> GetGenre(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
-    var result = await service.GetOne(id, cancellationToken);
+    var result = await service.GetOne(id, includeMovies, cancellationToken);
 
     if (result == null)
     {

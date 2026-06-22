@@ -34,6 +34,13 @@ public class GenreServiceTests
     Slug = entity.Slug
   };
 
+  private static GenreExtendedDto MakeGenreExtendedDto(Genre entity) => new()
+  {
+    Id = entity.Id,
+    Name = entity.Name,
+    Slug = entity.Slug
+  };
+
   // GetMany
 
   [Fact]
@@ -82,10 +89,10 @@ public class GenreServiceTests
   public async Task GetOne_WhenNotFound_ReturnsNull()
   {
     _repo
-      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
-    var result = await _sut.GetOne(Guid.NewGuid(), CancellationToken.None);
+    var result = await _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None);
 
     Assert.Null(result);
   }
@@ -94,12 +101,12 @@ public class GenreServiceTests
   public async Task GetOne_WhenFound_ReturnsMappedDto()
   {
     var entity = MakeGenreEntity();
-    var dto = MakeGenreDto(entity);
+    var dto = MakeGenreExtendedDto(entity);
 
-    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    _mapper.Setup(m => m.Map<GenreDto>(entity)).Returns(dto);
+    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
 
-    var result = await _sut.GetOne(entity.Id, CancellationToken.None);
+    var result = await _sut.GetOne(entity.Id, false, CancellationToken.None);
 
     Assert.NotNull(result);
     Assert.Equal(entity.Id, result.Id);
@@ -111,11 +118,11 @@ public class GenreServiceTests
   public async Task GetOne_WhenNotFound_DoesNotCallMapper()
   {
     _repo
-      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
-    await _sut.GetOne(Guid.NewGuid(), CancellationToken.None);
+    await _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None);
 
-    _mapper.Verify(m => m.Map<GenreDto>(It.IsAny<Genre>()), Times.Never);
+    _mapper.Verify(m => m.Map<GenreExtendedDto>(It.IsAny<Genre>()), Times.Never);
   }
 }
