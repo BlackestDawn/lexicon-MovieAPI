@@ -1,6 +1,6 @@
 namespace MovieAPI.Application.Models;
 
-public class ReviewForUpdateDto
+public class ReviewForChangeDto
 {
   public string AuthorName { get; set; } = string.Empty;
   public string Body { get; set; } = string.Empty;

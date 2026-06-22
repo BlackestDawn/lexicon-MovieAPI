@@ -15,13 +15,12 @@ public class PersonService(
   IPersonRepository repository,
   IMovieRepository movieRepository,
   IMapper mapper,
-  IValidator<PersonForCreationDto> createValidator,
-  IValidator<PersonForUpdateDto> updateValidator
+  IValidator<PersonForChangeDto> validator
 ) : IPersonService
 {
-  public async Task<PersonCreationResult> Create(PersonForCreationDto newPerson, CancellationToken token = default)
+  public async Task<PersonCreationResult> Create(PersonForChangeDto newPerson, CancellationToken token = default)
   {
-    var validationResult = createValidator.Validate(newPerson);
+    var validationResult = validator.Validate(newPerson);
 
     if (!validationResult.IsValid)
     {
@@ -87,7 +86,7 @@ public class PersonService(
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, PersonForUpdateDto updatedPerson, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, PersonForChangeDto updatedPerson, CancellationToken token = default)
   {
     var entity = await repository.GetPersonAsync(id, true, token);
     if (entity == null)
@@ -98,7 +97,7 @@ public class PersonService(
     return await ApplyUpdateAsync(entity, updatedPerson, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForChangeDto> patchDocument, CancellationToken token = default)
   {
     var entity = await repository.GetPersonAsync(id, true, token);
     if (entity == null)
@@ -106,15 +105,15 @@ public class PersonService(
       return (false, $"Person '{id}' not found");
     }
 
-    var dto = mapper.Map<PersonForUpdateDto>(entity);
+    var dto = mapper.Map<PersonForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     return await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Person entity, PersonForUpdateDto updatedPerson, CancellationToken token)
+  private async Task<(bool, string?)> ApplyUpdateAsync(Person entity, PersonForChangeDto updatedPerson, CancellationToken token)
   {
-    var validationResult = updateValidator.Validate(updatedPerson);
+    var validationResult = validator.Validate(updatedPerson);
 
     if (!validationResult.IsValid)
     {

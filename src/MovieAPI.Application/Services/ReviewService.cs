@@ -17,12 +17,11 @@ public class ReviewService(
   IReviewRepository repository,
   IMovieRepository movieRepository,
   IMapper mapper,
-  IValidator<ReviewForCreationDto> createValidator,
-  IValidator<ReviewForUpdateDto> updateValidator) : IReviewService
+  IValidator<ReviewForChangeDto> validator) : IReviewService
 {
-  public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForCreationDto newReview, CancellationToken token = default)
+  public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForChangeDto newReview, CancellationToken token = default)
   {
-    var validationResult = createValidator.Validate(newReview);
+    var validationResult = validator.Validate(newReview);
 
     if (!validationResult.IsValid)
     {
@@ -84,7 +83,7 @@ public class ReviewService(
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForChangeDto updatedReview, CancellationToken token = default)
   {
     if (!await movieRepository.ExistsAsync(movieId, token))
     {
@@ -100,7 +99,7 @@ public class ReviewService(
     return await ApplyUpdateAsync(entity, updatedReview, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patchDocument, CancellationToken token = default)
   {
     if (!await movieRepository.ExistsAsync(movieId, token))
     {
@@ -113,15 +112,15 @@ public class ReviewService(
       return (false, $"Review '{id}' not found");
     }
 
-    var dto = mapper.Map<ReviewForUpdateDto>(entity);
+    var dto = mapper.Map<ReviewForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     return await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Review entity, ReviewForUpdateDto updatedReview, CancellationToken token)
+  private async Task<(bool, string?)> ApplyUpdateAsync(Review entity, ReviewForChangeDto updatedReview, CancellationToken token)
   {
-    var validationResult = updateValidator.Validate(updatedReview);
+    var validationResult = validator.Validate(updatedReview);
 
     if (!validationResult.IsValid)
     {

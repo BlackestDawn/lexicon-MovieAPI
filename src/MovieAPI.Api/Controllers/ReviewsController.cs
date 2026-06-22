@@ -43,7 +43,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   }
 
   [HttpPost]
-  public async Task<IActionResult> CreateReview(Guid movieId, ReviewForCreationDto newReview,
+  public async Task<IActionResult> CreateReview(Guid movieId, ReviewForChangeDto newReview,
     CancellationToken cancellationToken = default)
   {
     var result = await service.Create(movieId, newReview, cancellationToken);
@@ -57,7 +57,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   }
 
   [HttpPut("{id}")]
-  public async Task<IActionResult> UpdateReview(Guid movieId, Guid id, ReviewForUpdateDto updatedReview,
+  public async Task<IActionResult> UpdateReview(Guid movieId, Guid id, ReviewForChangeDto updatedReview,
     CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(movieId, id, updatedReview, cancellationToken);
@@ -71,7 +71,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   }
 
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchReview(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patch,
+  public async Task<IActionResult> PatchReview(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patch,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(movieId, id, patch, cancellationToken);

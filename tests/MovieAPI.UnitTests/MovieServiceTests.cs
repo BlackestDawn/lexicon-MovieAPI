@@ -19,33 +19,19 @@ public class MovieServiceTests
   private readonly Mock<IPersonRepository> _personRepo = new();
   private readonly Mock<IGenreRepository> _genreRepo = new();
   private readonly Mock<IMapper> _mapper = new();
-  private readonly Mock<IValidator<MovieForCreationDto>> _createValidator = new();
-  private readonly Mock<IValidator<MovieForUpdateDto>> _updateValidator = new();
+  private readonly Mock<IValidator<MovieForChangeDto>> _validator = new();
   private readonly MovieService _sut;
 
   public MovieServiceTests()
   {
-    _sut = new MovieService(_repo.Object, _personRepo.Object, _genreRepo.Object, _mapper.Object, _createValidator.Object, _updateValidator.Object);
+    _sut = new MovieService(_repo.Object, _personRepo.Object, _genreRepo.Object, _mapper.Object, _validator.Object);
   }
 
   // Helpers
 
-  private static MovieForCreationDto MakeCreationDto(Guid? personId = null, Guid? genreId = null) => new()
+  private static MovieForChangeDto MakeDto(Guid? personId = null, Guid? genreId = null) => new()
   {
     Title = "Inception",
-    Language = "English",
-    PlotSummery = "A thief enters dreams.",
-    Synopsis = "Full synopsis here.",
-    RuntimeMinutes = 148,
-    Budget = 160_000_000,
-    ReleaseDate = new DateOnly(2010, 7, 16),
-    Genres = [genreId ?? Guid.NewGuid()],
-    CastCrews = [new CastCrewForCreationDto { PersonId = personId ?? Guid.NewGuid(), Role = PersonRole.Director }]
-  };
-
-  private static MovieForUpdateDto MakeUpdateDto(Guid? personId = null, Guid? genreId = null) => new()
-  {
-    Title = "Inception Updated",
     Language = "English",
     PlotSummery = "A thief enters dreams.",
     Synopsis = "Full synopsis here.",
@@ -65,14 +51,9 @@ public class MovieServiceTests
     MovieGenres = []
   };
 
-  private void SetupCreateValidatorValid() =>
-    _createValidator
-      .Setup(v => v.Validate(It.IsAny<MovieForCreationDto>()))
-      .Returns(new ValidationResult());
-
-  private void SetupUpdateValidatorValid() =>
-    _updateValidator
-      .Setup(v => v.Validate(It.IsAny<MovieForUpdateDto>()))
+  private void SetupValidatorValid() =>
+    _validator
+      .Setup(v => v.Validate(It.IsAny<MovieForChangeDto>()))
       .Returns(new ValidationResult());
 
   // Create
@@ -80,11 +61,11 @@ public class MovieServiceTests
   [Fact]
   public async Task Create_WhenValidationFails_ReturnsFailed_WithValidationException()
   {
-    _createValidator
-      .Setup(v => v.Validate(It.IsAny<MovieForCreationDto>()))
+    _validator
+      .Setup(v => v.Validate(It.IsAny<MovieForChangeDto>()))
       .Returns(new ValidationResult([new ValidationFailure("Title", "Required")]));
 
-    var result = await _sut.Create(MakeCreationDto());
+    var result = await _sut.Create(MakeDto());
 
     Assert.False(result.Success);
     Assert.IsType<ValidationException>(result.Error);
@@ -94,11 +75,11 @@ public class MovieServiceTests
   public async Task Create_WhenPersonIdNotFound_ReturnsFailed_WithPersonError()
   {
     var personId = Guid.NewGuid();
-    SetupCreateValidatorValid();
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([personId]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
-    var result = await _sut.Create(MakeCreationDto(personId: personId));
+    var result = await _sut.Create(MakeDto(personId: personId));
 
     Assert.False(result.Success);
     Assert.IsType<ArgumentException>(result.Error);
@@ -109,11 +90,11 @@ public class MovieServiceTests
   public async Task Create_WhenGenreIdNotFound_ReturnsFailed_WithGenreError()
   {
     var genreId = Guid.NewGuid();
-    SetupCreateValidatorValid();
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([genreId]);
 
-    var result = await _sut.Create(MakeCreationDto(genreId: genreId));
+    var result = await _sut.Create(MakeDto(genreId: genreId));
 
     Assert.False(result.Success);
     Assert.IsType<ArgumentException>(result.Error);
@@ -123,17 +104,17 @@ public class MovieServiceTests
   [Fact]
   public async Task Create_WhenInputIsValid_ReturnsSuccessful()
   {
-    var dto = MakeCreationDto();
+    var dto = MakeDto();
     var entity = MakeMovieEntity();
     var movieDto = new MovieDto { Id = entity.Id, Title = dto.Title };
 
-    SetupCreateValidatorValid();
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _repo.Setup(r => r.AddAsync(It.IsAny<Movie>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    _mapper.Setup(m => m.Map<Movie>(It.IsAny<MovieForCreationDto>())).Returns(entity);
+    _mapper.Setup(m => m.Map<Movie>(It.IsAny<MovieForChangeDto>())).Returns(entity);
     _mapper.Setup(m => m.Map<MovieDto>(It.IsAny<Movie>())).Returns(movieDto);
 
     var result = await _sut.Create(dto);
@@ -257,7 +238,7 @@ public class MovieServiceTests
     var id = Guid.NewGuid();
     _repo.Setup(r => r.GetMovieAsync(id, true, It.IsAny<CancellationToken>())).ReturnsAsync((Movie?)null);
 
-    var (success, error) = await _sut.Update(id, MakeUpdateDto());
+    var (success, error) = await _sut.Update(id, MakeDto());
 
     Assert.False(success);
     Assert.Contains($"Movie '{id}' not found", error);
@@ -268,11 +249,11 @@ public class MovieServiceTests
   {
     var entity = MakeMovieEntity();
     _repo.Setup(r => r.GetMovieAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    _updateValidator
-      .Setup(v => v.Validate(It.IsAny<MovieForUpdateDto>()))
+    _validator
+      .Setup(v => v.Validate(It.IsAny<MovieForChangeDto>()))
       .Returns(new ValidationResult([new ValidationFailure("Title", "Required")]));
 
-    var (success, error) = await _sut.Update(entity.Id, MakeUpdateDto());
+    var (success, error) = await _sut.Update(entity.Id, MakeDto());
 
     Assert.False(success);
     Assert.NotNull(error);
@@ -285,11 +266,11 @@ public class MovieServiceTests
     var entity = MakeMovieEntity();
 
     _repo.Setup(r => r.GetMovieAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    SetupUpdateValidatorValid();
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([personId]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
-    var (success, error) = await _sut.Update(entity.Id, MakeUpdateDto(personId: personId));
+    var (success, error) = await _sut.Update(entity.Id, MakeDto(personId: personId));
 
     Assert.False(success);
     Assert.Contains($"Person '{personId}' not found", error);
@@ -302,11 +283,11 @@ public class MovieServiceTests
     var entity = MakeMovieEntity();
 
     _repo.Setup(r => r.GetMovieAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    SetupUpdateValidatorValid();
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([genreId]);
 
-    var (success, error) = await _sut.Update(entity.Id, MakeUpdateDto(genreId: genreId));
+    var (success, error) = await _sut.Update(entity.Id, MakeDto(genreId: genreId));
 
     Assert.False(success);
     Assert.Contains($"Genre '{genreId}' not found", error);
@@ -320,13 +301,13 @@ public class MovieServiceTests
     var entity = MakeMovieEntity();
 
     _repo.Setup(r => r.GetMovieAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    SetupUpdateValidatorValid();
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<CastCrewForCreationDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(entity.Id, MakeUpdateDto(personId: personId, genreId: genreId));
+    var (success, error) = await _sut.Update(entity.Id, MakeDto(personId: personId, genreId: genreId));
 
     Assert.True(success);
     Assert.Null(error);
@@ -341,7 +322,7 @@ public class MovieServiceTests
     var id = Guid.NewGuid();
     _repo.Setup(r => r.GetMovieAsync(id, true, It.IsAny<CancellationToken>())).ReturnsAsync((Movie?)null);
 
-    var (success, error) = await _sut.Update(id, new JsonPatchDocument<MovieForUpdateDto>());
+    var (success, error) = await _sut.Update(id, new JsonPatchDocument<MovieForChangeDto>());
 
     Assert.False(success);
     Assert.Contains($"Movie '{id}' not found", error);
@@ -353,17 +334,17 @@ public class MovieServiceTests
     var personId = Guid.NewGuid();
     var genreId = Guid.NewGuid();
     var entity = MakeMovieEntity();
-    var updateDto = MakeUpdateDto(personId: personId, genreId: genreId);
+    var updateDto = MakeDto(personId: personId, genreId: genreId);
 
     _repo.Setup(r => r.GetMovieAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
-    _mapper.Setup(m => m.Map<MovieForUpdateDto>(entity)).Returns(updateDto);
-    SetupUpdateValidatorValid();
+    _mapper.Setup(m => m.Map<MovieForChangeDto>(entity)).Returns(updateDto);
+    SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<CastCrewForCreationDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(entity.Id, new JsonPatchDocument<MovieForUpdateDto>());
+    var (success, error) = await _sut.Update(entity.Id, new JsonPatchDocument<MovieForChangeDto>());
 
     Assert.True(success);
     Assert.Null(error);

@@ -16,12 +16,11 @@ public class MovieService(
   IPersonRepository personRepository,
   IGenreRepository genreRepository,
   IMapper mapper,
-  IValidator<MovieForCreationDto> createValidator,
-  IValidator<MovieForUpdateDto> updateValidator) : IMovieService
+  IValidator<MovieForChangeDto> validator) : IMovieService
 {
-  public async Task<MovieCreationResult> Create(MovieForCreationDto newMovie, CancellationToken token = default)
+  public async Task<MovieCreationResult> Create(MovieForChangeDto newMovie, CancellationToken token = default)
   {
-    var validationResult = createValidator.Validate(newMovie);
+    var validationResult = validator.Validate(newMovie);
 
     if (!validationResult.IsValid)
     {
@@ -96,7 +95,7 @@ public class MovieService(
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, MovieForUpdateDto updatedMovie, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, MovieForChangeDto updatedMovie, CancellationToken token = default)
   {
     var entity = await repository.GetMovieAsync(id, true, token);
     if (entity == null)
@@ -105,21 +104,21 @@ public class MovieService(
     return await ApplyUpdateAsync(entity, updatedMovie, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForUpdateDto> patchDocument, CancellationToken token = default)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForChangeDto> patchDocument, CancellationToken token = default)
   {
     var entity = await repository.GetMovieAsync(id, true, token);
     if (entity == null)
       return (false, $"Movie '{id}' not found");
 
-    var dto = mapper.Map<MovieForUpdateDto>(entity);
+    var dto = mapper.Map<MovieForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     return await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Movie entity, MovieForUpdateDto updatedMovie, CancellationToken token)
+  private async Task<(bool, string?)> ApplyUpdateAsync(Movie entity, MovieForChangeDto updatedMovie, CancellationToken token)
   {
-    var validationResult = updateValidator.Validate(updatedMovie);
+    var validationResult = validator.Validate(updatedMovie);
     if (!validationResult.IsValid)
       return (false, new ValidationException(validationResult.Errors).Message);
 

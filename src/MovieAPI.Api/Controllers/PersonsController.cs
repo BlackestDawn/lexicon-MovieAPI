@@ -40,7 +40,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpPost]
-  public async Task<IActionResult> CreatePerson(PersonForCreationDto newPerson, CancellationToken cancellationToken = default)
+  public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newPerson, cancellationToken);
 
@@ -53,7 +53,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpPut("{id}")]
-  public async Task<IActionResult> UpdatePerson(Guid id, PersonForUpdateDto updatedPerson,
+  public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeDto updatedPerson,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, updatedPerson, cancellationToken);
@@ -67,7 +67,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForUpdateDto> patch,
+  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);

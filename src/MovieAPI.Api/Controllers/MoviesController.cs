@@ -45,7 +45,7 @@ public class MoviesController(IMovieService service) : ControllerBase
   }
 
   [HttpPost]
-  public async Task<IActionResult> CreateMovie(MovieForCreationDto newMovie,
+  public async Task<IActionResult> CreateMovie(MovieForChangeDto newMovie,
     CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newMovie, cancellationToken);
@@ -59,7 +59,7 @@ public class MoviesController(IMovieService service) : ControllerBase
   }
 
   [HttpPut("{id}")]
-  public async Task<IActionResult> UpdateMovie(Guid id, MovieForUpdateDto updatedMovie,
+  public async Task<IActionResult> UpdateMovie(Guid id, MovieForChangeDto updatedMovie,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, updatedMovie, cancellationToken);
@@ -73,7 +73,7 @@ public class MoviesController(IMovieService service) : ControllerBase
   }
 
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<MovieForUpdateDto> patch,
+  public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<MovieForChangeDto> patch,
     CancellationToken cancellationToken)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);

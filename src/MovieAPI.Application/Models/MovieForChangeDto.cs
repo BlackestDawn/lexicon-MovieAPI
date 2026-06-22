@@ -1,6 +1,6 @@
 namespace MovieAPI.Application.Models;
 
-public class MovieForUpdateDto
+public class MovieForChangeDto
 {
   public string Title { get; set; } = string.Empty;
   public DateOnly ReleaseDate { get; set; }
