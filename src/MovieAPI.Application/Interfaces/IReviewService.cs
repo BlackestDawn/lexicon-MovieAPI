@@ -11,5 +11,5 @@ public interface IReviewService
   Task<ReviewCreationResult> Create(Guid movieId, ReviewForCreationDto newReview, CancellationToken token = default);
   Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default);
   Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForUpdateDto> patchDocument, CancellationToken token = default);
-  Task Remove(Guid id, CancellationToken token = default);
+  Task Remove(Guid movieId, Guid id, CancellationToken token = default);
 }

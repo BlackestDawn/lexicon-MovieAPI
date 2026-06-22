@@ -83,4 +83,11 @@ public class ReviewsController(IReviewService service) : ControllerBase
 
     return NoContent();
   }
+
+  [HttpDelete("{id}")]
+  public async Task<IActionResult> DeletePerson(Guid movieId, Guid id, CancellationToken cancellationToken)
+  {
+    await service.Remove(movieId, id, cancellationToken);
+    return NoContent();
+  }
 }

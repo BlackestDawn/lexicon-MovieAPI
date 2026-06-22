@@ -69,9 +69,16 @@ public class ReviewService(
     return mapper.Map<ReviewDto>(result);
   }
 
-  public Task Remove(Guid id, CancellationToken token = default)
+  public async Task Remove(Guid movieId, Guid id, CancellationToken token = default)
   {
-    throw new NotImplementedException();
+    var entity = await repository.GetReviewAsync(movieId, id, token);
+    if (entity == null)
+    {
+      return;
+    }
+
+    repository.DeleteReview(entity);
+    await repository.SaveChangesAsync(token);
   }
 
   public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForUpdateDto updatedReview, CancellationToken token = default)
