@@ -2,25 +2,26 @@
 
 A RESTful Web API built with ASP.NET Core for browsing and managing movie data — think a small-scale IMDB clone. The API exposes information about movies, people (actors/directors), genres, and user ratings/reviews.
 
-> **Status:** Movies resource fully implemented (CRUD + filtering + pagination). People, Genres, and Reviews endpoints are repository-ready but controllers are not yet built.
+> **Status:** All four core resources — Movies, People, Genres, and Reviews — are implemented end-to-end (controller, service, validation, DTO mapping, unit tests). Integration tests are still a placeholder.
 
 ## Implemented Features
 
 - **Movies** — Full CRUD: list with filtering/pagination, get by ID, create, full update (PUT), partial update (PATCH via JSON Patch), delete
-- **Filtering** — Filter movies by name, free-text search (title + plot), genre, release year, and minimum rating
-- **Pagination** — Configurable page/pageSize with metadata returned in `X-Pagination` response header
-- **Validation** — FluentValidation on create and update requests (required fields, date range, positive runtime/budget, at least one genre and cast/crew member)
+- **People** — Full CRUD for actors/directors/crew, with filtering by name/genre/year and optional filmography inclusion
+- **Reviews** — Full CRUD scoped to a movie (`/api/movies/{movieId}/reviews`), with filtering by search text and score range
+- **Genres** — Read endpoints (list and get by ID)
+- **Filtering** — Movies by name, free-text search (title + plot), genre, release year, minimum rating; People by name, genre, year; Reviews by search text and min/max score
+- **Pagination** — Configurable page/pageSize with metadata returned in `X-Pagination` response header (Movies, People, Reviews)
+- **Validation** — FluentValidation on create/update requests for Movies, People, and Reviews
 - **DTO Mapping** — AutoMapper profiles for movies, people, genres, and reviews
 - **Domain Tracking** — `CreatedAt` / `UpdatedAt` auto-managed via an EF Core save interceptor
 - **Dev Seeding** — Database is seeded with sample data in the Development environment
-- **Unit Tests** — xUnit + Moq tests covering `MovieService` and both validators
+- **Unit Tests** — xUnit + Moq tests covering all four services and the Movie/Person validators
 
 ## Planned Features
 
-- **People** — Actors, directors, and crew members with filmographies (repository layer exists)
-- **Genres** — Read endpoints for genre listings (repository layer exists)
-- **Reviews** — Get and post reviews per movie (repository layer exists)
-- **Integration Tests** — End-to-end tests against a real database
+- **Integration Tests** — End-to-end tests against a real database (currently a placeholder project)
+- **Genre validation/write endpoints** — Genres are currently read-only
 
 ## Tech Stack
 
@@ -42,7 +43,7 @@ MovieAPI/
 │   ├── MovieAPI.Domain/        # Entities (Movie, Person, Genre, Review, CastCrew, MovieDetail)
 │   └── MovieAPI.Infrastructure/ # AppDbContext, EF Fluent configs, migrations, repository, seeder
 └── tests/
-    ├── MovieAPI.UnitTests/      # MovieService and validator tests
+    ├── MovieAPI.UnitTests/      # Service and validator tests for all four resources
     └── MovieAPI.IntegrationTests/ # Placeholder
 ```
 
@@ -71,14 +72,28 @@ The database is automatically seeded with sample data when running in the Develo
 
 ## API Overview
 
-| Method   | Route                   | Description                                      |
-|----------|-------------------------|--------------------------------------------------|
-| `GET`    | `/api/movies`           | List movies (filter by `name`, `search`, `genre`, `year`, `minRating`; paginate with `page`, `pageSize`) |
-| `GET`    | `/api/movies/{id}`      | Get a single movie by ID (optional `includePeople` query param) |
-| `POST`   | `/api/movies`           | Create a new movie                               |
-| `PUT`    | `/api/movies/{id}`      | Full update of a movie                           |
-| `PATCH`  | `/api/movies/{id}`      | Partial update via JSON Patch                    |
-| `DELETE` | `/api/movies/{id}`      | Delete a movie                                   |
+| Method   | Route                                   | Description                                      |
+|----------|------------------------------------------|--------------------------------------------------|
+| `GET`    | `/api/movies`                           | List movies (filter by `name`, `search`, `genre`, `year`, `minRating`; paginate with `page`, `pageSize`) |
+| `GET`    | `/api/movies/{id}`                      | Get a single movie by ID (optional `includePeople` query param) |
+| `POST`   | `/api/movies`                           | Create a new movie                               |
+| `PUT`    | `/api/movies/{id}`                      | Full update of a movie                           |
+| `PATCH`  | `/api/movies/{id}`                      | Partial update via JSON Patch                    |
+| `DELETE` | `/api/movies/{id}`                      | Delete a movie                                   |
+| `GET`    | `/api/people`                           | List people (filter by `name`, `genre`, `year`; paginate with `page`, `pageSize`) |
+| `GET`    | `/api/people/{id}`                      | Get a single person by ID (optional `includeMovies` query param) |
+| `POST`   | `/api/people`                           | Create a new person                              |
+| `PUT`    | `/api/people/{id}`                      | Full update of a person                          |
+| `PATCH`  | `/api/people/{id}`                      | Partial update via JSON Patch                    |
+| `DELETE` | `/api/people/{id}`                      | Delete a person                                  |
+| `GET`    | `/api/genres`                           | List genres                                      |
+| `GET`    | `/api/genres/{id}`                      | Get a single genre by ID                         |
+| `GET`    | `/api/movies/{movieId}/reviews`         | List reviews for a movie (filter by `search`, `minScore`, `maxScore`; paginate with `page`, `pageSize`) |
+| `GET`    | `/api/movies/{movieId}/reviews/{id}`    | Get a single review                              |
+| `POST`   | `/api/movies/{movieId}/reviews`         | Create a review for a movie                      |
+| `PUT`    | `/api/movies/{movieId}/reviews/{id}`    | Full update of a review                          |
+| `PATCH`  | `/api/movies/{movieId}/reviews/{id}`    | Partial update via JSON Patch                    |
+| `DELETE` | `/api/movies/{movieId}/reviews/{id}`    | Delete a review                                  |
 
 ## License
 
