@@ -22,6 +22,6 @@ public class GenreRepository(AppDbContext context) : RepositoryBase<Genre>(conte
       query = query.Include(g => g.MovieGenres).ThenInclude(gm => gm.Movie);
     }
 
-    return await query.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
+    return await query.FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
   }
 }

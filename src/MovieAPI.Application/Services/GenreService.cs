@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentValidation;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
@@ -45,5 +46,46 @@ public class GenreService
     }
 
     return mapper.Map<GenreExtendedDto>(result);
+  }
+
+  public async Task<(bool, string?)> Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token)
+  {
+    var entity = await repository.GetGenreAsync(id, false, token);
+    if (entity == null)
+    {
+      return (false, $"Genre '{id}' not found");
+    }
+
+    return await ApplyUpdateAsync(entity, updatedGenre, token);
+  }
+
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token)
+  {
+    var entity = await repository.GetGenreAsync(id, false, token);
+    if (entity == null)
+    {
+      return (false, $"Genre '{id}' not found");
+    }
+
+    var dto = mapper.Map<GenreForChangeDto>(entity);
+    patchDocument.ApplyTo(dto);
+
+    return await ApplyUpdateAsync(entity, dto, token);
+  }
+
+  private async Task<(bool, string?)> ApplyUpdateAsync(Genre entity, GenreForChangeDto updatedGenre, CancellationToken token)
+  {
+    var validationResult = validator.Validate(updatedGenre);
+    if (!validationResult.IsValid)
+    {
+      return (false, new ValidationException(validationResult.Errors).Message);
+    }
+
+    entity.Name = updatedGenre.Name;
+    entity.Slug = updatedGenre.Slug;
+
+    await repository.SaveChangesAsync(token);
+
+    return (true, null);
   }
 }

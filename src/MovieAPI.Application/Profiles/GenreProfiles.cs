@@ -15,5 +15,6 @@ public class GenreProfiles : Profile
         opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.Movie)));
 
     CreateMap<GenreForChangeDto, Genre>();
+    CreateMap<Genre, GenreForChangeDto>();
   }
 }

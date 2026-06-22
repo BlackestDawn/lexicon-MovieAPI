@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -28,7 +29,7 @@ public class GenresController(IGenreService service) : ControllerBase
     return Ok(result);
   }
 
-  [HttpPut]
+  [HttpPost]
   public async Task<IActionResult> CreateGenre(GenreForChangeDto newGenre, CancellationToken cancellationToken)
   {
     var result = await service.Create(newGenre, cancellationToken);
@@ -39,5 +40,29 @@ public class GenresController(IGenreService service) : ControllerBase
     }
 
     return CreatedAtRoute("GetGenre", new { result.Genre!.Id }, result.Genre);
+  }
+
+  [HttpPut("{id}")]
+  public async Task<IActionResult> UpdateGenre(Guid id, GenreForChangeDto updatedGenre, CancellationToken cancellationToken)
+  {
+    var (success, message) = await service.Update(id, updatedGenre, cancellationToken);
+    if (!success)
+    {
+      return BadRequest(message);
+    }
+
+    return NoContent();
+  }
+
+  [HttpPatch("{id}")]
+  public async Task<IActionResult> PatchGenre(Guid id, JsonPatchDocument<GenreForChangeDto> patch, CancellationToken cancellationToken)
+  {
+    var (success, message) = await service.Update(id, patch, cancellationToken);
+    if (!success)
+    {
+      return BadRequest(message);
+    }
+
+    return NoContent();
   }
 }
