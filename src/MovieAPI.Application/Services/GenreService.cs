@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
@@ -13,12 +14,12 @@ public class GenreService
   IMapper mapper,
   IValidator<GenreForChangeDto> validator) : IGenreService
 {
-  public async Task<GenreCreationResult> Create(GenreForChangeDto newGenre, CancellationToken token = default)
+  public async Task<GenreDto> Create(GenreForChangeDto newGenre, CancellationToken token = default)
   {
-    var validationResult = validator.Validate(newGenre);
+    var validationResult = await validator.ValidateAsync(newGenre, token);
     if (!validationResult.IsValid)
     {
-      return GenreCreationResult.Failed(new ValidationException(validationResult.Errors));
+      throw new ValidationException(validationResult.Errors);
     }
 
     var genreEntity = mapper.Map<Genre>(newGenre);
@@ -26,25 +27,18 @@ public class GenreService
     await repository.AddAsync(genreEntity, token);
     await repository.SaveChangesAsync(token);
 
-    return GenreCreationResult.Successful(mapper.Map<GenreDto>(genreEntity));
+    return mapper.Map<GenreDto>(genreEntity);
   }
 
   public async Task<IEnumerable<GenreDto>> GetMany(CancellationToken token = default)
   {
     var result = await repository.GetGenresReadOnlyAsync(token);
-
     return mapper.Map<IEnumerable<GenreDto>>(result);
   }
 
-  public async Task<GenreExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
+  public async Task<GenreExtendedDto> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
   {
-    var result = await repository.GetGenreReadOnlyAsync(id, includeMovies, token);
-
-    if (result == null)
-    {
-      return null;
-    }
-
+    var result = await repository.GetGenreReadOnlyAsync(id, includeMovies, token) ?? throw new NotFoundException($"Genre '{id}' not found");
     return mapper.Map<GenreExtendedDto>(result);
   }
 
@@ -60,44 +54,33 @@ public class GenreService
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token = default)
+  public async Task Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token = default)
   {
-    var entity = await repository.GetGenreAsync(id, false, token);
-    if (entity == null)
-    {
-      return (false, $"Genre '{id}' not found");
-    }
-
-    return await ApplyUpdateAsync(entity, updatedGenre, token);
+    var entity = await repository.GetGenreAsync(id, false, token) ?? throw new NotFoundException($"Genre '{id}' not found");
+    await ApplyUpdateAsync(entity, updatedGenre, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token = default)
+  public async Task Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token = default)
   {
-    var entity = await repository.GetGenreAsync(id, false, token);
-    if (entity == null)
-    {
-      return (false, $"Genre '{id}' not found");
-    }
+    var entity = await repository.GetGenreAsync(id, false, token) ?? throw new NotFoundException($"Genre '{id}' not found");
 
     var dto = mapper.Map<GenreForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
-    return await ApplyUpdateAsync(entity, dto, token);
+    await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Genre entity, GenreForChangeDto updatedGenre, CancellationToken token)
+  private async Task ApplyUpdateAsync(Genre entity, GenreForChangeDto updatedGenre, CancellationToken token)
   {
-    var validationResult = validator.Validate(updatedGenre);
+    var validationResult = await validator.ValidateAsync(updatedGenre, token);
     if (!validationResult.IsValid)
     {
-      return (false, new ValidationException(validationResult.Errors).Message);
+      throw new ValidationException(validationResult.Errors);
     }
 
     entity.Name = updatedGenre.Name;
     entity.Slug = updatedGenre.Slug;
 
     await repository.SaveChangesAsync(token);
-
-    return (true, null);
   }
 }

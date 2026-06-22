@@ -20,12 +20,6 @@ public class GenresController(IGenreService service) : ControllerBase
   public async Task<IActionResult> GetGenre(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includeMovies, cancellationToken);
-
-    if (result == null)
-    {
-      return NotFound();
-    }
-
     return Ok(result);
   }
 
@@ -33,36 +27,20 @@ public class GenresController(IGenreService service) : ControllerBase
   public async Task<IActionResult> CreateGenre(GenreForChangeDto newGenre, CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newGenre, cancellationToken);
-
-    if (!result.Success)
-    {
-      return BadRequest(result.Error!.Message);
-    }
-
-    return CreatedAtRoute("GetGenre", new { result.Genre!.Id }, result.Genre);
+    return CreatedAtRoute("GetGenre", new { result.Id }, result);
   }
 
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateGenre(Guid id, GenreForChangeDto updatedGenre, CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(id, updatedGenre, cancellationToken);
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(id, updatedGenre, cancellationToken);
     return NoContent();
   }
 
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchGenre(Guid id, JsonPatchDocument<GenreForChangeDto> patch, CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(id, patch, cancellationToken);
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(id, patch, cancellationToken);
     return NoContent();
   }
 
