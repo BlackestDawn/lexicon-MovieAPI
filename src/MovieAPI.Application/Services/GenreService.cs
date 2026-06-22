@@ -13,7 +13,7 @@ public class GenreService
   IMapper mapper,
   IValidator<GenreForChangeDto> validator) : IGenreService
 {
-  public async Task<GenreCreationResult> Create(GenreForChangeDto newGenre, CancellationToken token)
+  public async Task<GenreCreationResult> Create(GenreForChangeDto newGenre, CancellationToken token = default)
   {
     var validationResult = validator.Validate(newGenre);
     if (!validationResult.IsValid)
@@ -29,14 +29,14 @@ public class GenreService
     return GenreCreationResult.Successful(mapper.Map<GenreDto>(genreEntity));
   }
 
-  public async Task<IEnumerable<GenreDto>> GetMany(CancellationToken token)
+  public async Task<IEnumerable<GenreDto>> GetMany(CancellationToken token = default)
   {
     var result = await repository.GetGenresReadOnlyAsync(token);
 
     return mapper.Map<IEnumerable<GenreDto>>(result);
   }
 
-  public async Task<GenreExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token)
+  public async Task<GenreExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
   {
     var result = await repository.GetGenreReadOnlyAsync(id, includeMovies, token);
 
@@ -60,7 +60,7 @@ public class GenreService
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token)
+  public async Task<(bool, string?)> Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token = default)
   {
     var entity = await repository.GetGenreAsync(id, false, token);
     if (entity == null)
@@ -71,7 +71,7 @@ public class GenreService
     return await ApplyUpdateAsync(entity, updatedGenre, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token)
+  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token = default)
   {
     var entity = await repository.GetGenreAsync(id, false, token);
     if (entity == null)

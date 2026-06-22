@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Interfaces;
@@ -60,7 +59,7 @@ public class MoviesController(IMovieService service) : ControllerBase
 
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateMovie(Guid id, MovieForChangeDto updatedMovie,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(id, updatedMovie, cancellationToken);
 
@@ -74,7 +73,7 @@ public class MoviesController(IMovieService service) : ControllerBase
 
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<MovieForChangeDto> patch,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);
 
@@ -88,7 +87,7 @@ public class MoviesController(IMovieService service) : ControllerBase
 
   [HttpDelete("{id}")]
   public async Task<IActionResult> RemoveMovie(Guid id,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken = default)
   {
     await service.Remove(id, cancellationToken);
     return NoContent();

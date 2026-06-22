@@ -8,17 +8,17 @@ public class PersonConfig : IEntityTypeConfiguration<Person>
 {
   public void Configure(EntityTypeBuilder<Person> builder)
   {
-    builder.Property(c => c.Id)
+    builder.Property(p => p.Id)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("NEWID()");
-    builder.Property(c => c.CreatedAt)
+    builder.Property(p => p.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
-    builder.Property(c => c.UpdatedAt)
+    builder.Property(p => p.UpdatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
-    builder.HasIndex(c => c.FirstName);
-    builder.HasIndex(c => c.LastName);
+    builder.HasIndex(p => p.FirstName);
+    builder.HasIndex(p => p.LastName);
   }
 }

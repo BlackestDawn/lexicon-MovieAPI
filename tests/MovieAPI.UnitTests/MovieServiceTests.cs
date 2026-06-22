@@ -9,7 +9,6 @@ using MovieAPI.Domain.Entities;
 using MovieAPI.Domain.Models;
 using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.UnitTests;
 

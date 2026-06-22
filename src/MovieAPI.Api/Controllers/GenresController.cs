@@ -30,7 +30,7 @@ public class GenresController(IGenreService service) : ControllerBase
   }
 
   [HttpPost]
-  public async Task<IActionResult> CreateGenre(GenreForChangeDto newGenre, CancellationToken cancellationToken)
+  public async Task<IActionResult> CreateGenre(GenreForChangeDto newGenre, CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newGenre, cancellationToken);
 
@@ -43,7 +43,7 @@ public class GenresController(IGenreService service) : ControllerBase
   }
 
   [HttpPut("{id}")]
-  public async Task<IActionResult> UpdateGenre(Guid id, GenreForChangeDto updatedGenre, CancellationToken cancellationToken)
+  public async Task<IActionResult> UpdateGenre(Guid id, GenreForChangeDto updatedGenre, CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(id, updatedGenre, cancellationToken);
     if (!success)
@@ -55,7 +55,7 @@ public class GenresController(IGenreService service) : ControllerBase
   }
 
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchGenre(Guid id, JsonPatchDocument<GenreForChangeDto> patch, CancellationToken cancellationToken)
+  public async Task<IActionResult> PatchGenre(Guid id, JsonPatchDocument<GenreForChangeDto> patch, CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);
     if (!success)

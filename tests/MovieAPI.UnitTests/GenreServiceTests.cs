@@ -7,7 +7,6 @@ using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.UnitTests;
 
@@ -256,7 +255,7 @@ public class GenreServiceTests
   public async Task UpdatePut_WhenInputIsValid_ReturnsTrueAndSaves()
   {
     var entity = MakeGenreEntity();
-    var dto = MakeDto() with { Name = "Comedy", Slug = "comedy" };
+    var dto = new GenreForChangeDto { Name = "Comedy", Slug = "comedy" };
 
     _repo.Setup(r => r.GetGenreAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     SetupValidatorValid();

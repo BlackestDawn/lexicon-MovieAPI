@@ -7,7 +7,6 @@ using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.Application.Services;
 

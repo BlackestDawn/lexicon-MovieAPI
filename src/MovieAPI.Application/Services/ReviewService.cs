@@ -1,15 +1,12 @@
-using System.Runtime.CompilerServices;
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
-using MovieAPI.Application.validators;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.Application.Services;
 

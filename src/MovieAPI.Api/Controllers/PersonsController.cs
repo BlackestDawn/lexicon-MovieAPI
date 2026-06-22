@@ -27,7 +27,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpGet("{id}", Name = "GetPerson")]
-  public async Task<IActionResult> GetPerson(Guid id, bool includeMovies, CancellationToken cancellationToken = default)
+  public async Task<IActionResult> GetPerson(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includeMovies, cancellationToken);
 
@@ -54,7 +54,7 @@ public class PersonsController(IPersonService service) : ControllerBase
 
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeDto updatedPerson,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(id, updatedPerson, cancellationToken);
 
@@ -68,7 +68,7 @@ public class PersonsController(IPersonService service) : ControllerBase
 
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(id, patch, cancellationToken);
 
@@ -81,7 +81,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpDelete("{id}")]
-  public async Task<IActionResult> DeletePerson(Guid id, CancellationToken cancellationToken)
+  public async Task<IActionResult> DeletePerson(Guid id, CancellationToken cancellationToken = default)
   {
     await service.Remove(id, cancellationToken);
     return NoContent();

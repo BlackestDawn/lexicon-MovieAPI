@@ -8,7 +8,6 @@ using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
 
 namespace MovieAPI.UnitTests;
 

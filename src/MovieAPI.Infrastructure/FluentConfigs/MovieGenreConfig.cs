@@ -8,17 +8,17 @@ public class MovieGenreConfig : IEntityTypeConfiguration<MovieGenre>
 {
   public void Configure(EntityTypeBuilder<MovieGenre> builder)
   {
-    builder.Property(m => m.Id)
+    builder.Property(mg => mg.Id)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("NEWID()");
-    builder.Property(m => m.CreatedAt)
+    builder.Property(mg => mg.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
-    builder.Property(m => m.UpdatedAt)
+    builder.Property(mg => mg.UpdatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
-    builder.HasKey(m => new { m.MovieId, m.GenreId });
+    builder.HasKey(mg => new { mg.MovieId, mg.GenreId });
 
     builder.HasOne(mg => mg.Movie)
       .WithMany(m => m.MovieGenres)

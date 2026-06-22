@@ -81,5 +81,4 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
 
     return await query.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
   }
-
 }

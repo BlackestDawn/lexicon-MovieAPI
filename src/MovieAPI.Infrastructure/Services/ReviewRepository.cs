@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
@@ -20,7 +19,7 @@ public class ReviewRepository(AppDbContext context) : RepositoryBase<Review>(con
     return await GetReviewsInternalAsync(movieId, searchParams, page, pageSize, true, cancellationToken);
   }
 
-  internal async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsInternalAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
+  private async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsInternalAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
   {
     var query = Context.Reviews.AsQueryable();
     query = query.Where(r => r.MovieId == movieId);
@@ -69,5 +68,4 @@ public class ReviewRepository(AppDbContext context) : RepositoryBase<Review>(con
       .AsNoTracking()
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
   }
-
 }

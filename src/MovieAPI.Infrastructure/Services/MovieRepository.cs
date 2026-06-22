@@ -97,5 +97,4 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
 
     return await query.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
   }
-
 }

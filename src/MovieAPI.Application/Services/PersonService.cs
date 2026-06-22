@@ -2,12 +2,11 @@ using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Helpers;
-using MovieAPI.Domain.Entities;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
-using MovieAPI.Infrastructure.Models;
-using MovieAPI.Infrastructure.Services;
+using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
+using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Application.Services;
 

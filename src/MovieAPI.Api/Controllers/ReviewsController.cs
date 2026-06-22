@@ -72,7 +72,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
 
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchReview(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patch,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken = default)
   {
     var (success, message) = await service.Update(movieId, id, patch, cancellationToken);
 
@@ -85,7 +85,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   }
 
   [HttpDelete("{id}")]
-  public async Task<IActionResult> DeletePerson(Guid movieId, Guid id, CancellationToken cancellationToken)
+  public async Task<IActionResult> DeleteReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
     await service.Remove(movieId, id, cancellationToken);
     return NoContent();
