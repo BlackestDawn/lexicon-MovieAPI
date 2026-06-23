@@ -45,7 +45,9 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
 
     if (searchParams.Year.HasValue)
     {
-      query = query.Where(m => m.ReleaseDate.Year == searchParams.Year.Value);
+      var yearStart = new DateOnly(searchParams.Year.Value, 1, 1);
+      var yearEnd = yearStart.AddYears(1);
+      query = query.Where(m => m.ReleaseDate >= yearStart && m.ReleaseDate < yearEnd);
     }
 
     if (searchParams.MinRating.HasValue)

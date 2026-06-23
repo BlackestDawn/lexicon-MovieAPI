@@ -19,5 +19,6 @@ public class MovieConfig : IEntityTypeConfiguration<Movie>
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
     builder.HasIndex(m => m.Title);
+    builder.HasIndex(m => m.ReleaseDate);
   }
 }
