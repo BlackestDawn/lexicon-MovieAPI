@@ -67,7 +67,14 @@ public class MovieService(
 
     var (result, pagination) = await repository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
 
-    return (mapper.Map<IEnumerable<MovieDto>>(result), pagination);
+    var movies = result.Select(item =>
+    {
+      var dto = mapper.Map<MovieDto>(item.Movie);
+      dto.AverageRating = item.AverageRating;
+      return dto;
+    });
+
+    return (movies, pagination);
   }
 
   public async Task<MovieExtendedDto> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
