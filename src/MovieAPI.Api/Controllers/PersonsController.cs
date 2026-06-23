@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
@@ -9,9 +10,10 @@ namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/people")]
-public class PersonsController(IPersonService service) : ControllerBase
+public class PersonsController(IPersonService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]
+  [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetPeople(string? name, string? genre, int? year,
     int? page, int? pageSize, CancellationToken cancellationToken = default)
   {
@@ -27,6 +29,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   }
 
   [HttpGet("{id}", Name = "GetPerson")]
+  [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetPerson(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includeMovies, cancellationToken);
@@ -37,6 +40,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newPerson, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return CreatedAtRoute("GetPerson", new { result.Id }, result);
   }
 
@@ -45,6 +49,7 @@ public class PersonsController(IPersonService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Update(id, updatedPerson, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
@@ -53,6 +58,7 @@ public class PersonsController(IPersonService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Update(id, patch, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
@@ -60,6 +66,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   public async Task<IActionResult> DeletePerson(Guid id, CancellationToken cancellationToken = default)
   {
     await service.Remove(id, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 }

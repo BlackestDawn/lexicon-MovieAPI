@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
@@ -9,9 +10,10 @@ namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/movies")]
-public class MoviesController(IMovieService service) : ControllerBase
+public class MoviesController(IMovieService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]
+  [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetMovies(string? name, string? search, string? genre,
     int? year, decimal? minRating,
     int? page, int? pageSize,
@@ -30,6 +32,7 @@ public class MoviesController(IMovieService service) : ControllerBase
   }
 
   [HttpGet("{id}", Name = "GetMovie")]
+  [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetMovie(Guid id, bool includePeople = true,
     CancellationToken cancellationToken = default)
   {
@@ -42,6 +45,7 @@ public class MoviesController(IMovieService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newMovie, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return CreatedAtRoute("GetMovie", new { result.Id }, result);
   }
 
@@ -50,6 +54,7 @@ public class MoviesController(IMovieService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Update(id, updatedMovie, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
@@ -58,6 +63,7 @@ public class MoviesController(IMovieService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Update(id, patch, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
@@ -66,6 +72,7 @@ public class MoviesController(IMovieService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Remove(id, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 }
