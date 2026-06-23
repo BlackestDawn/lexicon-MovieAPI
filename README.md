@@ -18,12 +18,11 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **DTO Mapping** — AutoMapper profiles for movies, people, genres, and reviews
 - **Domain Tracking** — `CreatedAt` / `UpdatedAt` auto-managed via an EF Core save interceptor
 - **Dev Seeding** — Database is seeded with sample data in the Development environment
-- **Unit Tests** — xUnit + Moq tests covering all four services (including Genre's create/update/remove flows) and the Movie/Person validators
+- **Unit Tests** — xUnit + Moq tests covering all four services and all four validators (Movie, Person, Genre, Review)
 
 ## Planned Features
 
 - **Integration Tests** — End-to-end tests against a real database (project scaffolded, no tests written yet)
-- **Genre/Review validator tests** — Dedicated validator unit tests currently only exist for Movie and Person
 
 ## Tech Stack
 
