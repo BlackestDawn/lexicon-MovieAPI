@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -16,18 +17,20 @@ public class ReviewService(
   IMapper mapper,
   IValidator<ReviewForChangeDto> validator) : IReviewService
 {
-  public async Task<ReviewCreationResult> Create(Guid movieId, ReviewForChangeDto newReview, CancellationToken token = default)
+  public async Task<ReviewDto> Create(Guid movieId, ReviewForChangeDto newReview, CancellationToken token = default)
   {
-    var validationResult = validator.Validate(newReview);
+    // movieId is part of the route, not the body, so a missing movie is treated like a bad route segment
+    // and checked before bothering to validate the body
+    if (!await movieRepository.ExistsAsync(movieId, token))
+    {
+      throw new NotFoundException($"Movie '{movieId}' not found");
+    }
+
+    var validationResult = await validator.ValidateAsync(newReview, token);
 
     if (!validationResult.IsValid)
     {
-      return ReviewCreationResult.Failed(new ValidationException(validationResult.Errors));
-    }
-
-    if (!await movieRepository.ExistsAsync(movieId, token))
-    {
-      return ReviewCreationResult.Failed(new ArgumentException($"Movie '{movieId}' not found"));
+      throw new ValidationException(validationResult.Errors);
     }
 
     var reviewEntity = mapper.Map<Review>(newReview);
@@ -36,7 +39,7 @@ public class ReviewService(
     await repository.AddAsync(reviewEntity, token);
     await repository.SaveChangesAsync(token);
 
-    return ReviewCreationResult.Successful(mapper.Map<ReviewDto>(reviewEntity));
+    return mapper.Map<ReviewDto>(reviewEntity);
   }
 
   public async Task<(IEnumerable<ReviewDto>, PaginationMetadata?)> GetMany(Guid movieId, ReviewSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
@@ -56,15 +59,9 @@ public class ReviewService(
     return (mapper.Map<IEnumerable<ReviewDto>>(result), pagination);
   }
 
-  public async Task<ReviewDto?> GetOne(Guid movieId, Guid id, CancellationToken token = default)
+  public async Task<ReviewDto> GetOne(Guid movieId, Guid id, CancellationToken token = default)
   {
-    var result = await repository.GetReviewReadOnlyAsync(movieId, id, token);
-
-    if (result == null)
-    {
-      return null;
-    }
-
+    var result = await repository.GetReviewReadOnlyAsync(movieId, id, token) ?? throw new NotFoundException($"Review '{id}' not found");
     return mapper.Map<ReviewDto>(result);
   }
 
@@ -80,48 +77,38 @@ public class ReviewService(
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid movieId, Guid id, ReviewForChangeDto updatedReview, CancellationToken token = default)
+  public async Task Update(Guid movieId, Guid id, ReviewForChangeDto updatedReview, CancellationToken token = default)
   {
     if (!await movieRepository.ExistsAsync(movieId, token))
     {
-      return (false, $"Movie '{movieId}' not found");
+      throw new NotFoundException($"Movie '{movieId}' not found");
     }
 
-    var entity = await repository.GetReviewAsync(movieId, id, token);
-    if (entity == null)
-    {
-      return (false, $"Review '{id}' not found");
-    }
-
-    return await ApplyUpdateAsync(entity, updatedReview, token);
+    var entity = await repository.GetReviewAsync(movieId, id, token) ?? throw new NotFoundException($"Review '{id}' not found");
+    await ApplyUpdateAsync(entity, updatedReview, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patchDocument, CancellationToken token = default)
+  public async Task Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patchDocument, CancellationToken token = default)
   {
     if (!await movieRepository.ExistsAsync(movieId, token))
     {
-      return (false, $"Movie '{movieId}' not found");
+      throw new NotFoundException($"Movie '{movieId}' not found");
     }
 
-    var entity = await repository.GetReviewAsync(movieId, id, token);
-    if (entity == null)
-    {
-      return (false, $"Review '{id}' not found");
-    }
-
+    var entity = await repository.GetReviewAsync(movieId, id, token) ?? throw new NotFoundException($"Review '{id}' not found");
     var dto = mapper.Map<ReviewForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
-    return await ApplyUpdateAsync(entity, dto, token);
+    await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Review entity, ReviewForChangeDto updatedReview, CancellationToken token)
+  private async Task ApplyUpdateAsync(Review entity, ReviewForChangeDto updatedReview, CancellationToken token)
   {
-    var validationResult = validator.Validate(updatedReview);
+    var validationResult = await validator.ValidateAsync(updatedReview, token);
 
     if (!validationResult.IsValid)
     {
-      return (false, new ValidationException(validationResult.Errors).Message);
+      throw new ValidationException(validationResult.Errors);
     }
 
     entity.AuthorName = updatedReview.AuthorName;
@@ -129,6 +116,5 @@ public class ReviewService(
     entity.Score = updatedReview.Score;
 
     await repository.SaveChangesAsync(token);
-    return (true, null);
   }
 }

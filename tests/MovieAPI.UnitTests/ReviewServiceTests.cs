@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Moq;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
@@ -44,40 +45,38 @@ public class ReviewServiceTests
 
   private void SetupValidatorValid() =>
     _validator
-      .Setup(v => v.Validate(It.IsAny<ReviewForChangeDto>()))
-      .Returns(new ValidationResult());
+      .Setup(v => v.ValidateAsync(It.IsAny<ReviewForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
 
   // Create
 
   [Fact]
-  public async Task Create_WhenValidationFails_ReturnsFailed_WithValidationException()
+  public async Task Create_WhenValidationFails_ThrowsValidationException()
   {
+    var movieId = Guid.NewGuid();
+
     _validator
-      .Setup(v => v.Validate(It.IsAny<ReviewForChangeDto>()))
-      .Returns(new ValidationResult([new ValidationFailure("AuthorName", "Required")]));
+      .Setup(v => v.ValidateAsync(It.IsAny<ReviewForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("AuthorName", "Required")]));
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var result = await _sut.Create(Guid.NewGuid(), MakeDto());
-
-    Assert.False(result.Success);
-    Assert.IsType<ValidationException>(result.Error);
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Create(movieId, MakeDto()));
   }
 
   [Fact]
-  public async Task Create_WhenMovieNotFound_ReturnsFailed_WithMovieError()
+  public async Task Create_WhenMovieNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     SetupValidatorValid();
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-    var result = await _sut.Create(movieId, MakeDto());
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Create(movieId, MakeDto()));
 
-    Assert.False(result.Success);
-    Assert.IsType<ArgumentException>(result.Error);
-    Assert.Contains($"Movie '{movieId}' not found", result.Error!.Message);
+    Assert.Contains($"Movie '{movieId}' not found", error.Message);
   }
 
   [Fact]
-  public async Task Create_WhenInputIsValid_ReturnsSuccessful()
+  public async Task Create_WhenInputIsValid_ReturnsMappedDto()
   {
     var movieId = Guid.NewGuid();
     var dto = MakeDto();
@@ -93,9 +92,10 @@ public class ReviewServiceTests
 
     var result = await _sut.Create(movieId, dto);
 
-    Assert.True(result.Success);
-    Assert.Null(result.Error);
-    Assert.Equal(entity.Id, result.Review!.Id);
+    Assert.NotNull(result);
+    Assert.Equal(entity.AuthorName, result.AuthorName);
+    Assert.Equal(entity.Body, result.Body);
+    Assert.Equal(entity.Id, result.Id);
   }
 
   [Fact]
@@ -173,16 +173,14 @@ public class ReviewServiceTests
   // GetOne
 
   [Fact]
-  public async Task GetOne_WhenNotFound_ReturnsNull()
+  public async Task GetOne_WhenNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     _repo
       .Setup(r => r.GetReviewReadOnlyAsync(movieId, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Review?)null);
 
-    var result = await _sut.GetOne(movieId, Guid.NewGuid());
-
-    Assert.Null(result);
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(movieId, Guid.NewGuid()));
   }
 
   [Fact]
@@ -210,7 +208,7 @@ public class ReviewServiceTests
       .Setup(r => r.GetReviewReadOnlyAsync(movieId, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Review?)null);
 
-    await _sut.GetOne(movieId, Guid.NewGuid());
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(movieId, Guid.NewGuid()));
 
     _mapper.Verify(m => m.Map<ReviewDto>(It.IsAny<Review>()), Times.Never);
   }
@@ -248,50 +246,45 @@ public class ReviewServiceTests
   // Update (PUT)
 
   [Fact]
-  public async Task UpdatePut_WhenMovieNotFound_ReturnsFalse()
+  public async Task UpdatePut_WhenMovieNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-    var (success, error) = await _sut.Update(movieId, Guid.NewGuid(), MakeDto());
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(movieId, Guid.NewGuid(), MakeDto()));
 
-    Assert.False(success);
-    Assert.Contains($"Movie '{movieId}' not found", error);
+    Assert.Contains($"Movie '{movieId}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePut_WhenReviewNotFound_ReturnsFalse()
+  public async Task UpdatePut_WhenReviewNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     var id = Guid.NewGuid();
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, id, It.IsAny<CancellationToken>())).ReturnsAsync((Review?)null);
 
-    var (success, error) = await _sut.Update(movieId, id, MakeDto());
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(movieId, id, MakeDto()));
 
-    Assert.False(success);
-    Assert.Contains($"Review '{id}' not found", error);
+    Assert.Contains($"Review '{id}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePut_WhenValidationFails_ReturnsFalse()
+  public async Task UpdatePut_WhenValidationFails_ThrowsValidationError()
   {
     var movieId = Guid.NewGuid();
     var entity = MakeReviewEntity(movieId: movieId);
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _validator
-      .Setup(v => v.Validate(It.IsAny<ReviewForChangeDto>()))
-      .Returns(new ValidationResult([new ValidationFailure("AuthorName", "Required")]));
+      .Setup(v => v.ValidateAsync(It.IsAny<ReviewForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("AuthorName", "Required")]));
 
-    var (success, error) = await _sut.Update(movieId, entity.Id, MakeDto());
-
-    Assert.False(success);
-    Assert.NotNull(error);
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Update(movieId, entity.Id, MakeDto()));
   }
 
   [Fact]
-  public async Task UpdatePut_WhenInputIsValid_ReturnsTrueAndSaves()
+  public async Task UpdatePut_WhenInputIsValid_Saves()
   {
     var movieId = Guid.NewGuid();
     var entity = MakeReviewEntity(movieId: movieId);
@@ -302,10 +295,8 @@ public class ReviewServiceTests
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
     var dto = MakeDto();
-    var (success, error) = await _sut.Update(movieId, entity.Id, dto);
+    await _sut.Update(movieId, entity.Id, dto);
 
-    Assert.True(success);
-    Assert.Null(error);
     Assert.Equal(dto.AuthorName, entity.AuthorName);
     Assert.Equal(dto.Body, entity.Body);
     Assert.Equal(dto.Score, entity.Score);
@@ -315,15 +306,14 @@ public class ReviewServiceTests
   // Update (PATCH)
 
   [Fact]
-  public async Task UpdatePatch_WhenMovieNotFound_ReturnsFalse()
+  public async Task UpdatePatch_WhenMovieNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-    var (success, error) = await _sut.Update(movieId, Guid.NewGuid(), new JsonPatchDocument<ReviewForChangeDto>());
+    var error = await Assert.ThrowsAsync<NotFoundException>(()=> _sut.Update(movieId, Guid.NewGuid(), new JsonPatchDocument<ReviewForChangeDto>()));
 
-    Assert.False(success);
-    Assert.Contains($"Movie '{movieId}' not found", error);
+    Assert.Contains($"Movie '{movieId}' not found", error.Message);
   }
 
   [Fact]
@@ -334,14 +324,13 @@ public class ReviewServiceTests
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
     _repo.Setup(r => r.GetReviewAsync(movieId, id, It.IsAny<CancellationToken>())).ReturnsAsync((Review?)null);
 
-    var (success, error) = await _sut.Update(movieId, id, new JsonPatchDocument<ReviewForChangeDto>());
+    var error = await Assert.ThrowsAsync<NotFoundException>(()=> _sut.Update(movieId, id, new JsonPatchDocument<ReviewForChangeDto>()));
 
-    Assert.False(success);
-    Assert.Contains($"Review '{id}' not found", error);
+    Assert.Contains($"Review '{id}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePatch_WhenPatchIsValid_ReturnsTrueAndSaves()
+  public async Task UpdatePatch_WhenPatchIsValid_Saves()
   {
     var movieId = Guid.NewGuid();
     var entity = MakeReviewEntity(movieId: movieId);
@@ -353,10 +342,8 @@ public class ReviewServiceTests
     SetupValidatorValid();
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(movieId, entity.Id, new JsonPatchDocument<ReviewForChangeDto>());
+    await _sut.Update(movieId, entity.Id, new JsonPatchDocument<ReviewForChangeDto>());
 
-    Assert.True(success);
-    Assert.Null(error);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 }
