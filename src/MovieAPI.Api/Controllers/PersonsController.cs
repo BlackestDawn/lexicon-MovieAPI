@@ -30,12 +30,6 @@ public class PersonsController(IPersonService service) : ControllerBase
   public async Task<IActionResult> GetPerson(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includeMovies, cancellationToken);
-
-    if (result == null)
-    {
-      return NotFound();
-    }
-
     return Ok(result);
   }
 
@@ -43,26 +37,14 @@ public class PersonsController(IPersonService service) : ControllerBase
   public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newPerson, cancellationToken);
-
-    if (!result.Success)
-    {
-      return BadRequest(result.Error!.Message);
-    }
-
-    return CreatedAtRoute("GetPerson", new { result.Person!.Id }, result.Person);
+    return CreatedAtRoute("GetPerson", new { result.Id }, result);
   }
 
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeDto updatedPerson,
     CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(id, updatedPerson, cancellationToken);
-
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(id, updatedPerson, cancellationToken);
     return NoContent();
   }
 
@@ -70,13 +52,7 @@ public class PersonsController(IPersonService service) : ControllerBase
   public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
     CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(id, patch, cancellationToken);
-
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(id, patch, cancellationToken);
     return NoContent();
   }
 

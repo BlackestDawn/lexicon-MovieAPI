@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -17,13 +18,13 @@ public class PersonService(
   IValidator<PersonForChangeDto> validator
 ) : IPersonService
 {
-  public async Task<PersonCreationResult> Create(PersonForChangeDto newPerson, CancellationToken token = default)
+  public async Task<PersonDto> Create(PersonForChangeDto newPerson, CancellationToken token = default)
   {
-    var validationResult = validator.Validate(newPerson);
+    var validationResult = await validator.ValidateAsync(newPerson, token);
 
     if (!validationResult.IsValid)
     {
-      return PersonCreationResult.Failed(new ValidationException(validationResult.Errors));
+      throw new ValidationException(validationResult.Errors);
     }
 
     var movieIds = newPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
@@ -32,7 +33,7 @@ public class PersonService(
     if (invalidMovieIds.Count > 0)
     {
       var errors = invalidMovieIds.Select(id => $"Movie '{id}' not found");
-      return PersonCreationResult.Failed(new ArgumentException(string.Join("; ", errors)));
+      throw new NotFoundException(string.Join("; ", errors));
     }
 
     var personEntity = mapper.Map<Person>(newPerson);
@@ -42,7 +43,7 @@ public class PersonService(
     await repository.AddAsync(personEntity, token);
     await repository.SaveChangesAsync(token);
 
-    return PersonCreationResult.Successful(mapper.Map<PersonDto>(personEntity));
+    return mapper.Map<PersonDto>(personEntity);
   }
 
   public async Task<(IEnumerable<PersonDto>, PaginationMetadata?)> GetMany(PeopleSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
@@ -61,15 +62,9 @@ public class PersonService(
     return (mapper.Map<IEnumerable<PersonDto>>(result), pagination);
   }
 
-  public async Task<PersonExtendedDto?> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
+  public async Task<PersonExtendedDto> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
   {
-    var result = await repository.GetPersonReadOnlyAsync(id, includeMovies, token);
-
-    if (result == null)
-    {
-      return null;
-    }
-
+    var result = await repository.GetPersonReadOnlyAsync(id, includeMovies, token) ?? throw new NotFoundException($"Person '{id}' not found");
     return mapper.Map<PersonExtendedDto>(result);
   }
 
@@ -85,38 +80,29 @@ public class PersonService(
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, PersonForChangeDto updatedPerson, CancellationToken token = default)
+  public async Task Update(Guid id, PersonForChangeDto updatedPerson, CancellationToken token = default)
   {
-    var entity = await repository.GetPersonAsync(id, true, token);
-    if (entity == null)
-    {
-      return (false, $"Person '{id}' not found");
-    }
-
-    return await ApplyUpdateAsync(entity, updatedPerson, token);
+    var entity = await repository.GetPersonAsync(id, true, token) ?? throw new NotFoundException($"Person '{id}' not found");
+    await ApplyUpdateAsync(entity, updatedPerson, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<PersonForChangeDto> patchDocument, CancellationToken token = default)
+  public async Task Update(Guid id, JsonPatchDocument<PersonForChangeDto> patchDocument, CancellationToken token = default)
   {
-    var entity = await repository.GetPersonAsync(id, true, token);
-    if (entity == null)
-    {
-      return (false, $"Person '{id}' not found");
-    }
+    var entity = await repository.GetPersonAsync(id, true, token) ?? throw new NotFoundException($"Person '{id}' not found");
 
     var dto = mapper.Map<PersonForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
-    return await ApplyUpdateAsync(entity, dto, token);
+    await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Person entity, PersonForChangeDto updatedPerson, CancellationToken token)
+  private async Task ApplyUpdateAsync(Person entity, PersonForChangeDto updatedPerson, CancellationToken token)
   {
-    var validationResult = validator.Validate(updatedPerson);
+    var validationResult = await validator.ValidateAsync(updatedPerson, token);
 
     if (!validationResult.IsValid)
     {
-      return (false, new ValidationException(validationResult.Errors).Message);
+      throw new ValidationException(validationResult.Errors);
     }
 
     var movieIds = updatedPerson.MovieRoles.Select(mr => mr.MovieId).Distinct().ToList();
@@ -125,7 +111,7 @@ public class PersonService(
     if (invalidMovieIds.Count > 0)
     {
       var errors = invalidMovieIds.Select(id => $"Movie '{id}' not found");
-      return (false, string.Join("; ", errors));
+      throw new NotFoundException(string.Join("; ", errors));
     }
 
     entity.FirstName = updatedPerson.FirstName;
@@ -137,6 +123,5 @@ public class PersonService(
       entity.CastCrews.Add(cc);
 
     await repository.SaveChangesAsync(token);
-    return (true, null);
   }
 }
