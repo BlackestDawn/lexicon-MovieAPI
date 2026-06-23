@@ -10,7 +10,7 @@ public class CastCrewConfig : IEntityTypeConfiguration<CastCrew>
   {
     builder.Property(c => c.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("NEWSEQUENTIALID()");
     builder.Property(c => c.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");

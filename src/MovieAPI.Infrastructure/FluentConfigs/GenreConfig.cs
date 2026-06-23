@@ -10,7 +10,7 @@ public class GenreConfig : IEntityTypeConfiguration<Genre>
   {
     builder.Property(g => g.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("NEWSEQUENTIALID()");
     builder.Property(g => g.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
@@ -19,5 +19,6 @@ public class GenreConfig : IEntityTypeConfiguration<Genre>
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
     builder.HasIndex(g => g.Name);
+    builder.HasIndex(g => g.Slug);
   }
 }

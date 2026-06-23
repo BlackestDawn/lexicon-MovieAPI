@@ -106,7 +106,7 @@ public class MovieServiceTests
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _repo.Setup(r => r.AddAsync(It.IsAny<Movie>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
-    _repo.Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetMovieReadOnlyAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<Movie>(It.IsAny<MovieForChangeDto>())).Returns(entity);
     _mapper.Setup(m => m.Map<MovieDto>(It.IsAny<Movie>())).Returns(movieDto);
 
@@ -120,11 +120,10 @@ public class MovieServiceTests
   [Fact]
   public async Task GetMany_WhenPageAndSizeAreNull_UsesDefaults()
   {
-    var movies = Enumerable.Empty<Movie>();
+    var movies = Enumerable.Empty<MovieListItem>();
     _repo
       .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
       .ReturnsAsync((movies, null));
-    _mapper.Setup(m => m.Map<IEnumerable<MovieDto>>(movies)).Returns([]);
 
     await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), null, null);
 
@@ -134,11 +133,10 @@ public class MovieServiceTests
   [Fact]
   public async Task GetMany_WhenPageIsZeroAndSizeIsNegative_UsesDefaults()
   {
-    var movies = Enumerable.Empty<Movie>();
+    var movies = Enumerable.Empty<MovieListItem>();
     _repo
       .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
       .ReturnsAsync((movies, null));
-    _mapper.Setup(m => m.Map<IEnumerable<MovieDto>>(movies)).Returns([]);
 
     await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), 0, -5);
 
@@ -150,17 +148,18 @@ public class MovieServiceTests
   {
     var entity = MakeMovieEntity();
     var movieDto = new MovieDto { Id = entity.Id };
-    var movies = new[] { entity };
+    var movies = new[] { new MovieListItem(entity, 8.5m) };
     var pagination = new PaginationMetadata(1, 10, 1);
 
     _repo
       .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
       .ReturnsAsync((movies.AsEnumerable(), pagination));
-    _mapper.Setup(m => m.Map<IEnumerable<MovieDto>>(movies.AsEnumerable())).Returns([movieDto]);
+    _mapper.Setup(m => m.Map<MovieDto>(entity)).Returns(movieDto);
 
     var (result, meta) = await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), null, null);
 
-    Assert.Single(result);
+    var dto = Assert.Single(result);
+    Assert.Equal(8.5m, dto.AverageRating);
     Assert.NotNull(meta);
   }
 

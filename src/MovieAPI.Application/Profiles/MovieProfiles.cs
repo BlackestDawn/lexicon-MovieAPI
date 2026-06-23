@@ -12,7 +12,10 @@ public class MovieProfiles : Profile
 
     CreateMap<Movie, MovieDto>()
       .ForMember(dest => dest.Genres,
-        opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.Genre)));
+        opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.Genre)))
+      // AverageRating is computed in SQL by the repository (the list query doesn't load
+      // Reviews), and assigned onto the DTO separately in MovieService.
+      .ForMember(dest => dest.AverageRating, opt => opt.Ignore());
 
     CreateMap<Movie, MovieExtendedDto>()
       .ForMember(dest => dest.Genres,

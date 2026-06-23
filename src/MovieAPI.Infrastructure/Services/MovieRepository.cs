@@ -9,17 +9,17 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
 {
   protected override DbSet<Movie> Set => Context.Movies;
 
-  public async Task<(IEnumerable<Movie>, PaginationMetadata?)> GetMoviesAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public async Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
     return await GetMoviesInternalAsync(searchParams, page, pageSize, false, cancellationToken);
   }
 
-  public async Task<(IEnumerable<Movie>, PaginationMetadata?)> GetMoviesReadOnlyAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public async Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesReadOnlyAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
     return await GetMoviesInternalAsync(searchParams, page, pageSize, true, cancellationToken);
   }
 
-  private async Task<(IEnumerable<Movie>, PaginationMetadata?)> GetMoviesInternalAsync(MovieSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
+  private async Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesInternalAsync(MovieSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
   {
     var query = Context.Movies.AsQueryable();
 
@@ -45,7 +45,9 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
 
     if (searchParams.Year.HasValue)
     {
-      query = query.Where(m => m.ReleaseDate.Year == searchParams.Year.Value);
+      var yearStart = new DateOnly(searchParams.Year.Value, 1, 1);
+      var yearEnd = yearStart.AddYears(1);
+      query = query.Where(m => m.ReleaseDate >= yearStart && m.ReleaseDate < yearEnd);
     }
 
     if (searchParams.MinRating.HasValue)
@@ -61,7 +63,7 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
       .Skip((page - 1) * pageSize)
       .Take(pageSize)
       .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
-      .Include(m => m.Reviews)
+      .Select(m => new MovieListItem(m, (decimal)(m.Reviews.Average(r => (double?)r.Score) ?? 0)))
       .ToListAsync(cancellationToken);
 
     return (movies, pagination);
@@ -83,6 +85,7 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
       .Include(m => m.Details)
       .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
       .Include(m => m.Reviews)
+      .AsSplitQuery()
       .AsQueryable();
 
     if (readOnly)

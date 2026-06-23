@@ -49,8 +49,8 @@ public class MovieService(
     await repository.AddAsync(movieEntity, token);
     await repository.SaveChangesAsync(token);
 
-    // refetch to properly populate genres
-    var savedMovie = await repository.GetMovieAsync(movieEntity.Id, false, token);
+    // refetch to properly populate genres; read-only since the result is only used to build the response
+    var savedMovie = await repository.GetMovieReadOnlyAsync(movieEntity.Id, false, token);
     return mapper.Map<MovieDto>(savedMovie);
   }
 
@@ -67,7 +67,14 @@ public class MovieService(
 
     var (result, pagination) = await repository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
 
-    return (mapper.Map<IEnumerable<MovieDto>>(result), pagination);
+    var movies = result.Select(item =>
+    {
+      var dto = mapper.Map<MovieDto>(item.Movie);
+      dto.AverageRating = item.AverageRating;
+      return dto;
+    });
+
+    return (movies, pagination);
   }
 
   public async Task<MovieExtendedDto> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)

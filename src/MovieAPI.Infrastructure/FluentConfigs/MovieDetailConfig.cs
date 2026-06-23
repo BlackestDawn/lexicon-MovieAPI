@@ -10,7 +10,7 @@ public class MovieDetailConfig : IEntityTypeConfiguration<MovieDetail>
   {
     builder.Property(d => d.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("NEWSEQUENTIALID()");
     builder.Property(d => d.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");

@@ -10,7 +10,7 @@ public class MovieConfig : IEntityTypeConfiguration<Movie>
   {
     builder.Property(m => m.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("NEWSEQUENTIALID()");
     builder.Property(m => m.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
@@ -19,5 +19,6 @@ public class MovieConfig : IEntityTypeConfiguration<Movie>
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
     builder.HasIndex(m => m.Title);
+    builder.HasIndex(m => m.ReleaseDate);
   }
 }

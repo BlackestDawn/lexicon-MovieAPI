@@ -40,7 +40,9 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
 
     if (searchParams.Year.HasValue)
     {
-      query = query.Where(p => p.CastCrews.Any(cc => cc.Movie.ReleaseDate.Year == searchParams.Year.Value));
+      var yearStart = new DateOnly(searchParams.Year.Value, 1, 1);
+      var yearEnd = yearStart.AddYears(1);
+      query = query.Where(p => p.CastCrews.Any(cc => cc.Movie.ReleaseDate >= yearStart && cc.Movie.ReleaseDate < yearEnd));
     }
 
     var totalCount = await query.CountAsync(cancellationToken);
