@@ -28,6 +28,17 @@ builder.Services.AddAutoMapper(config => {},
   AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 
+// Redis backs the output cache in Production so it's shared across instances; every
+// other environment (Development, Testing, ...) keeps the default in-memory store.
+if (builder.Environment.IsProduction())
+{
+  builder.Services.AddStackExchangeRedisOutputCache(options =>
+  {
+    options.Configuration = builder.Configuration.GetConnectionString("redis")
+      ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
+  });
+}
+
 builder.Services.AddOutputCache(options =>
 {
   // Movies, genres, people and reviews embed each other's data in their
