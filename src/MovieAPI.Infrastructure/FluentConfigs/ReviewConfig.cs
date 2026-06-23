@@ -10,7 +10,7 @@ public class ReviewConfig : IEntityTypeConfiguration<Review>
   {
     builder.Property(r => r.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("NEWSEQUENTIALID()");
     builder.Property(r => r.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");

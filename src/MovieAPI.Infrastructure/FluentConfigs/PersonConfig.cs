@@ -10,7 +10,7 @@ public class PersonConfig : IEntityTypeConfiguration<Person>
   {
     builder.Property(p => p.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWID()");
+      .HasDefaultValueSql("NEWSEQUENTIALID()");
     builder.Property(p => p.CreatedAt)
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
