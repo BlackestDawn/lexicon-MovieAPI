@@ -2,7 +2,7 @@
 
 A RESTful Web API built with ASP.NET Core for browsing and managing movie data — think a small-scale IMDB clone. The API exposes information about movies, people (actors/directors), genres, and user ratings/reviews.
 
-> **Status:** All four core resources — Movies, People, Genres, and Reviews — are implemented end-to-end with full CRUD (controller, service, validation, DTO mapping, unit tests). Repositories expose tracked and read-only (`AsNoTracking`) query paths, with GET endpoints wired to the read-only versions. Error handling has been centralized: all four services now throw (`NotFoundException`, FluentValidation's `ValidationException`) instead of returning result wrapper objects or tuples, and a global `IExceptionHandler` middleware maps those to `ProblemDetails` HTTP responses. Integration tests project is currently empty (no tests yet).
+> **Status:** All four core resources — Movies, People, Genres, and Reviews — are implemented end-to-end with full CRUD (controller, service, validation, DTO mapping, unit tests, integration tests). Repositories expose tracked and read-only (`AsNoTracking`) query paths, with GET endpoints wired to the read-only versions. Error handling has been centralized: all four services now throw (`NotFoundException`, FluentValidation's `ValidationException`) instead of returning result wrapper objects or tuples, and a global `IExceptionHandler` middleware maps those to `ProblemDetails` HTTP responses.
 
 ## Implemented Features
 
@@ -19,10 +19,7 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **Domain Tracking** — `CreatedAt` / `UpdatedAt` auto-managed via an EF Core save interceptor
 - **Dev Seeding** — Database is seeded with sample data in the Development environment
 - **Unit Tests** — xUnit + Moq tests covering all four services and all four validators (Movie, Person, Genre, Review)
-
-## Planned Features
-
-- **Integration Tests** — End-to-end tests against a real database (project scaffolded, no tests written yet)
+- **Integration Tests** — xUnit + `WebApplicationFactory` tests covering full CRUD for all four controllers against a real SQL Server instance spun up via Testcontainers, with Respawn resetting the database between tests
 
 ## Tech Stack
 
@@ -32,6 +29,7 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **FluentValidation** for request validation
 - **Swagger / OpenAPI** (Swashbuckle + `Microsoft.AspNetCore.OpenApi`) for API docs
 - **xUnit + Moq** for unit testing
+- **xUnit + Testcontainers + Respawn** for integration testing
 
 ## Project Structure
 
@@ -45,7 +43,7 @@ MovieAPI/
 │   └── MovieAPI.Infrastructure/ # AppDbContext, EF Fluent configs, migrations, repository, seeder
 └── tests/
     ├── MovieAPI.UnitTests/      # Service tests for all four resources, validator tests for Movie/Person
-    └── MovieAPI.IntegrationTests/ # Scaffolded project, no tests yet
+    └── MovieAPI.IntegrationTests/ # WebApplicationFactory tests for all four controllers (Testcontainers + Respawn)
 ```
 
 ## Getting Started
@@ -70,6 +68,14 @@ MovieAPI/
 5. Browse the API docs at `https://localhost:<port>/swagger`
 
 The database is automatically seeded with sample data when running in the Development environment.
+
+### Running Tests
+
+```
+dotnet test
+```
+
+Unit tests run with no external dependencies. Integration tests require a running Docker daemon — they spin up a disposable SQL Server container via Testcontainers for each test run.
 
 ## API Overview
 
