@@ -33,12 +33,6 @@ public class ReviewsController(IReviewService service) : ControllerBase
   public async Task<IActionResult> GetReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(movieId, id, cancellationToken);
-
-    if (result == null)
-    {
-      return NotFound();
-    }
-
     return Ok(result);
   }
 
@@ -47,26 +41,14 @@ public class ReviewsController(IReviewService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await service.Create(movieId, newReview, cancellationToken);
-
-    if (!result.Success)
-    {
-      return BadRequest(result.Error!.Message);
-    }
-
-    return CreatedAtRoute("GetReview", new {movieId, result.Review!.Id}, result.Review);
+    return CreatedAtRoute("GetReview", new {movieId, result.Id}, result);
   }
 
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateReview(Guid movieId, Guid id, ReviewForChangeDto updatedReview,
     CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(movieId, id, updatedReview, cancellationToken);
-
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(movieId, id, updatedReview, cancellationToken);
     return NoContent();
   }
 
@@ -74,13 +56,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   public async Task<IActionResult> PatchReview(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patch,
     CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(movieId, id, patch, cancellationToken);
-
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(movieId, id, patch, cancellationToken);
     return NoContent();
   }
 

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using MovieAPI.Api.Middleware;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
@@ -9,6 +10,9 @@ using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -39,6 +43,8 @@ builder.Services.AddScoped<IValidator<ReviewForChangeDto>, ReviewChangeValidator
 builder.Services.AddScoped<IValidator<GenreForChangeDto>, GenreChangeValidator>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

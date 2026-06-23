@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Moq;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
@@ -53,26 +54,23 @@ public class GenreServiceTests
 
   private void SetupValidatorValid() =>
     _validator
-      .Setup(v => v.Validate(It.IsAny<GenreForChangeDto>()))
-      .Returns(new ValidationResult());
+      .Setup(v => v.ValidateAsync(It.IsAny<GenreForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
 
   // Create
 
   [Fact]
-  public async Task Create_WhenValidationFails_ReturnsFailed_WithValidationException()
+  public async Task Create_WhenValidationFails_ThrowsValidationException()
   {
     _validator
-      .Setup(v => v.Validate(It.IsAny<GenreForChangeDto>()))
-      .Returns(new ValidationResult([new ValidationFailure("Name", "Required")]));
+      .Setup(v => v.ValidateAsync(It.IsAny<GenreForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("Name", "Required")]));
 
-    var result = await _sut.Create(MakeDto(), CancellationToken.None);
-
-    Assert.False(result.Success);
-    Assert.IsType<ValidationException>(result.Error);
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Create(MakeDto(), CancellationToken.None));
   }
 
   [Fact]
-  public async Task Create_WhenInputIsValid_ReturnsSuccessful()
+  public async Task Create_WhenInputIsValid_ReturnsMappedDto()
   {
     var dto = MakeDto();
     var entity = MakeGenreEntity();
@@ -86,9 +84,8 @@ public class GenreServiceTests
 
     var result = await _sut.Create(dto, CancellationToken.None);
 
-    Assert.True(result.Success);
-    Assert.Null(result.Error);
-    Assert.Equal(entity.Id, result.Genre!.Id);
+    Assert.NotNull(result);
+    Assert.Equal(entity.Id, result.Id);
   }
 
   [Fact]
@@ -154,15 +151,13 @@ public class GenreServiceTests
   // GetOne
 
   [Fact]
-  public async Task GetOne_WhenNotFound_ReturnsNull()
+  public async Task GetOne_WhenNotFound_ThrowsNotFoundException()
   {
     _repo
       .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
-    var result = await _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None);
-
-    Assert.Null(result);
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None));
   }
 
   [Fact]
@@ -189,7 +184,7 @@ public class GenreServiceTests
       .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
-    await _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None);
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None));
 
     _mapper.Verify(m => m.Map<GenreExtendedDto>(It.IsAny<Genre>()), Times.Never);
   }
@@ -225,34 +220,30 @@ public class GenreServiceTests
   // Update (PUT)
 
   [Fact]
-  public async Task UpdatePut_WhenGenreNotFound_ReturnsFalse()
+  public async Task UpdatePut_WhenGenreNotFound_ThrowsNotFoundException()
   {
     var id = Guid.NewGuid();
     _repo.Setup(r => r.GetGenreAsync(id, false, It.IsAny<CancellationToken>())).ReturnsAsync((Genre?)null);
 
-    var (success, error) = await _sut.Update(id, MakeDto(), CancellationToken.None);
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(id, MakeDto(), CancellationToken.None));
 
-    Assert.False(success);
-    Assert.Contains($"Genre '{id}' not found", error);
+    Assert.Contains($"Genre '{id}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePut_WhenValidationFails_ReturnsFalse()
+  public async Task UpdatePut_WhenValidationFails_ThrowsValidationException()
   {
     var entity = MakeGenreEntity();
     _repo.Setup(r => r.GetGenreAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _validator
-      .Setup(v => v.Validate(It.IsAny<GenreForChangeDto>()))
-      .Returns(new ValidationResult([new ValidationFailure("Name", "Required")]));
+      .Setup(v => v.ValidateAsync(It.IsAny<GenreForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("Name", "Required")]));
 
-    var (success, error) = await _sut.Update(entity.Id, MakeDto(), CancellationToken.None);
-
-    Assert.False(success);
-    Assert.NotNull(error);
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Update(entity.Id, MakeDto(), CancellationToken.None));
   }
 
   [Fact]
-  public async Task UpdatePut_WhenInputIsValid_ReturnsTrueAndSaves()
+  public async Task UpdatePut_WhenInputIsValid_Saves()
   {
     var entity = MakeGenreEntity();
     var dto = new GenreForChangeDto { Name = "Comedy", Slug = "comedy" };
@@ -261,10 +252,8 @@ public class GenreServiceTests
     SetupValidatorValid();
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(entity.Id, dto, CancellationToken.None);
+    await _sut.Update(entity.Id, dto, CancellationToken.None);
 
-    Assert.True(success);
-    Assert.Null(error);
     Assert.Equal(dto.Name, entity.Name);
     Assert.Equal(dto.Slug, entity.Slug);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -273,19 +262,18 @@ public class GenreServiceTests
   // Update (PATCH)
 
   [Fact]
-  public async Task UpdatePatch_WhenGenreNotFound_ReturnsFalse()
+  public async Task UpdatePatch_WhenGenreNotFound_ThrowsNotFoundException()
   {
     var id = Guid.NewGuid();
     _repo.Setup(r => r.GetGenreAsync(id, false, It.IsAny<CancellationToken>())).ReturnsAsync((Genre?)null);
 
-    var (success, error) = await _sut.Update(id, new JsonPatchDocument<GenreForChangeDto>(), CancellationToken.None);
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(id, new JsonPatchDocument<GenreForChangeDto>(), CancellationToken.None));
 
-    Assert.False(success);
-    Assert.Contains($"Genre '{id}' not found", error);
+    Assert.Contains($"Genre '{id}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePatch_WhenPatchIsValid_ReturnsTrueAndSaves()
+  public async Task UpdatePatch_WhenPatchIsValid_Saves()
   {
     var entity = MakeGenreEntity();
     var updateDto = MakeDto();
@@ -295,10 +283,8 @@ public class GenreServiceTests
     SetupValidatorValid();
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(entity.Id, new JsonPatchDocument<GenreForChangeDto>(), CancellationToken.None);
+    await _sut.Update(entity.Id, new JsonPatchDocument<GenreForChangeDto>(), CancellationToken.None);
 
-    Assert.True(success);
-    Assert.Null(error);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 }

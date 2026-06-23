@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Moq;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
@@ -46,26 +47,23 @@ public class PersonServiceTests
 
   private void SetupValidatorValid() =>
     _validator
-      .Setup(v => v.Validate(It.IsAny<PersonForChangeDto>()))
-      .Returns(new ValidationResult());
+      .Setup(v => v.ValidateAsync(It.IsAny<PersonForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
 
   // Create
 
   [Fact]
-  public async Task Create_WhenValidationFails_ReturnsFailed_WithValidationException()
+  public async Task Create_WhenValidationFails_ThrowsValidationException()
   {
     _validator
-      .Setup(v => v.Validate(It.IsAny<PersonForChangeDto>()))
-      .Returns(new ValidationResult([new ValidationFailure("FirstName", "Required")]));
+      .Setup(v => v.ValidateAsync(It.IsAny<PersonForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("FirstName", "Required")]));
 
-    var result = await _sut.Create(MakeDto());
-
-    Assert.False(result.Success);
-    Assert.IsType<ValidationException>(result.Error);
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Create(MakeDto()));
   }
 
   [Fact]
-  public async Task Create_WhenMovieIdNotFound_ReturnsFailed_WithMovieError()
+  public async Task Create_WhenMovieIdNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     SetupValidatorValid();
@@ -73,15 +71,13 @@ public class PersonServiceTests
       .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([movieId]);
 
-    var result = await _sut.Create(MakeDto(movieId: movieId));
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Create(MakeDto(movieId: movieId)));
 
-    Assert.False(result.Success);
-    Assert.IsType<ArgumentException>(result.Error);
-    Assert.Contains($"Movie '{movieId}' not found", result.Error!.Message);
+    Assert.Contains($"Movie '{movieId}' not found", error.Message);
   }
 
   [Fact]
-  public async Task Create_WhenInputIsValid_ReturnsSuccessful()
+  public async Task Create_WhenInputIsValid_ReturnsMappedDto()
   {
     var dto = MakeDto();
     var entity = MakePersonEntity();
@@ -99,9 +95,7 @@ public class PersonServiceTests
 
     var result = await _sut.Create(dto);
 
-    Assert.True(result.Success);
-    Assert.Null(result.Error);
-    Assert.Equal(entity.Id, result.Person!.Id);
+    Assert.Equal(entity.Id, result.Id);
   }
 
   // GetMany
@@ -156,15 +150,13 @@ public class PersonServiceTests
   // GetOne
 
   [Fact]
-  public async Task GetOne_WhenNotFound_ReturnsNull()
+  public async Task GetOne_WhenNotFound_ThrowsNotFoundException()
   {
     _repo
       .Setup(r => r.GetPersonReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Person?)null);
 
-    var result = await _sut.GetOne(Guid.NewGuid(), false);
-
-    Assert.Null(result);
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false));
   }
 
   [Fact]
@@ -213,34 +205,30 @@ public class PersonServiceTests
   // Update (PUT)
 
   [Fact]
-  public async Task UpdatePut_WhenPersonNotFound_ReturnsFalse()
+  public async Task UpdatePut_WhenPersonNotFound_ThrowsNotFoundException()
   {
     var id = Guid.NewGuid();
     _repo.Setup(r => r.GetPersonAsync(id, true, It.IsAny<CancellationToken>())).ReturnsAsync((Person?)null);
 
-    var (success, error) = await _sut.Update(id, MakeDto());
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(id, MakeDto()));
 
-    Assert.False(success);
-    Assert.Contains($"Person '{id}' not found", error);
+    Assert.Contains($"Person '{id}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePut_WhenValidationFails_ReturnsFalse()
+  public async Task UpdatePut_WhenValidationFails_ThrowsValidationException()
   {
     var entity = MakePersonEntity();
     _repo.Setup(r => r.GetPersonAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _validator
-      .Setup(v => v.Validate(It.IsAny<PersonForChangeDto>()))
-      .Returns(new ValidationResult([new ValidationFailure("FirstName", "Required")]));
+      .Setup(v => v.ValidateAsync(It.IsAny<PersonForChangeDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("FirstName", "Required")]));
 
-    var (success, error) = await _sut.Update(entity.Id, MakeDto());
-
-    Assert.False(success);
-    Assert.NotNull(error);
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Update(entity.Id, MakeDto()));
   }
 
   [Fact]
-  public async Task UpdatePut_WhenMovieIdNotFound_ReturnsFalse()
+  public async Task UpdatePut_WhenMovieIdNotFound_ThrowsNotFoundException()
   {
     var movieId = Guid.NewGuid();
     var entity = MakePersonEntity();
@@ -251,14 +239,13 @@ public class PersonServiceTests
       .Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync([movieId]);
 
-    var (success, error) = await _sut.Update(entity.Id, MakeDto(movieId: movieId));
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(entity.Id, MakeDto(movieId: movieId)));
 
-    Assert.False(success);
-    Assert.Contains($"Movie '{movieId}' not found", error);
+    Assert.Contains($"Movie '{movieId}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePut_WhenInputIsValid_ReturnsTrueAndSaves()
+  public async Task UpdatePut_WhenInputIsValid_Saves()
   {
     var movieId = Guid.NewGuid();
     var entity = MakePersonEntity();
@@ -271,29 +258,26 @@ public class PersonServiceTests
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<MovieRoleForCreationDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(entity.Id, MakeDto(movieId: movieId));
+    await _sut.Update(entity.Id, MakeDto(movieId: movieId));
 
-    Assert.True(success);
-    Assert.Null(error);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
   // Update (PATCH)
 
   [Fact]
-  public async Task UpdatePatch_WhenPersonNotFound_ReturnsFalse()
+  public async Task UpdatePatch_WhenPersonNotFound_ThrowsNotFoundException()
   {
     var id = Guid.NewGuid();
     _repo.Setup(r => r.GetPersonAsync(id, true, It.IsAny<CancellationToken>())).ReturnsAsync((Person?)null);
 
-    var (success, error) = await _sut.Update(id, new JsonPatchDocument<PersonForChangeDto>());
+    var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(id, new JsonPatchDocument<PersonForChangeDto>()));
 
-    Assert.False(success);
-    Assert.Contains($"Person '{id}' not found", error);
+    Assert.Contains($"Person '{id}' not found", error.Message);
   }
 
   [Fact]
-  public async Task UpdatePatch_WhenPatchIsValid_ReturnsTrueAndSaves()
+  public async Task UpdatePatch_WhenPatchIsValid_Saves()
   {
     var movieId = Guid.NewGuid();
     var entity = MakePersonEntity();
@@ -308,10 +292,8 @@ public class PersonServiceTests
     _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<MovieRoleForCreationDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-    var (success, error) = await _sut.Update(entity.Id, new JsonPatchDocument<PersonForChangeDto>());
+    await _sut.Update(entity.Id, new JsonPatchDocument<PersonForChangeDto>());
 
-    Assert.True(success);
-    Assert.Null(error);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 }

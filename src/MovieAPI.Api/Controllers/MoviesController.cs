@@ -34,12 +34,6 @@ public class MoviesController(IMovieService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includePeople, cancellationToken);
-
-    if (result == null)
-    {
-      return NotFound();
-    }
-
     return Ok(result);
   }
 
@@ -48,26 +42,14 @@ public class MoviesController(IMovieService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await service.Create(newMovie, cancellationToken);
-
-    if (!result.Success)
-    {
-      return BadRequest(result.Error!.Message);
-    }
-
-    return CreatedAtRoute("GetMovie", new { result.Movie!.Id }, result.Movie);
+    return CreatedAtRoute("GetMovie", new { result.Id }, result);
   }
 
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateMovie(Guid id, MovieForChangeDto updatedMovie,
     CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(id, updatedMovie, cancellationToken);
-
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(id, updatedMovie, cancellationToken);
     return NoContent();
   }
 
@@ -75,13 +57,7 @@ public class MoviesController(IMovieService service) : ControllerBase
   public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<MovieForChangeDto> patch,
     CancellationToken cancellationToken = default)
   {
-    var (success, message) = await service.Update(id, patch, cancellationToken);
-
-    if (!success)
-    {
-      return BadRequest(message);
-    }
-
+    await service.Update(id, patch, cancellationToken);
     return NoContent();
   }
 

@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -17,14 +18,13 @@ public class MovieService(
   IMapper mapper,
   IValidator<MovieForChangeDto> validator) : IMovieService
 {
-  public async Task<MovieCreationResult> Create(MovieForChangeDto newMovie, CancellationToken token = default)
+  public async Task<MovieDto> Create(MovieForChangeDto newMovie, CancellationToken token = default)
   {
-    var validationResult = validator.Validate(newMovie);
+    var validationResult = await validator.ValidateAsync(newMovie, token);
 
     if (!validationResult.IsValid)
     {
-      var error = new ValidationException(validationResult.Errors);
-      return MovieCreationResult.Failed(error);
+      throw new ValidationException(validationResult.Errors);
     }
 
     var invalidPersonIds = await personRepository.GetMissingIdsAsync(
@@ -36,7 +36,7 @@ public class MovieService(
     {
       var errors = invalidPersonIds.Select(id => $"Person '{id}' not found")
         .Concat(invalidGenreIds.Select(id => $"Genre '{id}' not found"));
-      return MovieCreationResult.Failed(new ArgumentException(string.Join("; ", errors)));
+      throw new NotFoundException(string.Join("; ", errors));
     }
 
     var movieEntity = mapper.Map<Movie>(newMovie);
@@ -51,7 +51,7 @@ public class MovieService(
 
     // refetch to properly populate genres
     var savedMovie = await repository.GetMovieAsync(movieEntity.Id, false, token);
-    return MovieCreationResult.Successful(mapper.Map<MovieDto>(savedMovie));
+    return mapper.Map<MovieDto>(savedMovie);
   }
 
   public async Task<(IEnumerable<MovieDto>, PaginationMetadata?)> GetMany(MovieSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
@@ -70,15 +70,9 @@ public class MovieService(
     return (mapper.Map<IEnumerable<MovieDto>>(result), pagination);
   }
 
-  public async Task<MovieExtendedDto?> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
+  public async Task<MovieExtendedDto> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
   {
-    var result = await repository.GetMovieReadOnlyAsync(id, includePeople, token);
-
-    if (result == null)
-    {
-      return null;
-    }
-
+    var result = await repository.GetMovieReadOnlyAsync(id, includePeople, token) ?? throw new NotFoundException($"Movie '{id}' not found");
     return mapper.Map<MovieExtendedDto>(result);
   }
 
@@ -94,32 +88,29 @@ public class MovieService(
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, MovieForChangeDto updatedMovie, CancellationToken token = default)
+  public async Task Update(Guid id, MovieForChangeDto updatedMovie, CancellationToken token = default)
   {
-    var entity = await repository.GetMovieAsync(id, true, token);
-    if (entity == null)
-      return (false, $"Movie '{id}' not found");
-
-    return await ApplyUpdateAsync(entity, updatedMovie, token);
+    var entity = await repository.GetMovieAsync(id, true, token) ?? throw new NotFoundException($"Movie '{id}' not found");
+    await ApplyUpdateAsync(entity, updatedMovie, token);
   }
 
-  public async Task<(bool, string?)> Update(Guid id, JsonPatchDocument<MovieForChangeDto> patchDocument, CancellationToken token = default)
+  public async Task Update(Guid id, JsonPatchDocument<MovieForChangeDto> patchDocument, CancellationToken token = default)
   {
-    var entity = await repository.GetMovieAsync(id, true, token);
-    if (entity == null)
-      return (false, $"Movie '{id}' not found");
+    var entity = await repository.GetMovieAsync(id, true, token) ?? throw new NotFoundException($"Movie '{id}' not found");
 
     var dto = mapper.Map<MovieForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
-    return await ApplyUpdateAsync(entity, dto, token);
+    await ApplyUpdateAsync(entity, dto, token);
   }
 
-  private async Task<(bool, string?)> ApplyUpdateAsync(Movie entity, MovieForChangeDto updatedMovie, CancellationToken token)
+  private async Task ApplyUpdateAsync(Movie entity, MovieForChangeDto updatedMovie, CancellationToken token)
   {
-    var validationResult = validator.Validate(updatedMovie);
+    var validationResult = await validator.ValidateAsync(updatedMovie, token);
     if (!validationResult.IsValid)
-      return (false, new ValidationException(validationResult.Errors).Message);
+    {
+      throw new ValidationException(validationResult.Errors);
+    }
 
     var invalidPersonIds = await personRepository.GetMissingIdsAsync(
       updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
@@ -130,7 +121,7 @@ public class MovieService(
     {
       var errors = invalidPersonIds.Select(id => $"Person '{id}' not found")
         .Concat(invalidGenreIds.Select(id => $"Genre '{id}' not found"));
-      return (false, string.Join("; ", errors));
+      throw new NotFoundException(string.Join("; ", errors));
     }
 
     entity.Title = updatedMovie.Title;
@@ -151,6 +142,5 @@ public class MovieService(
     entity.Details.Budget = updatedMovie.Budget;
 
     await repository.SaveChangesAsync(token);
-    return (true, null);
   }
 }
