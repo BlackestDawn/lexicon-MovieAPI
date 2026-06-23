@@ -19,6 +19,7 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **Domain Tracking** — `CreatedAt` / `UpdatedAt` auto-managed via an EF Core save interceptor
 - **Dev Seeding** — Database is seeded with sample data in the Development environment
 - **Response Caching** — GET endpoints for all four resources are output-cached under a single shared cache tag (`catalog`), since their "extended"/detail DTOs embed each other's data (e.g. movies embed genres/cast/reviews, genres embed movies). Any write through any of the four controllers evicts the shared tag, so the simpler invalidation comes at the cost of busting more cache than strictly necessary per write. The store is in-memory in Development/Testing and Redis-backed in Production (`AddStackExchangeRedisOutputCache`, configured via the `redis` connection string)
+- **Structured Logging** — Serilog replaces the default logging provider, with per-request logging (`UseSerilogRequestLogging`) and startup failures captured by a bootstrap logger. Development logs at `Debug` to the console and a rolling daily file under `logs/`; Production logs at `Information` to the console and ships structured events to an external Elasticsearch cluster (configured via the `Elasticsearch:Uri` setting, required and fail-fast in Production, matching the Redis connection-string pattern)
 - **Unit Tests** — xUnit + Moq tests covering all four services and all four validators (Movie, Person, Genre, Review)
 - **Integration Tests** — xUnit + `WebApplicationFactory` tests covering full CRUD for all four controllers against a real SQL Server instance spun up via Testcontainers, with Respawn resetting the database between tests, plus dedicated tests verifying output cache hits and shared-tag invalidation
 
@@ -30,6 +31,7 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **FluentValidation** for request validation
 - **Swagger / OpenAPI** (Swashbuckle + `Microsoft.AspNetCore.OpenApi`) for API docs
 - **ASP.NET Core Output Caching**, with `Microsoft.AspNetCore.OutputCaching.StackExchangeRedis` for the Production store
+- **Serilog** (`Serilog.AspNetCore`) for structured logging, with `Serilog.Sinks.Elasticsearch` as the external log store in Production
 - **xUnit + Moq** for unit testing
 - **xUnit + Testcontainers + Respawn** for integration testing
 
@@ -72,6 +74,8 @@ MovieAPI/
 The database is automatically seeded with sample data when running in the Development environment.
 
 Output caching uses an in-memory store in Development, so no extra setup is needed locally. Running with `ASPNETCORE_ENVIRONMENT=Production` requires a `redis` connection string (e.g. `ConnectionStrings__redis=localhost:6379`) — the app fails fast at startup if it's missing.
+
+Logging similarly needs no extra setup in Development (console + a rolling file under `logs/`). Production additionally requires an `Elasticsearch:Uri` setting (e.g. `Elasticsearch__Uri=http://localhost:9200`) pointing at an Elasticsearch cluster — the app fails fast at startup if it's missing. Logs are shipped to a `movieapi-logs-{yyyy.MM}` index, viewable in Kibana.
 
 ### Running Tests
 
