@@ -28,6 +28,27 @@ builder.Services.AddAutoMapper(config => {},
   AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 
+// Redis backs the output cache in Production so it's shared across instances; every
+// other environment (Development, Testing, ...) keeps the default in-memory store.
+if (builder.Environment.IsProduction())
+{
+  builder.Services.AddStackExchangeRedisOutputCache(options =>
+  {
+    options.Configuration = builder.Configuration.GetConnectionString("redis")
+      ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
+  });
+}
+
+builder.Services.AddOutputCache(options =>
+{
+  // Movies, genres, people and reviews embed each other's data in their
+  // "extended"/detail DTOs, so a write to any one of them can make cached
+  // responses from the others stale. Sharing one tag keeps invalidation correct
+  // at the cost of evicting more than strictly necessary on each write.
+  options.AddPolicy("CatalogCache", policy =>
+    policy.Expire(TimeSpan.FromMinutes(5)).Tag("catalog"));
+});
+
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
@@ -55,6 +76,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseOutputCache();
 
 app.MapControllers();
 

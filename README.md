@@ -2,7 +2,7 @@
 
 A RESTful Web API built with ASP.NET Core for browsing and managing movie data — think a small-scale IMDB clone. The API exposes information about movies, people (actors/directors), genres, and user ratings/reviews.
 
-> **Status:** All four core resources — Movies, People, Genres, and Reviews — are implemented end-to-end with full CRUD (controller, service, validation, DTO mapping, unit tests, integration tests). Repositories expose tracked and read-only (`AsNoTracking`) query paths, with GET endpoints wired to the read-only versions. Error handling has been centralized: all four services now throw (`NotFoundException`, FluentValidation's `ValidationException`) instead of returning result wrapper objects or tuples, and a global `IExceptionHandler` middleware maps those to `ProblemDetails` HTTP responses.
+> **Status:** All four core resources — Movies, People, Genres, and Reviews — are implemented end-to-end with full CRUD (controller, service, validation, DTO mapping, unit tests, integration tests). Repositories expose tracked and read-only (`AsNoTracking`) query paths, with GET endpoints wired to the read-only versions. Error handling has been centralized: all four services now throw (`NotFoundException`, FluentValidation's `ValidationException`) instead of returning result wrapper objects or tuples, and a global `IExceptionHandler` middleware maps those to `ProblemDetails` HTTP responses. GET endpoints across all four resources are response-cached via ASP.NET Core's output caching middleware, backed by Redis in Production and an in-memory store elsewhere.
 
 ## Implemented Features
 
@@ -18,8 +18,9 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **DTO Mapping** — AutoMapper profiles for movies, people, genres, and reviews
 - **Domain Tracking** — `CreatedAt` / `UpdatedAt` auto-managed via an EF Core save interceptor
 - **Dev Seeding** — Database is seeded with sample data in the Development environment
+- **Response Caching** — GET endpoints for all four resources are output-cached under a single shared cache tag (`catalog`), since their "extended"/detail DTOs embed each other's data (e.g. movies embed genres/cast/reviews, genres embed movies). Any write through any of the four controllers evicts the shared tag, so the simpler invalidation comes at the cost of busting more cache than strictly necessary per write. The store is in-memory in Development/Testing and Redis-backed in Production (`AddStackExchangeRedisOutputCache`, configured via the `redis` connection string)
 - **Unit Tests** — xUnit + Moq tests covering all four services and all four validators (Movie, Person, Genre, Review)
-- **Integration Tests** — xUnit + `WebApplicationFactory` tests covering full CRUD for all four controllers against a real SQL Server instance spun up via Testcontainers, with Respawn resetting the database between tests
+- **Integration Tests** — xUnit + `WebApplicationFactory` tests covering full CRUD for all four controllers against a real SQL Server instance spun up via Testcontainers, with Respawn resetting the database between tests, plus dedicated tests verifying output cache hits and shared-tag invalidation
 
 ## Tech Stack
 
@@ -28,6 +29,7 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **AutoMapper** for DTO mapping
 - **FluentValidation** for request validation
 - **Swagger / OpenAPI** (Swashbuckle + `Microsoft.AspNetCore.OpenApi`) for API docs
+- **ASP.NET Core Output Caching**, with `Microsoft.AspNetCore.OutputCaching.StackExchangeRedis` for the Production store
 - **xUnit + Moq** for unit testing
 - **xUnit + Testcontainers + Respawn** for integration testing
 
@@ -68,6 +70,8 @@ MovieAPI/
 5. Browse the API docs at `https://localhost:<port>/swagger`
 
 The database is automatically seeded with sample data when running in the Development environment.
+
+Output caching uses an in-memory store in Development, so no extra setup is needed locally. Running with `ASPNETCORE_ENVIRONMENT=Production` requires a `redis` connection string (e.g. `ConnectionStrings__redis=localhost:6379`) — the app fails fast at startup if it's missing.
 
 ### Running Tests
 

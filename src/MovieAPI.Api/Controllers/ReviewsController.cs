@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Infrastructure.Models;
@@ -9,9 +10,10 @@ namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/movies/{movieId}/reviews")]
-public class ReviewsController(IReviewService service) : ControllerBase
+public class ReviewsController(IReviewService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]
+  [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetReviews(Guid movieId,
     string? search, int? minScore, int? maxScore,
     int? page, int? pageSize,
@@ -30,6 +32,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   }
 
   [HttpGet("{id}", Name = "GetReview")]
+  [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(movieId, id, cancellationToken);
@@ -41,6 +44,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await service.Create(movieId, newReview, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return CreatedAtRoute("GetReview", new {movieId, result.Id}, result);
   }
 
@@ -49,6 +53,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Update(movieId, id, updatedReview, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
@@ -57,6 +62,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await service.Update(movieId, id, patch, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
@@ -64,6 +70,7 @@ public class ReviewsController(IReviewService service) : ControllerBase
   public async Task<IActionResult> DeleteReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
     await service.Remove(movieId, id, cancellationToken);
+    await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 }
