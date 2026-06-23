@@ -28,6 +28,16 @@ builder.Services.AddAutoMapper(config => {},
   AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 
+builder.Services.AddOutputCache(options =>
+{
+  // Movies, genres, people and reviews embed each other's data in their
+  // "extended"/detail DTOs, so a write to any one of them can make cached
+  // responses from the others stale. Sharing one tag keeps invalidation correct
+  // at the cost of evicting more than strictly necessary on each write.
+  options.AddPolicy("CatalogCache", policy =>
+    policy.Expire(TimeSpan.FromMinutes(5)).Tag("catalog"));
+});
+
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
@@ -55,6 +65,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseOutputCache();
 
 app.MapControllers();
 
