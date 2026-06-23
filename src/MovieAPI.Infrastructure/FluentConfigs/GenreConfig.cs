@@ -19,5 +19,6 @@ public class GenreConfig : IEntityTypeConfiguration<Genre>
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
     builder.HasIndex(g => g.Name);
+    builder.HasIndex(g => g.Slug);
   }
 }
