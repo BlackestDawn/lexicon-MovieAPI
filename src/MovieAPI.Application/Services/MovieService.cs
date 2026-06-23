@@ -49,8 +49,8 @@ public class MovieService(
     await repository.AddAsync(movieEntity, token);
     await repository.SaveChangesAsync(token);
 
-    // refetch to properly populate genres
-    var savedMovie = await repository.GetMovieAsync(movieEntity.Id, false, token);
+    // refetch to properly populate genres; read-only since the result is only used to build the response
+    var savedMovie = await repository.GetMovieReadOnlyAsync(movieEntity.Id, false, token);
     return mapper.Map<MovieDto>(savedMovie);
   }
 

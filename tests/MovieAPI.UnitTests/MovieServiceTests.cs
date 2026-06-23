@@ -106,7 +106,7 @@ public class MovieServiceTests
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _repo.Setup(r => r.AddAsync(It.IsAny<Movie>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
-    _repo.Setup(r => r.GetMovieAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetMovieReadOnlyAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<Movie>(It.IsAny<MovieForChangeDto>())).Returns(entity);
     _mapper.Setup(m => m.Map<MovieDto>(It.IsAny<Movie>())).Returns(movieDto);
 
