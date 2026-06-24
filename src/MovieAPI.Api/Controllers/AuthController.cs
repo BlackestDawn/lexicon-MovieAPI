@@ -24,11 +24,18 @@ public class AuthController(IAuthService service) : ControllerBase
     return Ok(result);
   }
 
+  [HttpPost("refresh")]
+  public async Task<IActionResult> Refresh(RefreshTokenDto request, CancellationToken cancellationToken = default)
+  {
+    var result = await service.Refresh(request, cancellationToken);
+    return Ok(result);
+  }
+
   [Authorize]
   [HttpPost("logout")]
-  public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
+  public async Task<IActionResult> Logout(RefreshTokenDto request, CancellationToken cancellationToken = default)
   {
-    await service.Logout(User.GetUserId(), cancellationToken);
+    await service.Logout(User.GetUserId(), request, cancellationToken);
     return NoContent();
   }
 

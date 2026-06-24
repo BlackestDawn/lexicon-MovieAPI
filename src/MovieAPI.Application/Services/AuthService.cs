@@ -15,11 +15,13 @@ public class AuthService(
   UserManager<ApplicationUser> userManager,
   SignInManager<ApplicationUser> signInManager,
   ITokenService tokenService,
+  IRefreshTokenRepository refreshTokenRepository,
   IMapper mapper,
   IValidator<RegisterDto> registerValidator,
   IValidator<LoginDto> loginValidator,
   IValidator<UserForUpdateDto> updateValidator,
-  IValidator<ChangePasswordDto> changePasswordValidator) : IAuthService
+  IValidator<ChangePasswordDto> changePasswordValidator,
+  IValidator<RefreshTokenDto> refreshTokenValidator) : IAuthService
 {
   public async Task<AuthResponseDto> Register(RegisterDto newUser, CancellationToken token = default)
   {
@@ -39,7 +41,7 @@ public class AuthService(
 
     await userManager.AddToRoleAsync(user, Roles.User);
 
-    return await BuildAuthResponseAsync(user);
+    return await BuildAuthResponseAsync(user, token);
   }
 
   public async Task<AuthResponseDto> Login(LoginDto credentials, CancellationToken token = default)
@@ -59,18 +61,63 @@ public class AuthService(
       throw new AuthenticationException("Invalid email or password");
     }
 
-    return await BuildAuthResponseAsync(user);
+    return await BuildAuthResponseAsync(user, token);
   }
 
-  public async Task Logout(Guid userId, CancellationToken token = default)
+  public async Task<AuthResponseDto> Refresh(RefreshTokenDto request, CancellationToken token = default)
   {
-    var user = await userManager.FindByIdAsync(userId.ToString())
-      ?? throw new NotFoundException($"User '{userId}' not found");
+    var validationResult = await refreshTokenValidator.ValidateAsync(request, token);
+    if (!validationResult.IsValid)
+    {
+      throw new ValidationException(validationResult.Errors);
+    }
 
-    // Access tokens aren't tracked/blacklisted yet, so there's nothing to revoke
-    // directly. Bumping the security stamp invalidates anything issued before this
-    // point and becomes real revocation once token validation checks the stamp.
-    await userManager.UpdateSecurityStampAsync(user);
+    var tokenHash = tokenService.HashToken(request.RefreshToken);
+    var existing = await refreshTokenRepository.GetByTokenHashAsync(tokenHash, token);
+
+    if (existing is null || existing.ExpiresAtUtc <= DateTime.UtcNow)
+    {
+      throw new AuthenticationException("Invalid refresh token");
+    }
+
+    if (existing.RevokedAtUtc is not null)
+    {
+      // A revoked token being presented again means it was already rotated away (or
+      // explicitly logged out) - treat this as possible token theft and kill every
+      // active session for the user rather than just rejecting this one request.
+      await refreshTokenRepository.RevokeAllActiveForUserAsync(existing.UserId, token);
+      await refreshTokenRepository.SaveChangesAsync(token);
+      throw new AuthenticationException("Invalid refresh token");
+    }
+
+    var user = await userManager.FindByIdAsync(existing.UserId.ToString())
+      ?? throw new AuthenticationException("Invalid refresh token");
+
+    existing.RevokedAtUtc = DateTime.UtcNow;
+
+    return await BuildAuthResponseAsync(user, token);
+  }
+
+  public async Task Logout(Guid userId, RefreshTokenDto request, CancellationToken token = default)
+  {
+    var validationResult = await refreshTokenValidator.ValidateAsync(request, token);
+    if (!validationResult.IsValid)
+    {
+      throw new ValidationException(validationResult.Errors);
+    }
+
+    var tokenHash = tokenService.HashToken(request.RefreshToken);
+    var existing = await refreshTokenRepository.GetByTokenHashAsync(tokenHash, token);
+
+    // An unknown, already-revoked, or someone-else's token is treated as a no-op:
+    // the end state the caller wants (this session not logged in) is already true.
+    if (existing is null || existing.UserId != userId || existing.RevokedAtUtc is not null)
+    {
+      return;
+    }
+
+    existing.RevokedAtUtc = DateTime.UtcNow;
+    await refreshTokenRepository.SaveChangesAsync(token);
   }
 
   public async Task<UserDto> Update(Guid userId, UserForUpdateDto updatedUser, CancellationToken token = default)
@@ -120,16 +167,27 @@ public class AuthService(
     }
   }
 
-  private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user)
+  private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user, CancellationToken token)
   {
     var roles = await userManager.GetRolesAsync(user);
-    var (accessToken, expiresAtUtc) = tokenService.GenerateToken(user, roles);
+    var (accessToken, accessExpiresAtUtc) = tokenService.GenerateToken(user, roles);
+    var (refreshToken, refreshExpiresAtUtc) = tokenService.GenerateRefreshToken();
+
+    await refreshTokenRepository.AddAsync(new RefreshToken
+    {
+      UserId = user.Id,
+      TokenHash = tokenService.HashToken(refreshToken),
+      ExpiresAtUtc = refreshExpiresAtUtc,
+    }, token);
+    await refreshTokenRepository.SaveChangesAsync(token);
 
     return new AuthResponseDto
     {
       User = mapper.Map<UserDto>(user),
       AccessToken = accessToken,
-      ExpiresAtUtc = expiresAtUtc,
+      ExpiresAtUtc = accessExpiresAtUtc,
+      RefreshToken = refreshToken,
+      RefreshTokenExpiresAtUtc = refreshExpiresAtUtc,
     };
   }
 

@@ -25,6 +25,8 @@ public class AuthServiceTests
   private readonly Mock<IValidator<LoginDto>> _loginValidator = new();
   private readonly Mock<IValidator<UserForUpdateDto>> _updateValidator = new();
   private readonly Mock<IValidator<ChangePasswordDto>> _changePasswordValidator = new();
+  private readonly Mock<IValidator<RefreshTokenDto>> _refreshTokenValidator = new();
+  private readonly Mock<IRefreshTokenRepository> _refreshTokenRepository = new();
   private readonly AuthService _sut;
 
   public AuthServiceTests()
@@ -36,15 +38,29 @@ public class AuthServiceTests
     _tokenService
       .Setup(t => t.GenerateToken(It.IsAny<ApplicationUser>(), It.IsAny<IEnumerable<string>>()))
       .Returns(("access-token", DateTime.UtcNow.AddMinutes(60)));
+    _tokenService
+      .Setup(t => t.GenerateRefreshToken())
+      .Returns(("refresh-token", DateTime.UtcNow.AddDays(7)));
+    _tokenService
+      .Setup(t => t.HashToken(It.IsAny<string>()))
+      .Returns<string>(raw => $"hash:{raw}");
+    _refreshTokenRepository
+      .Setup(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
+      .Returns(Task.CompletedTask);
+    _refreshTokenRepository
+      .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(true);
     _sut = new AuthService(
       _userManager.Object,
       _signInManager.Object,
       _tokenService.Object,
+      _refreshTokenRepository.Object,
       _mapper.Object,
       _registerValidator.Object,
       _loginValidator.Object,
       _updateValidator.Object,
-      _changePasswordValidator.Object);
+      _changePasswordValidator.Object,
+      _refreshTokenValidator.Object);
   }
 
   // Helpers
@@ -75,6 +91,17 @@ public class AuthServiceTests
 
   private static ChangePasswordDto MakeChangePasswordDto() => new() { CurrentPassword = "OldPassword123!", NewPassword = "NewPassword123!" };
 
+  private static RefreshTokenDto MakeRefreshTokenDto(string token = "raw-refresh-token") => new() { RefreshToken = token };
+
+  private static RefreshToken MakeRefreshTokenEntity(Guid? userId = null, string tokenHash = "hash:raw-refresh-token", bool revoked = false, bool expired = false) => new()
+  {
+    Id = Guid.NewGuid(),
+    UserId = userId ?? Guid.NewGuid(),
+    TokenHash = tokenHash,
+    ExpiresAtUtc = expired ? DateTime.UtcNow.AddDays(-1) : DateTime.UtcNow.AddDays(7),
+    RevokedAtUtc = revoked ? DateTime.UtcNow.AddMinutes(-1) : null,
+  };
+
   private static ApplicationUser MakeUser(Guid? id = null, string email = "user@test.com") =>
     new() { Id = id ?? Guid.NewGuid(), Email = email, UserName = email };
 
@@ -93,6 +120,9 @@ public class AuthServiceTests
       .ReturnsAsync(new ValidationResult());
     _changePasswordValidator
       .Setup(v => v.ValidateAsync(It.IsAny<ChangePasswordDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
+    _refreshTokenValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<RefreshTokenDto>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new ValidationResult());
   }
 
@@ -137,6 +167,7 @@ public class AuthServiceTests
 
     Assert.Equal(dto.Email, result.User.Email);
     Assert.Equal("access-token", result.AccessToken);
+    Assert.Equal("refresh-token", result.RefreshToken);
     Assert.Equal(dto.Email, createdUser!.Email);
     Assert.Equal(dto.Email, createdUser.UserName);
   }
@@ -156,6 +187,26 @@ public class AuthServiceTests
     await _sut.Register(dto, CancellationToken.None);
 
     _userManager.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), MovieAPI.Domain.Constants.Roles.User), Times.Once);
+  }
+
+  [Fact]
+  public async Task Register_WhenSucceeds_PersistsRefreshToken()
+  {
+    SetupValidatorsValid();
+    var dto = MakeRegisterDto();
+    _userManager
+      .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), dto.Password))
+      .ReturnsAsync(IdentityResult.Success);
+    _mapper
+      .Setup(m => m.Map<UserDto>(It.IsAny<ApplicationUser>()))
+      .Returns((ApplicationUser u) => MakeUserDto(u));
+
+    await _sut.Register(dto, CancellationToken.None);
+
+    _refreshTokenRepository.Verify(
+      r => r.AddAsync(It.Is<RefreshToken>(rt => rt.TokenHash == "hash:refresh-token"), It.IsAny<CancellationToken>()),
+      Times.Once);
+    _refreshTokenRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
   // Login
@@ -207,28 +258,147 @@ public class AuthServiceTests
 
     Assert.Equal(user.Id, result.User.Id);
     Assert.Equal("access-token", result.AccessToken);
+    Assert.Equal("refresh-token", result.RefreshToken);
+  }
+
+  // Refresh
+
+  [Fact]
+  public async Task Refresh_WhenValidationFails_ThrowsValidationException()
+  {
+    _refreshTokenValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<RefreshTokenDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("RefreshToken", "Required")]));
+
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.Refresh(MakeRefreshTokenDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task Refresh_WhenTokenNotFound_ThrowsAuthenticationException()
+  {
+    SetupValidatorsValid();
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((RefreshToken?)null);
+
+    await Assert.ThrowsAsync<AuthenticationException>(() => _sut.Refresh(MakeRefreshTokenDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task Refresh_WhenTokenExpired_ThrowsAuthenticationException()
+  {
+    SetupValidatorsValid();
+    var existing = MakeRefreshTokenEntity(expired: true);
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
+
+    await Assert.ThrowsAsync<AuthenticationException>(() => _sut.Refresh(MakeRefreshTokenDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task Refresh_WhenTokenAlreadyRevoked_RevokesAllActiveForUserAndThrows()
+  {
+    SetupValidatorsValid();
+    var existing = MakeRefreshTokenEntity(revoked: true);
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
+
+    await Assert.ThrowsAsync<AuthenticationException>(() => _sut.Refresh(MakeRefreshTokenDto(), CancellationToken.None));
+
+    _refreshTokenRepository.Verify(r => r.RevokeAllActiveForUserAsync(existing.UserId, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task Refresh_WhenUserNotFound_ThrowsAuthenticationException()
+  {
+    SetupValidatorsValid();
+    var existing = MakeRefreshTokenEntity();
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
+    _userManager.Setup(m => m.FindByIdAsync(existing.UserId.ToString())).ReturnsAsync((ApplicationUser?)null);
+
+    await Assert.ThrowsAsync<AuthenticationException>(() => _sut.Refresh(MakeRefreshTokenDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task Refresh_WhenTokenValid_RevokesOldTokenAndReturnsNewTokens()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var existing = MakeRefreshTokenEntity(userId: user.Id);
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
+    _userManager.Setup(m => m.FindByIdAsync(user.Id.ToString())).ReturnsAsync(user);
+    _mapper.Setup(m => m.Map<UserDto>(user)).Returns(MakeUserDto(user));
+
+    var result = await _sut.Refresh(MakeRefreshTokenDto(), CancellationToken.None);
+
+    Assert.NotNull(existing.RevokedAtUtc);
+    Assert.Equal("access-token", result.AccessToken);
+    Assert.Equal("refresh-token", result.RefreshToken);
   }
 
   // Logout
 
   [Fact]
-  public async Task Logout_WhenUserNotFound_ThrowsNotFoundException()
+  public async Task Logout_WhenTokenUnknown_DoesNotRevokeAnything()
   {
-    _userManager.Setup(m => m.FindByIdAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+    SetupValidatorsValid();
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((RefreshToken?)null);
 
-    await Assert.ThrowsAsync<NotFoundException>(() => _sut.Logout(Guid.NewGuid(), CancellationToken.None));
+    await _sut.Logout(Guid.NewGuid(), MakeRefreshTokenDto(), CancellationToken.None);
+
+    _refreshTokenRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task Logout_WhenUserExists_UpdatesSecurityStamp()
+  public async Task Logout_WhenTokenBelongsToDifferentUser_DoesNotRevokeIt()
   {
-    var user = MakeUser();
-    _userManager.Setup(m => m.FindByIdAsync(user.Id.ToString())).ReturnsAsync(user);
-    _userManager.Setup(m => m.UpdateSecurityStampAsync(user)).ReturnsAsync(IdentityResult.Success);
+    SetupValidatorsValid();
+    var existing = MakeRefreshTokenEntity();
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
 
-    await _sut.Logout(user.Id, CancellationToken.None);
+    await _sut.Logout(Guid.NewGuid(), MakeRefreshTokenDto(), CancellationToken.None);
 
-    _userManager.Verify(m => m.UpdateSecurityStampAsync(user), Times.Once);
+    Assert.Null(existing.RevokedAtUtc);
+    _refreshTokenRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+  }
+
+  [Fact]
+  public async Task Logout_WhenTokenAlreadyRevoked_DoesNotSaveAgain()
+  {
+    SetupValidatorsValid();
+    var existing = MakeRefreshTokenEntity(revoked: true);
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
+
+    await _sut.Logout(existing.UserId, MakeRefreshTokenDto(), CancellationToken.None);
+
+    _refreshTokenRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+  }
+
+  [Fact]
+  public async Task Logout_WhenTokenValid_RevokesIt()
+  {
+    SetupValidatorsValid();
+    var existing = MakeRefreshTokenEntity();
+    _refreshTokenRepository
+      .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(existing);
+
+    await _sut.Logout(existing.UserId, MakeRefreshTokenDto(), CancellationToken.None);
+
+    Assert.NotNull(existing.RevokedAtUtc);
+    _refreshTokenRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
   }
 
   // Update

@@ -129,6 +129,7 @@ try
   builder.Services.AddScoped<IMovieRepository, MovieRepository>();
   builder.Services.AddScoped<IGenreRepository, GenreRepository>();
   builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+  builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
   builder.Services.AddScoped<IPersonRepository, PersonRepository>();
   builder.Services.AddScoped<IMovieService, MovieService>();
   builder.Services.AddScoped<IGenreService, GenreService>();
@@ -145,6 +146,7 @@ try
   builder.Services.AddScoped<IValidator<LoginDto>, LoginValidator>();
   builder.Services.AddScoped<IValidator<UserForUpdateDto>, UserUpdateValidator>();
   builder.Services.AddScoped<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
+  builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenValidator>();
 
   var app = builder.Build();
 
