@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieAPI.Api.Extensions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 
@@ -28,7 +28,7 @@ public class AuthController(IAuthService service) : ControllerBase
   [HttpPost("logout")]
   public async Task<IActionResult> Logout(CancellationToken cancellationToken = default)
   {
-    await service.Logout(CurrentUserId, cancellationToken);
+    await service.Logout(User.GetUserId(), cancellationToken);
     return NoContent();
   }
 
@@ -36,9 +36,7 @@ public class AuthController(IAuthService service) : ControllerBase
   [HttpPut("me")]
   public async Task<IActionResult> UpdateMe(UserForUpdateDto updatedUser, CancellationToken cancellationToken = default)
   {
-    var result = await service.Update(CurrentUserId, updatedUser, cancellationToken);
+    var result = await service.Update(User.GetUserId(), updatedUser, cancellationToken);
     return Ok(result);
   }
-
-  private Guid CurrentUserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
 
@@ -34,6 +35,8 @@ public class AuthService(
     {
       throw new ValidationException(ToValidationFailures(result.Errors));
     }
+
+    await userManager.AddToRoleAsync(user, Roles.User);
 
     return await BuildAuthResponseAsync(user);
   }

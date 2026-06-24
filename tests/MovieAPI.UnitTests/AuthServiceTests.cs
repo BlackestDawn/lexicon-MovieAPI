@@ -31,6 +31,7 @@ public class AuthServiceTests
     _userManager = MockUserManager();
     _signInManager = MockSignInManager(_userManager.Object);
     _userManager.Setup(m => m.GetRolesAsync(It.IsAny<ApplicationUser>())).ReturnsAsync([]);
+    _userManager.Setup(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>())).ReturnsAsync(IdentityResult.Success);
     _tokenService
       .Setup(t => t.GenerateToken(It.IsAny<ApplicationUser>(), It.IsAny<IEnumerable<string>>()))
       .Returns(("access-token", DateTime.UtcNow.AddMinutes(60)));
@@ -131,6 +132,23 @@ public class AuthServiceTests
     Assert.Equal("access-token", result.AccessToken);
     Assert.Equal(dto.Email, createdUser!.Email);
     Assert.Equal(dto.Email, createdUser.UserName);
+  }
+
+  [Fact]
+  public async Task Register_WhenSucceeds_AssignsDefaultUserRole()
+  {
+    SetupValidatorsValid();
+    var dto = MakeRegisterDto();
+    _userManager
+      .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), dto.Password))
+      .ReturnsAsync(IdentityResult.Success);
+    _mapper
+      .Setup(m => m.Map<UserDto>(It.IsAny<ApplicationUser>()))
+      .Returns((ApplicationUser u) => MakeUserDto(u));
+
+    await _sut.Register(dto, CancellationToken.None);
+
+    _userManager.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), MovieAPI.Domain.Constants.Roles.User), Times.Once);
   }
 
   // Login

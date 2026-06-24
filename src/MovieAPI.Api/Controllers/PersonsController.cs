@@ -1,9 +1,11 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Api.Controllers;
@@ -36,6 +38,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return Ok(result);
   }
 
+  [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPost]
   public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
   {
@@ -44,6 +47,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return CreatedAtRoute("GetPerson", new { result.Id }, result);
   }
 
+  [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeDto updatedPerson,
     CancellationToken cancellationToken = default)
@@ -53,6 +57,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return NoContent();
   }
 
+  [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
     CancellationToken cancellationToken = default)
@@ -62,6 +67,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return NoContent();
   }
 
+  [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpDelete("{id}")]
   public async Task<IActionResult> DeletePerson(Guid id, CancellationToken cancellationToken = default)
   {

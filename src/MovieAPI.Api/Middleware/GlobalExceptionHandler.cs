@@ -13,6 +13,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
     {
       NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
       AuthenticationException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+      ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
       ValidationException => (StatusCodes.Status400BadRequest, "Validation Failed"),
       _ => (StatusCodes.Status500InternalServerError, "Internal Server Error"),
     };

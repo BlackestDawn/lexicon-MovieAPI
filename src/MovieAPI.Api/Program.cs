@@ -159,6 +159,15 @@ try
     await DbSeeder.SeedAsync(app.Services);
   }
 
+  // Skipped in the "Testing" environment: integration tests apply migrations lazily
+  // inside IntegrationTestWebAppFactory.InitializeAsync, after the host (and this
+  // line) has already run, so the AspNetRoles table wouldn't exist yet here. The
+  // test factory seeds roles itself once migration is done.
+  if (!app.Environment.IsEnvironment("Testing"))
+  {
+    await RoleSeeder.SeedAsync(app.Services);
+  }
+
   app.UseHttpsRedirection();
 
   app.UseAuthentication();

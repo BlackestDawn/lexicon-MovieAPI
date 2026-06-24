@@ -1,9 +1,11 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Api.Controllers;
@@ -40,6 +42,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
     return Ok(result);
   }
 
+  [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPost]
   public async Task<IActionResult> CreateMovie(MovieForChangeDto newMovie,
     CancellationToken cancellationToken = default)
@@ -49,6 +52,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
     return CreatedAtRoute("GetMovie", new { result.Id }, result);
   }
 
+  [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateMovie(Guid id, MovieForChangeDto updatedMovie,
     CancellationToken cancellationToken = default)
@@ -58,6 +62,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
     return NoContent();
   }
 
+  [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchMovie(Guid id, JsonPatchDocument<MovieForChangeDto> patch,
     CancellationToken cancellationToken = default)
@@ -67,6 +72,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
     return NoContent();
   }
 
+  [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpDelete("{id}")]
   public async Task<IActionResult> RemoveMovie(Guid id,
     CancellationToken cancellationToken = default)

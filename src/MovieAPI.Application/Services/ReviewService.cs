@@ -17,7 +17,7 @@ public class ReviewService(
   IMapper mapper,
   IValidator<ReviewForChangeDto> validator) : IReviewService
 {
-  public async Task<ReviewDto> Create(Guid movieId, ReviewForChangeDto newReview, CancellationToken token = default)
+  public async Task<ReviewDto> Create(Guid movieId, ReviewForChangeDto newReview, Guid currentUserId, CancellationToken token = default)
   {
     // movieId is part of the route, not the body, so a missing movie is treated like a bad route segment
     // and checked before bothering to validate the body
@@ -35,6 +35,7 @@ public class ReviewService(
 
     var reviewEntity = mapper.Map<Review>(newReview);
     reviewEntity.MovieId = movieId;
+    reviewEntity.UserId = currentUserId;
 
     await repository.AddAsync(reviewEntity, token);
     await repository.SaveChangesAsync(token);
@@ -65,7 +66,7 @@ public class ReviewService(
     return mapper.Map<ReviewDto>(result);
   }
 
-  public async Task Remove(Guid movieId, Guid id, CancellationToken token = default)
+  public async Task Remove(Guid movieId, Guid id, Guid currentUserId, bool canModerate, CancellationToken token = default)
   {
     var entity = await repository.GetReviewAsync(movieId, id, token);
     if (entity == null)
@@ -73,11 +74,13 @@ public class ReviewService(
       return;
     }
 
+    EnsureOwnerOrModerator(entity, currentUserId, canModerate);
+
     repository.Delete(entity);
     await repository.SaveChangesAsync(token);
   }
 
-  public async Task Update(Guid movieId, Guid id, ReviewForChangeDto updatedReview, CancellationToken token = default)
+  public async Task Update(Guid movieId, Guid id, ReviewForChangeDto updatedReview, Guid currentUserId, bool canModerate, CancellationToken token = default)
   {
     if (!await movieRepository.ExistsAsync(movieId, token))
     {
@@ -85,10 +88,11 @@ public class ReviewService(
     }
 
     var entity = await repository.GetReviewAsync(movieId, id, token) ?? throw new NotFoundException($"Review '{id}' not found");
+    EnsureOwnerOrModerator(entity, currentUserId, canModerate);
     await ApplyUpdateAsync(entity, updatedReview, token);
   }
 
-  public async Task Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patchDocument, CancellationToken token = default)
+  public async Task Update(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patchDocument, Guid currentUserId, bool canModerate, CancellationToken token = default)
   {
     if (!await movieRepository.ExistsAsync(movieId, token))
     {
@@ -96,10 +100,25 @@ public class ReviewService(
     }
 
     var entity = await repository.GetReviewAsync(movieId, id, token) ?? throw new NotFoundException($"Review '{id}' not found");
+    EnsureOwnerOrModerator(entity, currentUserId, canModerate);
+
     var dto = mapper.Map<ReviewForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
 
     await ApplyUpdateAsync(entity, dto, token);
+  }
+
+  private static void EnsureOwnerOrModerator(Review entity, Guid currentUserId, bool canModerate)
+  {
+    if (canModerate)
+    {
+      return;
+    }
+
+    if (entity.UserId != currentUserId)
+    {
+      throw new ForbiddenException("You can only modify your own review");
+    }
   }
 
   private async Task ApplyUpdateAsync(Review entity, ReviewForChangeDto updatedReview, CancellationToken token)
