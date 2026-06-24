@@ -11,6 +11,7 @@ using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 
 namespace MovieAPI.UnitTests;
 
@@ -18,6 +19,7 @@ public class AuthServiceTests
 {
   private readonly Mock<UserManager<ApplicationUser>> _userManager;
   private readonly Mock<SignInManager<ApplicationUser>> _signInManager;
+  private readonly Mock<ITokenService> _tokenService = new();
   private readonly Mock<IMapper> _mapper = new();
   private readonly Mock<IValidator<RegisterDto>> _registerValidator = new();
   private readonly Mock<IValidator<LoginDto>> _loginValidator = new();
@@ -28,9 +30,14 @@ public class AuthServiceTests
   {
     _userManager = MockUserManager();
     _signInManager = MockSignInManager(_userManager.Object);
+    _userManager.Setup(m => m.GetRolesAsync(It.IsAny<ApplicationUser>())).ReturnsAsync([]);
+    _tokenService
+      .Setup(t => t.GenerateToken(It.IsAny<ApplicationUser>(), It.IsAny<IEnumerable<string>>()))
+      .Returns(("access-token", DateTime.UtcNow.AddMinutes(60)));
     _sut = new AuthService(
       _userManager.Object,
       _signInManager.Object,
+      _tokenService.Object,
       _mapper.Object,
       _registerValidator.Object,
       _loginValidator.Object,
@@ -120,7 +127,8 @@ public class AuthServiceTests
 
     var result = await _sut.Register(dto, CancellationToken.None);
 
-    Assert.Equal(dto.Email, result.Email);
+    Assert.Equal(dto.Email, result.User.Email);
+    Assert.Equal("access-token", result.AccessToken);
     Assert.Equal(dto.Email, createdUser!.Email);
     Assert.Equal(dto.Email, createdUser.UserName);
   }
@@ -172,7 +180,8 @@ public class AuthServiceTests
 
     var result = await _sut.Login(MakeLoginDto(), CancellationToken.None);
 
-    Assert.Equal(user.Id, result.Id);
+    Assert.Equal(user.Id, result.User.Id);
+    Assert.Equal("access-token", result.AccessToken);
   }
 
   // Logout

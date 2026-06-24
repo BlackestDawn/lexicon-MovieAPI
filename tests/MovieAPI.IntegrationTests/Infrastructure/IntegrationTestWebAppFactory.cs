@@ -29,6 +29,9 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
       configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
       {
         ["ConnectionStrings:sqlserver"] = _connectionString,
+        ["Jwt:Issuer"] = "MovieAPI.Tests",
+        ["Jwt:Audience"] = "MovieAPI.Tests",
+        ["Jwt:Key"] = "test-signing-key-not-for-production-use-0123456789abcdef",
       });
     });
   }

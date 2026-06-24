@@ -6,18 +6,20 @@ using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
+using MovieAPI.Infrastructure.Interfaces;
 
 namespace MovieAPI.Application.Services;
 
 public class AuthService(
   UserManager<ApplicationUser> userManager,
   SignInManager<ApplicationUser> signInManager,
+  ITokenService tokenService,
   IMapper mapper,
   IValidator<RegisterDto> registerValidator,
   IValidator<LoginDto> loginValidator,
   IValidator<UserForUpdateDto> updateValidator) : IAuthService
 {
-  public async Task<UserDto> Register(RegisterDto newUser, CancellationToken token = default)
+  public async Task<AuthResponseDto> Register(RegisterDto newUser, CancellationToken token = default)
   {
     var validationResult = await registerValidator.ValidateAsync(newUser, token);
     if (!validationResult.IsValid)
@@ -33,10 +35,10 @@ public class AuthService(
       throw new ValidationException(ToValidationFailures(result.Errors));
     }
 
-    return mapper.Map<UserDto>(user);
+    return await BuildAuthResponseAsync(user);
   }
 
-  public async Task<UserDto> Login(LoginDto credentials, CancellationToken token = default)
+  public async Task<AuthResponseDto> Login(LoginDto credentials, CancellationToken token = default)
   {
     var validationResult = await loginValidator.ValidateAsync(credentials, token);
     if (!validationResult.IsValid)
@@ -53,7 +55,7 @@ public class AuthService(
       throw new AuthenticationException("Invalid email or password");
     }
 
-    return mapper.Map<UserDto>(user);
+    return await BuildAuthResponseAsync(user);
   }
 
   public async Task Logout(Guid userId, CancellationToken token = default)
@@ -61,9 +63,9 @@ public class AuthService(
     var user = await userManager.FindByIdAsync(userId.ToString())
       ?? throw new NotFoundException($"User '{userId}' not found");
 
-    // No JWT/refresh tokens exist yet, so there is nothing to revoke directly.
-    // Bumping the security stamp invalidates anything issued before this point and
-    // becomes real revocation once token validation checks the security-stamp claim.
+    // Access tokens aren't tracked/blacklisted yet, so there's nothing to revoke
+    // directly. Bumping the security stamp invalidates anything issued before this
+    // point and becomes real revocation once token validation checks the stamp.
     await userManager.UpdateSecurityStampAsync(user);
   }
 
@@ -94,6 +96,19 @@ public class AuthService(
     }
 
     return mapper.Map<UserDto>(user);
+  }
+
+  private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user)
+  {
+    var roles = await userManager.GetRolesAsync(user);
+    var (accessToken, expiresAtUtc) = tokenService.GenerateToken(user, roles);
+
+    return new AuthResponseDto
+    {
+      User = mapper.Map<UserDto>(user),
+      AccessToken = accessToken,
+      ExpiresAtUtc = expiresAtUtc,
+    };
   }
 
   private static IEnumerable<ValidationFailure> ToValidationFailures(IEnumerable<IdentityError> errors) =>

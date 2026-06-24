@@ -1,7 +1,10 @@
+using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using MovieAPI.Api.Middleware;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -61,15 +64,42 @@ try
 
   // AddIdentityCore (not AddIdentity) since this is an API project: it registers
   // UserManager/RoleManager without pulling in the cookie-auth middleware that
-  // AddIdentity assumes. The actual auth scheme (JWT, etc.) is a later step.
+  // AddIdentity assumes. The actual bearer scheme is configured below via AddJwtBearer.
   builder.Services.AddIdentityCore<ApplicationUser>(options => options.User.RequireUniqueEmail = true)
     .AddRoles<ApplicationRole>()
     .AddSignInManager()
     .AddEntityFrameworkStores<AppDbContext>();
 
-  // No scheme configured yet (JWT comes later) - this only exists so SignInManager
-  // can resolve IAuthenticationSchemeProvider via DI.
-  builder.Services.AddAuthentication();
+  // The Jwt:* lookups happen inside this callback (not eagerly above) because
+  // it's only invoked once JwtBearerOptions are actually resolved, after the host
+  // is built. Reading them eagerly here would run before WebApplicationFactory's
+  // test configuration overrides are merged in, breaking integration tests - the
+  // same reason the sqlserver connection string above is read inside AddDbContext's
+  // options callback rather than directly against builder.Configuration.
+  builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+      var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+        ?? throw new InvalidOperationException("Configuration value 'Jwt:Issuer' is not configured.");
+      var jwtAudience = builder.Configuration["Jwt:Audience"]
+        ?? throw new InvalidOperationException("Configuration value 'Jwt:Audience' is not configured.");
+      var jwtKey = builder.Configuration["Jwt:Key"]
+        ?? throw new InvalidOperationException("Configuration value 'Jwt:Key' is not configured.");
+
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
+      };
+    });
+
+  builder.Services.AddAuthorization();
 
   builder.Services.AddAutoMapper(config => {},
     AppDomain.CurrentDomain.GetAssemblies());
@@ -105,6 +135,7 @@ try
   builder.Services.AddScoped<IPersonService, PersonService>();
   builder.Services.AddScoped<IReviewService, ReviewService>();
   builder.Services.AddScoped<IAuthService, AuthService>();
+  builder.Services.AddScoped<ITokenService, TokenService>();
 
   builder.Services.AddScoped<IValidator<MovieForChangeDto>, MovieChangeValidator>();
   builder.Services.AddScoped<IValidator<PersonForChangeDto>, PersonChangeValidator>();
@@ -129,6 +160,9 @@ try
   }
 
   app.UseHttpsRedirection();
+
+  app.UseAuthentication();
+  app.UseAuthorization();
 
   app.UseOutputCache();
 
