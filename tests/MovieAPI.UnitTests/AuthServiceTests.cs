@@ -31,7 +31,7 @@ public class AuthServiceTests
 
   public AuthServiceTests()
   {
-    _userManager = MockUserManager();
+    _userManager = IdentityMocks.MockUserManager();
     _signInManager = MockSignInManager(_userManager.Object);
     _userManager.Setup(m => m.GetRolesAsync(It.IsAny<ApplicationUser>())).ReturnsAsync([]);
     _userManager.Setup(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>())).ReturnsAsync(IdentityResult.Success);
@@ -64,12 +64,6 @@ public class AuthServiceTests
   }
 
   // Helpers
-
-  private static Mock<UserManager<ApplicationUser>> MockUserManager()
-  {
-    var store = new Mock<IUserStore<ApplicationUser>>();
-    return new Mock<UserManager<ApplicationUser>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
-  }
 
   private static Mock<SignInManager<ApplicationUser>> MockSignInManager(UserManager<ApplicationUser> userManager)
   {

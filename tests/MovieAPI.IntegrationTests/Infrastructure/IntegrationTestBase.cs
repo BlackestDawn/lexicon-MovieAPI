@@ -36,10 +36,18 @@ public abstract class IntegrationTestBase(IntegrationTestWebAppFactory factory) 
   // a different user identity than the shared Administrator-by-default Client.
   protected async Task<HttpClient> CreateClientWithRoleAsync(string role)
   {
-    var client = Factory.CreateClient();
-    var token = await Factory.CreateUserTokenAsync(role);
-    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    var (_, client) = await CreateUserAndClientAsync(role);
     return client;
+  }
+
+  // Same as CreateClientWithRoleAsync, but also returns the user's id - needed by
+  // tests that act on "your own account" (e.g. admin self-delete/self-demote guards).
+  protected async Task<(Guid Id, HttpClient Client)> CreateUserAndClientAsync(string role)
+  {
+    var client = Factory.CreateClient();
+    var (id, token) = await Factory.CreateUserAsync(role);
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    return (id, client);
   }
 
   // The JSON Patch input formatter only matches application/json-patch+json,

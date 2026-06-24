@@ -77,6 +77,14 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
   // so tests can get a token for a specific role without an extra round trip.
   public async Task<string> CreateUserTokenAsync(string role = Roles.User)
   {
+    var (_, token) = await CreateUserAsync(role);
+    return token;
+  }
+
+  // Same as CreateUserTokenAsync, but also returns the new user's id - needed by
+  // tests that act on "your own account" (e.g. admin self-delete/self-demote guards).
+  public async Task<(Guid Id, string Token)> CreateUserAsync(string role = Roles.User)
+  {
     using var scope = Services.CreateScope();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var tokenService = scope.ServiceProvider.GetRequiredService<ITokenService>();
@@ -94,7 +102,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
     var roles = await userManager.GetRolesAsync(user);
     var (token, _) = tokenService.GenerateToken(user, roles);
-    return token;
+    return (user.Id, token);
   }
 
   async Task IAsyncLifetime.DisposeAsync()

@@ -136,6 +136,7 @@ try
   builder.Services.AddScoped<IPersonService, PersonService>();
   builder.Services.AddScoped<IReviewService, ReviewService>();
   builder.Services.AddScoped<IAuthService, AuthService>();
+  builder.Services.AddScoped<IAdminUserService, AdminUserService>();
   builder.Services.AddScoped<ITokenService, TokenService>();
 
   builder.Services.AddScoped<IValidator<MovieForChangeDto>, MovieChangeValidator>();
@@ -147,6 +148,8 @@ try
   builder.Services.AddScoped<IValidator<UserForUpdateDto>, UserUpdateValidator>();
   builder.Services.AddScoped<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
   builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenValidator>();
+  builder.Services.AddScoped<IValidator<AdminUserForCreationDto>, AdminUserCreationValidator>();
+  builder.Services.AddScoped<IValidator<AdminUserForUpdateDto>, AdminUserUpdateValidator>();
 
   var app = builder.Build();
 
