@@ -172,6 +172,9 @@ try
   if (!app.Environment.IsEnvironment("Testing"))
   {
     await RoleSeeder.SeedAsync(app.Services);
+    // No-op unless Seed:AdminEmail/Seed:AdminPassword are configured - see
+    // AdminUserSeeder for why that's the deliberate default outside Development.
+    await AdminUserSeeder.SeedAsync(app.Services);
   }
 
   app.UseHttpsRedirection();
