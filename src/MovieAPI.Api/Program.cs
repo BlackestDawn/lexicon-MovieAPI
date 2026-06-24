@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using MovieAPI.Api.Middleware;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
@@ -54,7 +55,23 @@ try
 
   builder.Services.AddOpenApi();
   builder.Services.AddEndpointsApiExplorer();
-  builder.Services.AddSwaggerGen();
+  builder.Services.AddSwaggerGen(options =>
+  {
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+      Name = "Authorization",
+      Type = SecuritySchemeType.ApiKey,
+      Scheme = "Bearer",
+      BearerFormat = "JWT",
+      In = ParameterLocation.Header,
+      Description = "Paste the access token from /api/auth/login or /api/auth/register here - no \"Bearer \" prefix needed.",
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+      [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
+    });
+  });
 
   builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
