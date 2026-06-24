@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +12,7 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Application.validators;
+using MovieAPI.Domain.Constants;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure;
 using MovieAPI.Infrastructure.Interfaces;
@@ -117,6 +119,38 @@ try
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
+      };
+
+      // Runs on every authenticated request, after signature/expiry checks pass.
+      // A token's security-stamp claim is fixed at issuance; comparing it against
+      // the user's current stamp means anything that bumps the stamp (password
+      // change/reset) invalidates every access token issued before that point,
+      // without needing a token blacklist. Deliberately a real per-request DB read,
+      // not cached - the whole point is no staleness window.
+      options.Events = new JwtBearerEvents
+      {
+        OnTokenValidated = async context =>
+        {
+          // The default inbound claim map rewrites "sub" to the long ClaimTypes.NameIdentifier
+          // URI on the validated principal, so that's the key to look up here, not the
+          // short JWT claim name actually embedded in the token (see ClaimsPrincipalExtensions).
+          var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+          var tokenStamp = context.Principal?.FindFirstValue(CustomClaimTypes.SecurityStamp);
+
+          if (userId is null || tokenStamp is null)
+          {
+            context.Fail("Token is missing required claims.");
+            return;
+          }
+
+          var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+          var user = await userManager.FindByIdAsync(userId);
+
+          if (user is null || !string.Equals(user.SecurityStamp, tokenStamp, StringComparison.Ordinal))
+          {
+            context.Fail("Token is no longer valid.");
+          }
+        },
       };
     });
 

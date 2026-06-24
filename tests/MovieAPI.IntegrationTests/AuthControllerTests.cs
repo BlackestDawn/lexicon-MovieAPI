@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 using MovieAPI.IntegrationTests.Infrastructure;
 
 namespace MovieAPI.IntegrationTests;
@@ -232,6 +233,67 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var ownerCanStillRefresh = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
       new RefreshTokenDto { RefreshToken = owner.RefreshToken });
     Assert.Equal(HttpStatusCode.OK, ownerCanStillRefresh.StatusCode);
+  }
+
+  // Security-stamp validation (every authenticated request re-checks the token's
+  // embedded stamp against the user's current one)
+
+  [Fact]
+  public async Task AccessToken_WhenNothingChanged_StillAuthorizes()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+
+    var response = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = auth.User.Email });
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task AccessToken_AfterPasswordChange_NoLongerAuthorizes()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+
+    var changeResponse = await client.PutAsJsonAsync("/api/auth/me/password",
+      new ChangePasswordDto { CurrentPassword = Password, NewPassword = "NewPassword123!" });
+    Assert.Equal(HttpStatusCode.NoContent, changeResponse.StatusCode);
+
+    // client still carries the access token issued before the password change.
+    var staleTokenResponse = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = auth.User.Email });
+
+    Assert.Equal(HttpStatusCode.Unauthorized, staleTokenResponse.StatusCode);
+  }
+
+  [Fact]
+  public async Task AccessToken_AfterPasswordReset_NoLongerAuthorizes()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+    var resetToken = await Factory.GeneratePasswordResetTokenAsync(auth.User.Email);
+
+    var resetResponse = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+      new ResetPasswordDto { Email = auth.User.Email, Token = resetToken, NewPassword = "NewPassword123!" });
+    Assert.Equal(HttpStatusCode.NoContent, resetResponse.StatusCode);
+
+    var staleTokenResponse = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = auth.User.Email });
+
+    Assert.Equal(HttpStatusCode.Unauthorized, staleTokenResponse.StatusCode);
+  }
+
+  [Fact]
+  public async Task AccessToken_ForDeletedUser_Returns401()
+  {
+    var (userId, client) = await CreateUserAndClientAsync(Roles.User);
+    var adminClient = await CreateClientWithRoleAsync(Roles.Administrator);
+
+    // Delete the user out from under their own still-valid, unexpired access token.
+    var deleteResponse = await adminClient.DeleteAsync($"/api/admin/users/{userId}");
+    Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+    var response = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = "irrelevant@test.com" });
+
+    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
 
   private static async Task<AuthResponseDto> RegisterAsync(HttpClient client)

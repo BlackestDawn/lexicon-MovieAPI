@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using MovieAPI.Domain.Constants;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
 
@@ -28,6 +29,7 @@ public class TokenService(IConfiguration configuration) : ITokenService
       new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
       new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
       new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+      new(CustomClaimTypes.SecurityStamp, user.SecurityStamp ?? string.Empty),
     };
     claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
