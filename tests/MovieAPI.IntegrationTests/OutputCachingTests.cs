@@ -9,19 +9,27 @@ namespace MovieAPI.IntegrationTests;
 
 public class OutputCachingTests(IntegrationTestWebAppFactory factory) : IntegrationTestBase(factory)
 {
+  // ASP.NET Core's OutputCache middleware refuses to cache (or read from cache) any
+  // request that carries an Authorization header, to avoid leaking personalized
+  // responses across users. The shared Client now defaults to an Administrator
+  // token for write convenience, so these caching-specific assertions need a plain
+  // anonymous client - which is also the realistic case, since GET endpoints here
+  // are anonymous-accessible anyway.
+  private readonly HttpClient _anonymousClient = factory.CreateClient();
+
   [Fact]
   public async Task GetGenres_ServesStaleDataFromCache_UntilAnApiWriteEvictsIt()
   {
     var created = await CreateGenreAsync("Drama", "drama");
 
-    var firstFetch = await Client.GetFromJsonAsync<List<GenreDto>>("/api/genres");
+    var firstFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/genres");
     Assert.Contains(firstFetch!, g => g.Name == "Drama");
 
     // Bypasses the API (and therefore the cache eviction it triggers) to prove the
     // second GET below is served from cache rather than hitting the database again.
     await RenameGenreDirectlyInDbAsync(created.Id, "Renamed Directly In DB");
 
-    var cachedFetch = await Client.GetFromJsonAsync<List<GenreDto>>("/api/genres");
+    var cachedFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/genres");
     Assert.Contains(cachedFetch!, g => g.Name == "Drama");
     Assert.DoesNotContain(cachedFetch!, g => g.Name == "Renamed Directly In DB");
 
@@ -29,7 +37,7 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     // unrelated to genres.
     await CreateGenreAsync("Comedy", "comedy");
 
-    var freshFetch = await Client.GetFromJsonAsync<List<GenreDto>>("/api/genres");
+    var freshFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/genres");
     Assert.Contains(freshFetch!, g => g.Name == "Renamed Directly In DB");
   }
 
@@ -39,13 +47,13 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     var (genreId, personId) = await CreateGenreAndPersonAsync();
     await CreateMovieAsync(genreId, personId);
 
-    var firstFetch = await Client.GetFromJsonAsync<List<MovieDto>>("/api/movies");
+    var firstFetch = await _anonymousClient.GetFromJsonAsync<List<MovieDto>>("/api/movies");
     Assert.Contains(firstFetch!.Single().Genres, g => g.Name == "Sci-Fi");
 
     var response = await Client.PutAsJsonAsync($"/api/genres/{genreId}", TestData.ValidGenre("Period Drama", "period-drama"));
     response.EnsureSuccessStatusCode();
 
-    var secondFetch = await Client.GetFromJsonAsync<List<MovieDto>>("/api/movies");
+    var secondFetch = await _anonymousClient.GetFromJsonAsync<List<MovieDto>>("/api/movies");
     Assert.Contains(secondFetch!.Single().Genres, g => g.Name == "Period Drama");
   }
 
@@ -55,15 +63,15 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     var (genreId, personId) = await CreateGenreAndPersonAsync();
     var movie = await CreateMovieAsync(genreId, personId);
 
-    var afterCreate = await Client.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
+    var afterCreate = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
     Assert.Equal(0, afterCreate!.AverageRating);
 
     await Client.PostAsJsonAsync($"/api/movies/{movie.Id}/reviews", TestData.ValidReview(score: 8));
-    var afterFirstReview = await Client.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
+    var afterFirstReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
     Assert.Equal(8, afterFirstReview!.AverageRating);
 
     await Client.PostAsJsonAsync($"/api/movies/{movie.Id}/reviews", TestData.ValidReview("Second Reviewer", 4));
-    var afterSecondReview = await Client.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
+    var afterSecondReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
     Assert.Equal(6, afterSecondReview!.AverageRating);
   }
 

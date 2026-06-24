@@ -1,9 +1,12 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using MovieAPI.Api.Extensions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Api.Controllers;
@@ -39,38 +42,44 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
     return Ok(result);
   }
 
+  [Authorize]
   [HttpPost]
   public async Task<IActionResult> CreateReview(Guid movieId, ReviewForChangeDto newReview,
     CancellationToken cancellationToken = default)
   {
-    var result = await service.Create(movieId, newReview, cancellationToken);
+    var result = await service.Create(movieId, newReview, User.GetUserId(), cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return CreatedAtRoute("GetReview", new {movieId, result.Id}, result);
   }
 
+  [Authorize]
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateReview(Guid movieId, Guid id, ReviewForChangeDto updatedReview,
     CancellationToken cancellationToken = default)
   {
-    await service.Update(movieId, id, updatedReview, cancellationToken);
+    await service.Update(movieId, id, updatedReview, User.GetUserId(), CanModerate, cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
+  [Authorize]
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchReview(Guid movieId, Guid id, JsonPatchDocument<ReviewForChangeDto> patch,
     CancellationToken cancellationToken = default)
   {
-    await service.Update(movieId, id, patch, cancellationToken);
+    await service.Update(movieId, id, patch, User.GetUserId(), CanModerate, cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
+  [Authorize]
   [HttpDelete("{id}")]
   public async Task<IActionResult> DeleteReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
-    await service.Remove(movieId, id, cancellationToken);
+    await service.Remove(movieId, id, User.GetUserId(), CanModerate, cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
+
+  private bool CanModerate => User.IsInRole(Roles.Moderator) || User.IsInRole(Roles.Administrator);
 }

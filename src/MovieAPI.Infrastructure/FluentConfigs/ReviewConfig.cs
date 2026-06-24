@@ -19,5 +19,6 @@ public class ReviewConfig : IEntityTypeConfiguration<Review>
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
     builder.HasOne(r => r.Movie).WithMany(m => m.Reviews).OnDelete(DeleteBehavior.Cascade);
+    builder.HasOne(r => r.User).WithMany().OnDelete(DeleteBehavior.Restrict);
   }
 }

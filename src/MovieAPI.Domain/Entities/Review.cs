@@ -19,4 +19,11 @@ public class Review : ITrackable, IEntity
   public Guid MovieId { get; set; }
   [ForeignKey("MovieId")]
   public Movie Movie { get; set; } = null!;
+
+  // Nullable because reviews seeded as sample/demo data aren't tied to a real
+  // account. Reviews created through the API always have this set to the
+  // authenticated caller.
+  public Guid? UserId { get; set; }
+  [ForeignKey("UserId")]
+  public ApplicationUser? User { get; set; }
 }

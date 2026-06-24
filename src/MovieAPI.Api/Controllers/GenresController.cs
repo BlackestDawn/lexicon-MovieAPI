@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 
 namespace MovieAPI.Api.Controllers;
 
@@ -26,6 +28,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
     return Ok(result);
   }
 
+  [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpPost]
   public async Task<IActionResult> CreateGenre(GenreForChangeDto newGenre, CancellationToken cancellationToken = default)
   {
@@ -34,6 +37,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
     return CreatedAtRoute("GetGenre", new { result.Id }, result);
   }
 
+  [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateGenre(Guid id, GenreForChangeDto updatedGenre, CancellationToken cancellationToken = default)
   {
@@ -42,6 +46,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
     return NoContent();
   }
 
+  [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchGenre(Guid id, JsonPatchDocument<GenreForChangeDto> patch, CancellationToken cancellationToken = default)
   {
@@ -50,6 +55,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
     return NoContent();
   }
 
+  [Authorize(Roles = Roles.Administrator)]
   [HttpDelete("{id}")]
   public async Task<IActionResult> DeleteGenre(Guid id, CancellationToken cancellationToken = default)
   {

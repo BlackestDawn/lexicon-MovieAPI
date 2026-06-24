@@ -1,6 +1,8 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.DependencyInjection;
+using MovieAPI.Domain.Constants;
 
 namespace MovieAPI.IntegrationTests.Infrastructure;
 
@@ -20,16 +22,43 @@ public abstract class IntegrationTestBase(IntegrationTestWebAppFactory factory) 
     using var scope = Factory.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<IOutputCacheStore>()
       .EvictByTagAsync("catalog", CancellationToken.None);
+
+    // Most existing tests exercise plain CRUD round-trips, not authorization rules,
+    // so the shared client defaults to full access. Tests that specifically assert
+    // role boundaries build their own client with a lower-privileged token instead.
+    var token = await Factory.CreateUserTokenAsync(Roles.Administrator);
+    Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
   }
 
   public Task DisposeAsync() => Task.CompletedTask;
 
+  // A fresh client carrying its own token, for tests that need a specific role or
+  // a different user identity than the shared Administrator-by-default Client.
+  protected async Task<HttpClient> CreateClientWithRoleAsync(string role)
+  {
+    var (_, client) = await CreateUserAndClientAsync(role);
+    return client;
+  }
+
+  // Same as CreateClientWithRoleAsync, but also returns the user's id - needed by
+  // tests that act on "your own account" (e.g. admin self-delete/self-demote guards).
+  protected async Task<(Guid Id, HttpClient Client)> CreateUserAndClientAsync(string role)
+  {
+    var client = Factory.CreateClient();
+    var (id, token) = await Factory.CreateUserAsync(role);
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    return (id, client);
+  }
+
   // The JSON Patch input formatter only matches application/json-patch+json,
   // unlike PatchAsJsonAsync which sends the plain application/json content type.
-  protected Task<HttpResponseMessage> PatchJsonPatchAsync(string requestUri, object patchDocument)
+  protected Task<HttpResponseMessage> PatchJsonPatchAsync(string requestUri, object patchDocument) =>
+    PatchJsonPatchAsync(Client, requestUri, patchDocument);
+
+  protected static Task<HttpResponseMessage> PatchJsonPatchAsync(HttpClient client, string requestUri, object patchDocument)
   {
     var content = JsonContent.Create(patchDocument);
     content.Headers.ContentType!.MediaType = "application/json-patch+json";
-    return Client.PatchAsync(requestUri, content);
+    return client.PatchAsync(requestUri, content);
   }
 }
