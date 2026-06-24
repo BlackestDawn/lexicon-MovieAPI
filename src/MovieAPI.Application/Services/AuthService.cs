@@ -16,12 +16,15 @@ public class AuthService(
   SignInManager<ApplicationUser> signInManager,
   ITokenService tokenService,
   IRefreshTokenRepository refreshTokenRepository,
+  IEmailSender emailSender,
   IMapper mapper,
   IValidator<RegisterDto> registerValidator,
   IValidator<LoginDto> loginValidator,
   IValidator<UserForUpdateDto> updateValidator,
   IValidator<ChangePasswordDto> changePasswordValidator,
-  IValidator<RefreshTokenDto> refreshTokenValidator) : IAuthService
+  IValidator<RefreshTokenDto> refreshTokenValidator,
+  IValidator<ForgotPasswordDto> forgotPasswordValidator,
+  IValidator<ResetPasswordDto> resetPasswordValidator) : IAuthService
 {
   public async Task<AuthResponseDto> Register(RegisterDto newUser, CancellationToken token = default)
   {
@@ -85,8 +88,7 @@ public class AuthService(
       // A revoked token being presented again means it was already rotated away (or
       // explicitly logged out) - treat this as possible token theft and kill every
       // active session for the user rather than just rejecting this one request.
-      await refreshTokenRepository.RevokeAllActiveForUserAsync(existing.UserId, token);
-      await refreshTokenRepository.SaveChangesAsync(token);
+      await RevokeAllRefreshTokensAsync(existing.UserId, token);
       throw new AuthenticationException("Invalid refresh token");
     }
 
@@ -165,6 +167,56 @@ public class AuthService(
     {
       throw new ValidationException(ToValidationFailures(result.Errors));
     }
+
+    // A password change is as strong a signal as a password reset that any
+    // outstanding sessions should not be trusted to continue silently.
+    await RevokeAllRefreshTokensAsync(userId, token);
+  }
+
+  public async Task ForgotPassword(ForgotPasswordDto request, CancellationToken token = default)
+  {
+    var validationResult = await forgotPasswordValidator.ValidateAsync(request, token);
+    if (!validationResult.IsValid)
+    {
+      throw new ValidationException(validationResult.Errors);
+    }
+
+    var user = await userManager.FindByEmailAsync(request.Email);
+    if (user is null)
+    {
+      // Don't reveal whether the email exists - the caller sees the same response
+      // either way.
+      return;
+    }
+
+    var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+    await emailSender.SendPasswordResetEmailAsync(request.Email, resetToken, token);
+  }
+
+  public async Task ResetPassword(ResetPasswordDto request, CancellationToken token = default)
+  {
+    var validationResult = await resetPasswordValidator.ValidateAsync(request, token);
+    if (!validationResult.IsValid)
+    {
+      throw new ValidationException(validationResult.Errors);
+    }
+
+    var user = await userManager.FindByEmailAsync(request.Email)
+      ?? throw new AuthenticationException("Invalid email, token, or password");
+
+    var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+    if (!result.Succeeded)
+    {
+      throw new ValidationException(ToValidationFailures(result.Errors));
+    }
+
+    await RevokeAllRefreshTokensAsync(user.Id, token);
+  }
+
+  private async Task RevokeAllRefreshTokensAsync(Guid userId, CancellationToken token)
+  {
+    await refreshTokenRepository.RevokeAllActiveForUserAsync(userId, token);
+    await refreshTokenRepository.SaveChangesAsync(token);
   }
 
   private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user, CancellationToken token)

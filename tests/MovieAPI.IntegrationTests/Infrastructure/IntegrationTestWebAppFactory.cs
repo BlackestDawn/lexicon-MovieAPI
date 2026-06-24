@@ -105,6 +105,20 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     return (user.Id, token);
   }
 
+  // Email delivery is just a log line for now (see LoggingEmailSender), so there's no
+  // HTTP-observable way to get the real reset token /api/auth/forgot-password issued.
+  // This generates one directly via Identity, the same way AuthService does internally.
+  public async Task<string> GeneratePasswordResetTokenAsync(string email)
+  {
+    using var scope = Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    var user = await userManager.FindByEmailAsync(email)
+      ?? throw new InvalidOperationException($"No user with email '{email}' exists.");
+
+    return await userManager.GeneratePasswordResetTokenAsync(user);
+  }
+
   async Task IAsyncLifetime.DisposeAsync()
   {
     await _dbContainer.DisposeAsync();

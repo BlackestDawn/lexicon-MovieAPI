@@ -54,6 +54,94 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
   }
 
   [Fact]
+  public async Task ChangePassword_WhenSucceeds_RevokesExistingRefreshTokens()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+
+    var response = await client.PutAsJsonAsync("/api/auth/me/password",
+      new ChangePasswordDto { CurrentPassword = Password, NewPassword = "NewPassword123!" });
+    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+    var refreshWithOldToken = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+      new RefreshTokenDto { RefreshToken = auth.RefreshToken });
+    Assert.Equal(HttpStatusCode.Unauthorized, refreshWithOldToken.StatusCode);
+  }
+
+  [Fact]
+  public async Task ForgotPassword_WithUnknownEmail_Returns204()
+  {
+    var anonymous = Factory.CreateClient();
+
+    var response = await anonymous.PostAsJsonAsync("/api/auth/forgot-password",
+      new ForgotPasswordDto { Email = $"nobody_{Guid.NewGuid():N}@test.com" });
+
+    // Same response whether the email exists or not - the endpoint must not leak
+    // account existence.
+    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task ForgotPassword_WithKnownEmail_Returns204()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/forgot-password",
+      new ForgotPasswordDto { Email = auth.User.Email });
+
+    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task ResetPassword_WithInvalidToken_Returns400()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+      new ResetPasswordDto { Email = auth.User.Email, Token = "not-a-real-token", NewPassword = "NewPassword123!" });
+
+    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task ResetPassword_WithValidToken_Returns204AndNewPasswordWorks()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+    var resetToken = await Factory.GeneratePasswordResetTokenAsync(auth.User.Email);
+
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+      new ResetPasswordDto { Email = auth.User.Email, Token = resetToken, NewPassword = "NewPassword123!" });
+    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+    var loginWithOldPassword = await Factory.CreateClient().PostAsJsonAsync("/api/auth/login",
+      new LoginDto { Email = auth.User.Email, Password = Password });
+    Assert.Equal(HttpStatusCode.Unauthorized, loginWithOldPassword.StatusCode);
+
+    var loginWithNewPassword = await Factory.CreateClient().PostAsJsonAsync("/api/auth/login",
+      new LoginDto { Email = auth.User.Email, Password = "NewPassword123!" });
+    Assert.Equal(HttpStatusCode.OK, loginWithNewPassword.StatusCode);
+  }
+
+  [Fact]
+  public async Task ResetPassword_WhenSucceeds_RevokesExistingRefreshTokens()
+  {
+    var client = Factory.CreateClient();
+    var auth = await RegisterAsync(client);
+    var resetToken = await Factory.GeneratePasswordResetTokenAsync(auth.User.Email);
+
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+      new ResetPasswordDto { Email = auth.User.Email, Token = resetToken, NewPassword = "NewPassword123!" });
+    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+    var refreshWithOldToken = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+      new RefreshTokenDto { RefreshToken = auth.RefreshToken });
+    Assert.Equal(HttpStatusCode.Unauthorized, refreshWithOldToken.StatusCode);
+  }
+
+  [Fact]
   public async Task Refresh_WithValidToken_Returns200WithNewTokens()
   {
     var client = Factory.CreateClient();

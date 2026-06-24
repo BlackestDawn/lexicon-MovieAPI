@@ -26,7 +26,10 @@ public class AuthServiceTests
   private readonly Mock<IValidator<UserForUpdateDto>> _updateValidator = new();
   private readonly Mock<IValidator<ChangePasswordDto>> _changePasswordValidator = new();
   private readonly Mock<IValidator<RefreshTokenDto>> _refreshTokenValidator = new();
+  private readonly Mock<IValidator<ForgotPasswordDto>> _forgotPasswordValidator = new();
+  private readonly Mock<IValidator<ResetPasswordDto>> _resetPasswordValidator = new();
   private readonly Mock<IRefreshTokenRepository> _refreshTokenRepository = new();
+  private readonly Mock<IEmailSender> _emailSender = new();
   private readonly AuthService _sut;
 
   public AuthServiceTests()
@@ -50,17 +53,23 @@ public class AuthServiceTests
     _refreshTokenRepository
       .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
+    _refreshTokenRepository
+      .Setup(r => r.RevokeAllActiveForUserAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+      .Returns(Task.CompletedTask);
     _sut = new AuthService(
       _userManager.Object,
       _signInManager.Object,
       _tokenService.Object,
       _refreshTokenRepository.Object,
+      _emailSender.Object,
       _mapper.Object,
       _registerValidator.Object,
       _loginValidator.Object,
       _updateValidator.Object,
       _changePasswordValidator.Object,
-      _refreshTokenValidator.Object);
+      _refreshTokenValidator.Object,
+      _forgotPasswordValidator.Object,
+      _resetPasswordValidator.Object);
   }
 
   // Helpers
@@ -84,6 +93,10 @@ public class AuthServiceTests
   private static UserForUpdateDto MakeUpdateDto() => new() { Email = "new@test.com" };
 
   private static ChangePasswordDto MakeChangePasswordDto() => new() { CurrentPassword = "OldPassword123!", NewPassword = "NewPassword123!" };
+
+  private static ForgotPasswordDto MakeForgotPasswordDto() => new() { Email = "user@test.com" };
+
+  private static ResetPasswordDto MakeResetPasswordDto() => new() { Email = "user@test.com", Token = "reset-token", NewPassword = "NewPassword123!" };
 
   private static RefreshTokenDto MakeRefreshTokenDto(string token = "raw-refresh-token") => new() { RefreshToken = token };
 
@@ -117,6 +130,12 @@ public class AuthServiceTests
       .ReturnsAsync(new ValidationResult());
     _refreshTokenValidator
       .Setup(v => v.ValidateAsync(It.IsAny<RefreshTokenDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
+    _forgotPasswordValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<ForgotPasswordDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
+    _resetPasswordValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<ResetPasswordDto>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new ValidationResult());
   }
 
@@ -511,5 +530,109 @@ public class AuthServiceTests
     await _sut.ChangePassword(user.Id, dto, CancellationToken.None);
 
     _userManager.Verify(m => m.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword), Times.Once);
+  }
+
+  [Fact]
+  public async Task ChangePassword_WhenSucceeds_RevokesAllRefreshTokens()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var dto = MakeChangePasswordDto();
+    _userManager.Setup(m => m.FindByIdAsync(user.Id.ToString())).ReturnsAsync(user);
+    _userManager
+      .Setup(m => m.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword))
+      .ReturnsAsync(IdentityResult.Success);
+
+    await _sut.ChangePassword(user.Id, dto, CancellationToken.None);
+
+    _refreshTokenRepository.Verify(r => r.RevokeAllActiveForUserAsync(user.Id, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  // ForgotPassword
+
+  [Fact]
+  public async Task ForgotPassword_WhenValidationFails_ThrowsValidationException()
+  {
+    _forgotPasswordValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<ForgotPasswordDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("Email", "Required")]));
+
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.ForgotPassword(MakeForgotPasswordDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ForgotPassword_WhenEmailUnknown_DoesNotSendEmail()
+  {
+    SetupValidatorsValid();
+    _userManager.Setup(m => m.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+
+    await _sut.ForgotPassword(MakeForgotPasswordDto(), CancellationToken.None);
+
+    _emailSender.Verify(
+      e => e.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+      Times.Never);
+  }
+
+  [Fact]
+  public async Task ForgotPassword_WhenEmailKnown_SendsResetEmail()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var dto = MakeForgotPasswordDto();
+    _userManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(user);
+    _userManager.Setup(m => m.GeneratePasswordResetTokenAsync(user)).ReturnsAsync("reset-token");
+
+    await _sut.ForgotPassword(dto, CancellationToken.None);
+
+    _emailSender.Verify(e => e.SendPasswordResetEmailAsync(dto.Email, "reset-token", It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  // ResetPassword
+
+  [Fact]
+  public async Task ResetPassword_WhenValidationFails_ThrowsValidationException()
+  {
+    _resetPasswordValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<ResetPasswordDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("Token", "Required")]));
+
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.ResetPassword(MakeResetPasswordDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ResetPassword_WhenEmailUnknown_ThrowsAuthenticationException()
+  {
+    SetupValidatorsValid();
+    _userManager.Setup(m => m.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+
+    await Assert.ThrowsAsync<AuthenticationException>(() => _sut.ResetPassword(MakeResetPasswordDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ResetPassword_WhenTokenInvalid_ThrowsValidationException()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var dto = MakeResetPasswordDto();
+    _userManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(user);
+    _userManager
+      .Setup(m => m.ResetPasswordAsync(user, dto.Token, dto.NewPassword))
+      .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "InvalidToken", Description = "Invalid token." }));
+
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.ResetPassword(dto, CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ResetPassword_WhenSucceeds_RevokesAllRefreshTokens()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var dto = MakeResetPasswordDto();
+    _userManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(user);
+    _userManager.Setup(m => m.ResetPasswordAsync(user, dto.Token, dto.NewPassword)).ReturnsAsync(IdentityResult.Success);
+
+    await _sut.ResetPassword(dto, CancellationToken.None);
+
+    _refreshTokenRepository.Verify(r => r.RevokeAllActiveForUserAsync(user.Id, It.IsAny<CancellationToken>()), Times.Once);
   }
 }

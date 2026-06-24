@@ -85,7 +85,11 @@ try
   builder.Services.AddIdentityCore<ApplicationUser>(options => options.User.RequireUniqueEmail = true)
     .AddRoles<ApplicationRole>()
     .AddSignInManager()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    // Backs GeneratePasswordResetTokenAsync/ResetPasswordAsync - without this,
+    // forgot-password fails at runtime with "No IUserTwoFactorTokenProvider<TUser>
+    // named 'Default' is registered."
+    .AddDefaultTokenProviders();
 
   // The Jwt:* lookups happen inside this callback (not eagerly above) because
   // it's only invoked once JwtBearerOptions are actually resolved, after the host
@@ -155,6 +159,9 @@ try
   builder.Services.AddScoped<IAuthService, AuthService>();
   builder.Services.AddScoped<IAdminUserService, AdminUserService>();
   builder.Services.AddScoped<ITokenService, TokenService>();
+  // Logs reset tokens instead of emailing them - see LoggingEmailSender for why
+  // that's a deliberate placeholder rather than a missing integration.
+  builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
 
   builder.Services.AddScoped<IValidator<MovieForChangeDto>, MovieChangeValidator>();
   builder.Services.AddScoped<IValidator<PersonForChangeDto>, PersonChangeValidator>();
@@ -165,6 +172,8 @@ try
   builder.Services.AddScoped<IValidator<UserForUpdateDto>, UserUpdateValidator>();
   builder.Services.AddScoped<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
   builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenValidator>();
+  builder.Services.AddScoped<IValidator<ForgotPasswordDto>, ForgotPasswordValidator>();
+  builder.Services.AddScoped<IValidator<ResetPasswordDto>, ResetPasswordValidator>();
   builder.Services.AddScoped<IValidator<AdminUserForCreationDto>, AdminUserCreationValidator>();
   builder.Services.AddScoped<IValidator<AdminUserForUpdateDto>, AdminUserUpdateValidator>();
 

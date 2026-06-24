@@ -54,4 +54,18 @@ public class AuthController(IAuthService service) : ControllerBase
     await service.ChangePassword(User.GetUserId(), changePassword, cancellationToken);
     return NoContent();
   }
+
+  [HttpPost("forgot-password")]
+  public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request, CancellationToken cancellationToken = default)
+  {
+    await service.ForgotPassword(request, cancellationToken);
+    return NoContent();
+  }
+
+  [HttpPost("reset-password")]
+  public async Task<IActionResult> ResetPassword(ResetPasswordDto request, CancellationToken cancellationToken = default)
+  {
+    await service.ResetPassword(request, cancellationToken);
+    return NoContent();
+  }
 }
