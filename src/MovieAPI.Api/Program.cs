@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using MovieAPI.Api.Middleware;
@@ -61,9 +62,14 @@ try
   // AddIdentityCore (not AddIdentity) since this is an API project: it registers
   // UserManager/RoleManager without pulling in the cookie-auth middleware that
   // AddIdentity assumes. The actual auth scheme (JWT, etc.) is a later step.
-  builder.Services.AddIdentityCore<ApplicationUser>()
+  builder.Services.AddIdentityCore<ApplicationUser>(options => options.User.RequireUniqueEmail = true)
     .AddRoles<ApplicationRole>()
+    .AddSignInManager()
     .AddEntityFrameworkStores<AppDbContext>();
+
+  // No scheme configured yet (JWT comes later) - this only exists so SignInManager
+  // can resolve IAuthenticationSchemeProvider via DI.
+  builder.Services.AddAuthentication();
 
   builder.Services.AddAutoMapper(config => {},
     AppDomain.CurrentDomain.GetAssemblies());
@@ -98,11 +104,15 @@ try
   builder.Services.AddScoped<IGenreService, GenreService>();
   builder.Services.AddScoped<IPersonService, PersonService>();
   builder.Services.AddScoped<IReviewService, ReviewService>();
+  builder.Services.AddScoped<IAuthService, AuthService>();
 
   builder.Services.AddScoped<IValidator<MovieForChangeDto>, MovieChangeValidator>();
   builder.Services.AddScoped<IValidator<PersonForChangeDto>, PersonChangeValidator>();
   builder.Services.AddScoped<IValidator<ReviewForChangeDto>, ReviewChangeValidator>();
   builder.Services.AddScoped<IValidator<GenreForChangeDto>, GenreChangeValidator>();
+  builder.Services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
+  builder.Services.AddScoped<IValidator<LoginDto>, LoginValidator>();
+  builder.Services.AddScoped<IValidator<UserForUpdateDto>, UserUpdateValidator>();
 
   var app = builder.Build();
 
