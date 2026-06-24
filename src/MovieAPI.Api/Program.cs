@@ -6,6 +6,7 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Application.validators;
+using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure;
 using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Services;
@@ -56,6 +57,13 @@ try
       builder.Configuration.GetConnectionString("sqlserver")
       ?? throw new InvalidProgramException()
     ));
+
+  // AddIdentityCore (not AddIdentity) since this is an API project: it registers
+  // UserManager/RoleManager without pulling in the cookie-auth middleware that
+  // AddIdentity assumes. The actual auth scheme (JWT, etc.) is a later step.
+  builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<ApplicationRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
 
   builder.Services.AddAutoMapper(config => {},
     AppDomain.CurrentDomain.GetAssemblies());
