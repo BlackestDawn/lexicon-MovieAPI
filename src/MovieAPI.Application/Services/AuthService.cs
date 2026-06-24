@@ -18,7 +18,8 @@ public class AuthService(
   IMapper mapper,
   IValidator<RegisterDto> registerValidator,
   IValidator<LoginDto> loginValidator,
-  IValidator<UserForUpdateDto> updateValidator) : IAuthService
+  IValidator<UserForUpdateDto> updateValidator,
+  IValidator<ChangePasswordDto> changePasswordValidator) : IAuthService
 {
   public async Task<AuthResponseDto> Register(RegisterDto newUser, CancellationToken token = default)
   {
@@ -99,6 +100,24 @@ public class AuthService(
     }
 
     return mapper.Map<UserDto>(user);
+  }
+
+  public async Task ChangePassword(Guid userId, ChangePasswordDto changePassword, CancellationToken token = default)
+  {
+    var validationResult = await changePasswordValidator.ValidateAsync(changePassword, token);
+    if (!validationResult.IsValid)
+    {
+      throw new ValidationException(validationResult.Errors);
+    }
+
+    var user = await userManager.FindByIdAsync(userId.ToString())
+      ?? throw new NotFoundException($"User '{userId}' not found");
+
+    var result = await userManager.ChangePasswordAsync(user, changePassword.CurrentPassword, changePassword.NewPassword);
+    if (!result.Succeeded)
+    {
+      throw new ValidationException(ToValidationFailures(result.Errors));
+    }
   }
 
   private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user)

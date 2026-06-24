@@ -144,6 +144,7 @@ try
   builder.Services.AddScoped<IValidator<RegisterDto>, RegisterValidator>();
   builder.Services.AddScoped<IValidator<LoginDto>, LoginValidator>();
   builder.Services.AddScoped<IValidator<UserForUpdateDto>, UserUpdateValidator>();
+  builder.Services.AddScoped<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
 
   var app = builder.Build();
 

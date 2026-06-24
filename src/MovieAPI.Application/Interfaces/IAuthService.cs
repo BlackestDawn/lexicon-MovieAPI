@@ -8,4 +8,5 @@ public interface IAuthService
   Task<AuthResponseDto> Login(LoginDto credentials, CancellationToken token = default);
   Task Logout(Guid userId, CancellationToken token = default);
   Task<UserDto> Update(Guid userId, UserForUpdateDto updatedUser, CancellationToken token = default);
+  Task ChangePassword(Guid userId, ChangePasswordDto changePassword, CancellationToken token = default);
 }

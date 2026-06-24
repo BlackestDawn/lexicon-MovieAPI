@@ -39,4 +39,12 @@ public class AuthController(IAuthService service) : ControllerBase
     var result = await service.Update(User.GetUserId(), updatedUser, cancellationToken);
     return Ok(result);
   }
+
+  [Authorize]
+  [HttpPut("me/password")]
+  public async Task<IActionResult> ChangePassword(ChangePasswordDto changePassword, CancellationToken cancellationToken = default)
+  {
+    await service.ChangePassword(User.GetUserId(), changePassword, cancellationToken);
+    return NoContent();
+  }
 }

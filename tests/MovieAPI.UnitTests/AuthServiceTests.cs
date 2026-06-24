@@ -24,6 +24,7 @@ public class AuthServiceTests
   private readonly Mock<IValidator<RegisterDto>> _registerValidator = new();
   private readonly Mock<IValidator<LoginDto>> _loginValidator = new();
   private readonly Mock<IValidator<UserForUpdateDto>> _updateValidator = new();
+  private readonly Mock<IValidator<ChangePasswordDto>> _changePasswordValidator = new();
   private readonly AuthService _sut;
 
   public AuthServiceTests()
@@ -42,7 +43,8 @@ public class AuthServiceTests
       _mapper.Object,
       _registerValidator.Object,
       _loginValidator.Object,
-      _updateValidator.Object);
+      _updateValidator.Object,
+      _changePasswordValidator.Object);
   }
 
   // Helpers
@@ -71,6 +73,8 @@ public class AuthServiceTests
 
   private static UserForUpdateDto MakeUpdateDto() => new() { Email = "new@test.com" };
 
+  private static ChangePasswordDto MakeChangePasswordDto() => new() { CurrentPassword = "OldPassword123!", NewPassword = "NewPassword123!" };
+
   private static ApplicationUser MakeUser(Guid? id = null, string email = "user@test.com") =>
     new() { Id = id ?? Guid.NewGuid(), Email = email, UserName = email };
 
@@ -86,6 +90,9 @@ public class AuthServiceTests
       .ReturnsAsync(new ValidationResult());
     _updateValidator
       .Setup(v => v.ValidateAsync(It.IsAny<UserForUpdateDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult());
+    _changePasswordValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<ChangePasswordDto>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new ValidationResult());
   }
 
@@ -287,5 +294,58 @@ public class AuthServiceTests
     _userManager.Verify(m => m.SetEmailAsync(user, "new@test.com"), Times.Once);
     _userManager.Verify(m => m.SetUserNameAsync(user, "new@test.com"), Times.Once);
     Assert.Equal(user.Id, result.Id);
+  }
+
+  // ChangePassword
+
+  [Fact]
+  public async Task ChangePassword_WhenValidationFails_ThrowsValidationException()
+  {
+    _changePasswordValidator
+      .Setup(v => v.ValidateAsync(It.IsAny<ChangePasswordDto>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("NewPassword", "Required")]));
+
+    await Assert.ThrowsAsync<ValidationException>(
+      () => _sut.ChangePassword(Guid.NewGuid(), MakeChangePasswordDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ChangePassword_WhenUserNotFound_ThrowsNotFoundException()
+  {
+    SetupValidatorsValid();
+    _userManager.Setup(m => m.FindByIdAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+
+    await Assert.ThrowsAsync<NotFoundException>(
+      () => _sut.ChangePassword(Guid.NewGuid(), MakeChangePasswordDto(), CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ChangePassword_WhenCurrentPasswordIsWrong_ThrowsValidationException()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var dto = MakeChangePasswordDto();
+    _userManager.Setup(m => m.FindByIdAsync(user.Id.ToString())).ReturnsAsync(user);
+    _userManager
+      .Setup(m => m.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword))
+      .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "PasswordMismatch", Description = "Incorrect password." }));
+
+    await Assert.ThrowsAsync<ValidationException>(() => _sut.ChangePassword(user.Id, dto, CancellationToken.None));
+  }
+
+  [Fact]
+  public async Task ChangePassword_WhenSucceeds_CallsChangePasswordAsync()
+  {
+    SetupValidatorsValid();
+    var user = MakeUser();
+    var dto = MakeChangePasswordDto();
+    _userManager.Setup(m => m.FindByIdAsync(user.Id.ToString())).ReturnsAsync(user);
+    _userManager
+      .Setup(m => m.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword))
+      .ReturnsAsync(IdentityResult.Success);
+
+    await _sut.ChangePassword(user.Id, dto, CancellationToken.None);
+
+    _userManager.Verify(m => m.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword), Times.Once);
   }
 }
