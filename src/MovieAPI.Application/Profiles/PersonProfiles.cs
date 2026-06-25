@@ -14,7 +14,7 @@ public class PersonProfiles : Profile
 
     CreateMap<CastCrew, CastCrewDto>()
       .ForMember(dest => dest.PersonId, opt => opt.MapFrom(src => src.Person.Id))
-      .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Person.FirstName))
+      .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Person.GivenName))
       .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.Person.LastName));
 
     CreateMap<CastCrew, MovieRoleDto>()

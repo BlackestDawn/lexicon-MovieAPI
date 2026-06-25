@@ -39,7 +39,7 @@ public static class DbSeeder
 
     // --- People ---
     Person P(string first, string last, int year, int month, int day) =>
-      new() { Id = Guid.NewGuid(), FirstName = first, LastName = last, DateOfBirth = new DateOnly(year, month, day), CreatedAt = now, UpdatedAt = now };
+      new() { Id = Guid.NewGuid(), GivenName = first, LastName = last, DateOfBirth = new DateOnly(year, month, day), CreatedAt = now, UpdatedAt = now };
 
     // Directors
     var nolan = P("Christopher", "Nolan", 1970, 7, 30);

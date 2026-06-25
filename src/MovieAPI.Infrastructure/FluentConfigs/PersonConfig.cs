@@ -18,7 +18,8 @@ public class PersonConfig : IEntityTypeConfiguration<Person>
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("SYSUTCDATETIME()");
 
-    builder.HasIndex(p => p.FirstName);
+    builder.HasIndex(p => p.GivenName);
+    builder.HasIndex(p => p.MiddleName);
     builder.HasIndex(p => p.LastName);
   }
 }

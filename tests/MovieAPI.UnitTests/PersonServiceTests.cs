@@ -39,7 +39,7 @@ public class PersonServiceTests
   private static Person MakePersonEntity(Guid? id = null) => new()
   {
     Id = id ?? Guid.NewGuid(),
-    FirstName = "Leonardo",
+    GivenName = "Leonardo",
     LastName = "DiCaprio",
     DateOfBirth = new DateOnly(1974, 11, 11),
     CastCrews = []
@@ -163,7 +163,7 @@ public class PersonServiceTests
   public async Task GetOne_WhenFound_ReturnsMappedDto()
   {
     var entity = MakePersonEntity();
-    var dto = new PersonExtendedDto { Id = entity.Id, FirstName = entity.FirstName };
+    var dto = new PersonExtendedDto { Id = entity.Id, FirstName = entity.GivenName };
 
     _repo.Setup(r => r.GetPersonReadOnlyAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<PersonExtendedDto>(entity)).Returns(dto);

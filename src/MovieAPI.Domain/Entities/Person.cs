@@ -10,7 +10,9 @@ public class Person : ITrackable, IEntity
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
   [MaxLength(50)]
-  public string FirstName { get; set; } = string.Empty;
+  public string GivenName { get; set; } = string.Empty;
+  [MaxLength(50)]
+  public string? MiddleName { get; set; }
   [MaxLength(50)]
   public string LastName { get; set; } = string.Empty;
   public DateOnly DateOfBirth { get; set; }

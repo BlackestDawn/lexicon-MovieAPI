@@ -114,7 +114,7 @@ public class PersonService(
       throw new NotFoundException(string.Join("; ", errors));
     }
 
-    entity.FirstName = updatedPerson.FirstName;
+    entity.GivenName = updatedPerson.FirstName;
     entity.LastName = updatedPerson.LastName;
     entity.DateOfBirth = updatedPerson.DateOfBirth;
 
