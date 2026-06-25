@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Asp.Versioning;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MovieAPI.Api.Middleware;
+using MovieAPI.Api.Swagger;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
@@ -56,7 +58,25 @@ try
   builder.Services.AddProblemDetails();
 
   builder.Services.AddOpenApi();
+  builder.Services.AddApiVersioning(options =>
+  {
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+      new UrlSegmentApiVersionReader(),
+      new QueryStringApiVersionReader("apiversion"),
+      new HeaderApiVersionReader("X_API_VERSION")
+    );
+  })
+  .AddMvc()
+  .AddApiExplorer(options =>
+  {
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+  });
   builder.Services.AddEndpointsApiExplorer();
+  builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
   builder.Services.AddSwaggerGen(options =>
   {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -221,7 +241,13 @@ try
   {
     app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+      foreach (var desc in app.DescribeApiVersions().Reverse())
+      {
+        options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json", desc.GroupName.ToUpperInvariant());
+      }
+    });
     await DbSeeder.SeedAsync(app.Services);
   }
 
