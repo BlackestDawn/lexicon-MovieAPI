@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Api.Extensions;
@@ -9,8 +10,9 @@ using MovieAPI.Domain.Constants;
 namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
-[Route("api/admin/users")]
+[Route("api/v{version:apiVersion}/admin/users")]
 [Authorize(Roles = Roles.Administrator)]
+[ApiVersion("1.0")]
 public class AdminUsersController(IAdminUserService service) : ControllerBase
 {
   [HttpGet]

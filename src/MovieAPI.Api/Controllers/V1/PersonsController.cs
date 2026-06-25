@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,8 @@ using MovieAPI.Infrastructure.Models;
 namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
-[Route("api/people")]
+[Route("api/v{version:apiVersion}/people")]
+[ApiVersion("1.0")]
 public class PersonsController(IPersonService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]

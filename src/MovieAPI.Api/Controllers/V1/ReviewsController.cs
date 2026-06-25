@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,8 @@ using MovieAPI.Infrastructure.Models;
 namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
-[Route("api/movies/{movieId}/reviews")]
+[Route("api/v{version:apiVersion}/movies/{movieId}/reviews")]
+[ApiVersion("1.0")]
 public class ReviewsController(IReviewService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]

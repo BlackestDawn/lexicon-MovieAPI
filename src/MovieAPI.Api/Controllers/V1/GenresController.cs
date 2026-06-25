@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,8 @@ using MovieAPI.Domain.Constants;
 namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
-[Route("api/genres")]
+[Route("api/v{version:apiVersion}/genres")]
+[ApiVersion("1.0")]
 public class GenresController(IGenreService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]
