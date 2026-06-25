@@ -8,7 +8,7 @@ using MovieAPI.Application.Models;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
-namespace MovieAPI.Api.Controllers;
+namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/movies")]

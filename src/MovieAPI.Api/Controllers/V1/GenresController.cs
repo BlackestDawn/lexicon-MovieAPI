@@ -6,7 +6,7 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Constants;
 
-namespace MovieAPI.Api.Controllers;
+namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/genres")]

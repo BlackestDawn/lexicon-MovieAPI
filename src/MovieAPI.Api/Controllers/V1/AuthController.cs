@@ -4,7 +4,7 @@ using MovieAPI.Api.Extensions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 
-namespace MovieAPI.Api.Controllers;
+namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/auth")]
