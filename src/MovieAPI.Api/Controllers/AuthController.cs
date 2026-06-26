@@ -5,11 +5,12 @@ using MovieAPI.Api.Extensions;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 
-namespace MovieAPI.Api.Controllers.V1;
+namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/auth")]
 [ApiVersion("1.0")]
+[ApiVersion("2.0")]
 public class AuthController(IAuthService service) : ControllerBase
 {
   [HttpPost("register")]

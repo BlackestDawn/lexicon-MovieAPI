@@ -7,11 +7,12 @@ using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Constants;
 
-namespace MovieAPI.Api.Controllers.V1;
+namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/genres")]
 [ApiVersion("1.0")]
+[ApiVersion("2.0")]
 public class GenresController(IGenreService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]

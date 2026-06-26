@@ -10,11 +10,12 @@ using MovieAPI.Application.Models;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
-namespace MovieAPI.Api.Controllers.V1;
+namespace MovieAPI.Api.Controllers;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/movies/{movieId}/reviews")]
 [ApiVersion("1.0")]
+[ApiVersion("2.0")]
 public class ReviewsController(IReviewService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   [HttpGet]
