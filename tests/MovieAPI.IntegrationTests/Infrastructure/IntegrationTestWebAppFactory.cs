@@ -72,7 +72,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     await _respawner.ResetAsync(connection);
   }
 
-  // Creates a user directly via Identity (bypassing the HTTP /api/auth/register
+  // Creates a user directly via Identity (bypassing the HTTP /api/v1/auth/register
   // endpoint) and mints a token for it through the same ITokenService the app uses,
   // so tests can get a token for a specific role without an extra round trip.
   public async Task<string> CreateUserTokenAsync(string role = Roles.User)
@@ -106,7 +106,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
   }
 
   // Email delivery is just a log line for now (see LoggingEmailSender), so there's no
-  // HTTP-observable way to get the real reset token /api/auth/forgot-password issued.
+  // HTTP-observable way to get the real reset token /api/v1/auth/forgot-password issued.
   // This generates one directly via Identity, the same way AuthService does internally.
   public async Task<string> GeneratePasswordResetTokenAsync(string email)
   {

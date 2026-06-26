@@ -11,7 +11,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   [Fact]
   public async Task GetUsers_AsAdministrator_Returns200()
   {
-    var response = await Client.GetAsync("/api/admin/users");
+    var response = await Client.GetAsync("/api/v1/admin/users");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     Assert.True(response.Headers.Contains("X-Pagination"));
@@ -22,7 +22,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
 
-    var response = await moderator.GetAsync("/api/admin/users");
+    var response = await moderator.GetAsync("/api/v1/admin/users");
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -32,7 +32,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.GetAsync("/api/admin/users");
+    var response = await anonymous.GetAsync("/api/v1/admin/users");
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
@@ -47,7 +47,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
       Role = Roles.PowerUser,
     };
 
-    var response = await Client.PostAsJsonAsync("/api/admin/users", dto);
+    var response = await Client.PostAsJsonAsync("/api/v1/admin/users", dto);
 
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     var created = await response.Content.ReadFromJsonAsync<AdminUserDto>();
@@ -66,7 +66,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
       Role = "NotARealRole",
     };
 
-    var response = await Client.PostAsJsonAsync("/api/admin/users", dto);
+    var response = await Client.PostAsJsonAsync("/api/v1/admin/users", dto);
 
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
   }
@@ -76,7 +76,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var created = await CreateUserAsync(Roles.User);
 
-    var response = await Client.GetAsync($"/api/admin/users/{created.Id}");
+    var response = await Client.GetAsync($"/api/v1/admin/users/{created.Id}");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     var fetched = await response.Content.ReadFromJsonAsync<AdminUserDto>();
@@ -86,7 +86,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   [Fact]
   public async Task GetUser_WithUnknownId_Returns404()
   {
-    var response = await Client.GetAsync($"/api/admin/users/{Guid.NewGuid()}");
+    var response = await Client.GetAsync($"/api/v1/admin/users/{Guid.NewGuid()}");
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
@@ -96,19 +96,19 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var created = await CreateUserAsync(Roles.User);
 
-    var response = await Client.PutAsJsonAsync($"/api/admin/users/{created.Id}",
+    var response = await Client.PutAsJsonAsync($"/api/v1/admin/users/{created.Id}",
       new AdminUserForUpdateDto { Email = created.Email, Role = Roles.Moderator });
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-    var fetched = await Client.GetFromJsonAsync<AdminUserDto>($"/api/admin/users/{created.Id}");
+    var fetched = await Client.GetFromJsonAsync<AdminUserDto>($"/api/v1/admin/users/{created.Id}");
     Assert.Equal(Roles.Moderator, fetched!.Role);
   }
 
   [Fact]
   public async Task UpdateUser_WithUnknownId_Returns404()
   {
-    var response = await Client.PutAsJsonAsync($"/api/admin/users/{Guid.NewGuid()}",
+    var response = await Client.PutAsJsonAsync($"/api/v1/admin/users/{Guid.NewGuid()}",
       new AdminUserForUpdateDto { Email = "ghost@test.com", Role = Roles.User });
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -119,7 +119,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var (adminId, adminClient) = await CreateUserAndClientAsync(Roles.Administrator);
 
-    var response = await adminClient.PutAsJsonAsync($"/api/admin/users/{adminId}",
+    var response = await adminClient.PutAsJsonAsync($"/api/v1/admin/users/{adminId}",
       new AdminUserForUpdateDto { Email = $"self_{Guid.NewGuid():N}@test.com", Role = Roles.PowerUser });
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -130,7 +130,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var (adminId, adminClient) = await CreateUserAndClientAsync(Roles.Administrator);
 
-    var response = await adminClient.PutAsJsonAsync($"/api/admin/users/{adminId}",
+    var response = await adminClient.PutAsJsonAsync($"/api/v1/admin/users/{adminId}",
       new AdminUserForUpdateDto { Email = $"self_{Guid.NewGuid():N}@test.com", Role = Roles.Administrator });
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -141,10 +141,10 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var created = await CreateUserAsync(Roles.User);
 
-    var deleteResponse = await Client.DeleteAsync($"/api/admin/users/{created.Id}");
+    var deleteResponse = await Client.DeleteAsync($"/api/v1/admin/users/{created.Id}");
     Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-    var getResponse = await Client.GetAsync($"/api/admin/users/{created.Id}");
+    var getResponse = await Client.GetAsync($"/api/v1/admin/users/{created.Id}");
     Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
   }
 
@@ -153,7 +153,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
   {
     var (adminId, adminClient) = await CreateUserAndClientAsync(Roles.Administrator);
 
-    var response = await adminClient.DeleteAsync($"/api/admin/users/{adminId}");
+    var response = await adminClient.DeleteAsync($"/api/v1/admin/users/{adminId}");
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -167,7 +167,7 @@ public class AdminUsersControllerTests(IntegrationTestWebAppFactory factory) : I
       Role = role,
     };
 
-    var response = await Client.PostAsJsonAsync("/api/admin/users", dto);
+    var response = await Client.PostAsJsonAsync("/api/v1/admin/users", dto);
     return (await response.Content.ReadFromJsonAsync<AdminUserDto>())!;
   }
 }

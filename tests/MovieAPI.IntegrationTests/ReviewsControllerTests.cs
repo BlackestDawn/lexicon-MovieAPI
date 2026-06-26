@@ -12,7 +12,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.PostAsJsonAsync($"/api/movies/{movieId}/reviews", TestData.ValidReview());
+    var response = await Client.PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     Assert.NotNull(response.Headers.Location);
@@ -25,7 +25,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   [Fact]
   public async Task CreateReview_WithUnknownMovieId_Returns404()
   {
-    var response = await Client.PostAsJsonAsync($"/api/movies/{Guid.NewGuid()}/reviews", TestData.ValidReview());
+    var response = await Client.PostAsJsonAsync($"/api/v1/movies/{Guid.NewGuid()}/reviews", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
@@ -35,7 +35,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.PostAsJsonAsync($"/api/movies/{movieId}/reviews", TestData.ValidReview(score: 0));
+    var response = await Client.PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview(score: 0));
 
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
   }
@@ -47,7 +47,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     await CreateReviewAsync(movieId, "Reviewer One");
     await CreateReviewAsync(movieId, "Reviewer Two");
 
-    var response = await Client.GetAsync($"/api/movies/{movieId}/reviews");
+    var response = await Client.GetAsync($"/api/v1/movies/{movieId}/reviews");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     Assert.True(response.Headers.Contains("X-Pagination"));
@@ -62,7 +62,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     var movieId = await CreateMovieAsync();
     var created = await CreateReviewAsync(movieId);
 
-    var response = await Client.GetAsync($"/api/movies/{movieId}/reviews/{created.Id}");
+    var response = await Client.GetAsync($"/api/v1/movies/{movieId}/reviews/{created.Id}");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     var review = await response.Content.ReadFromJsonAsync<ReviewDto>();
@@ -74,7 +74,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.GetAsync($"/api/movies/{movieId}/reviews/{Guid.NewGuid()}");
+    var response = await Client.GetAsync($"/api/v1/movies/{movieId}/reviews/{Guid.NewGuid()}");
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
@@ -85,12 +85,12 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     var movieId = await CreateMovieAsync();
     var created = await CreateReviewAsync(movieId);
 
-    var response = await Client.PutAsJsonAsync($"/api/movies/{movieId}/reviews/{created.Id}",
+    var response = await Client.PutAsJsonAsync($"/api/v1/movies/{movieId}/reviews/{created.Id}",
       TestData.ValidReview("Updated Reviewer", 5));
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-    var fetched = await Client.GetFromJsonAsync<ReviewDto>($"/api/movies/{movieId}/reviews/{created.Id}");
+    var fetched = await Client.GetFromJsonAsync<ReviewDto>($"/api/v1/movies/{movieId}/reviews/{created.Id}");
     Assert.Equal("Updated Reviewer", fetched!.AuthorName);
     Assert.Equal(5, fetched.Score);
   }
@@ -100,7 +100,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.PutAsJsonAsync($"/api/movies/{movieId}/reviews/{Guid.NewGuid()}", TestData.ValidReview());
+    var response = await Client.PutAsJsonAsync($"/api/v1/movies/{movieId}/reviews/{Guid.NewGuid()}", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
@@ -112,11 +112,11 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     var created = await CreateReviewAsync(movieId);
     var patch = new[] { new { op = "replace", path = "/score", value = 3 } };
 
-    var response = await PatchJsonPatchAsync($"/api/movies/{movieId}/reviews/{created.Id}", patch);
+    var response = await PatchJsonPatchAsync($"/api/v1/movies/{movieId}/reviews/{created.Id}", patch);
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-    var fetched = await Client.GetFromJsonAsync<ReviewDto>($"/api/movies/{movieId}/reviews/{created.Id}");
+    var fetched = await Client.GetFromJsonAsync<ReviewDto>($"/api/v1/movies/{movieId}/reviews/{created.Id}");
     Assert.Equal(3, fetched!.Score);
   }
 
@@ -126,10 +126,10 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     var movieId = await CreateMovieAsync();
     var created = await CreateReviewAsync(movieId);
 
-    var deleteResponse = await Client.DeleteAsync($"/api/movies/{movieId}/reviews/{created.Id}");
+    var deleteResponse = await Client.DeleteAsync($"/api/v1/movies/{movieId}/reviews/{created.Id}");
     Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-    var getResponse = await Client.GetAsync($"/api/movies/{movieId}/reviews/{created.Id}");
+    var getResponse = await Client.GetAsync($"/api/v1/movies/{movieId}/reviews/{created.Id}");
     Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
   }
 
@@ -138,20 +138,20 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.DeleteAsync($"/api/movies/{movieId}/reviews/{Guid.NewGuid()}");
+    var response = await Client.DeleteAsync($"/api/v1/movies/{movieId}/reviews/{Guid.NewGuid()}");
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
 
   private async Task<Guid> CreateMovieAsync()
   {
-    var genreResponse = await Client.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var genreResponse = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
     var genre = (await genreResponse.Content.ReadFromJsonAsync<GenreDto>())!;
 
-    var personResponse = await Client.PostAsJsonAsync("/api/people", TestData.ValidPerson());
+    var personResponse = await Client.PostAsJsonAsync("/api/v1/people", TestData.ValidPerson());
     var person = (await personResponse.Content.ReadFromJsonAsync<PersonDto>())!;
 
-    var movieResponse = await Client.PostAsJsonAsync("/api/movies", TestData.ValidMovie(genre.Id, person.Id));
+    var movieResponse = await Client.PostAsJsonAsync("/api/v1/movies", TestData.ValidMovie(genre.Id, person.Id));
     var movie = (await movieResponse.Content.ReadFromJsonAsync<MovieDto>())!;
 
     return movie.Id;
@@ -159,7 +159,7 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
 
   private async Task<ReviewDto> CreateReviewAsync(Guid movieId, string author = "Reviewer")
   {
-    var response = await Client.PostAsJsonAsync($"/api/movies/{movieId}/reviews", TestData.ValidReview(author));
+    var response = await Client.PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview(author));
     return (await response.Content.ReadFromJsonAsync<ReviewDto>())!;
   }
 }

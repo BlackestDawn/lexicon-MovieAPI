@@ -22,14 +22,14 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
   {
     var created = await CreateGenreAsync("Drama", "drama");
 
-    var firstFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/genres");
+    var firstFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/v1/genres");
     Assert.Contains(firstFetch!, g => g.Name == "Drama");
 
     // Bypasses the API (and therefore the cache eviction it triggers) to prove the
     // second GET below is served from cache rather than hitting the database again.
     await RenameGenreDirectlyInDbAsync(created.Id, "Renamed Directly In DB");
 
-    var cachedFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/genres");
+    var cachedFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/v1/genres");
     Assert.Contains(cachedFetch!, g => g.Name == "Drama");
     Assert.DoesNotContain(cachedFetch!, g => g.Name == "Renamed Directly In DB");
 
@@ -37,7 +37,7 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     // unrelated to genres.
     await CreateGenreAsync("Comedy", "comedy");
 
-    var freshFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/genres");
+    var freshFetch = await _anonymousClient.GetFromJsonAsync<List<GenreDto>>("/api/v1/genres");
     Assert.Contains(freshFetch!, g => g.Name == "Renamed Directly In DB");
   }
 
@@ -47,13 +47,13 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     var (genreId, personId) = await CreateGenreAndPersonAsync();
     await CreateMovieAsync(genreId, personId);
 
-    var firstFetch = await _anonymousClient.GetFromJsonAsync<List<MovieDto>>("/api/movies");
+    var firstFetch = await _anonymousClient.GetFromJsonAsync<List<MovieDto>>("/api/v1/movies");
     Assert.Contains(firstFetch!.Single().Genres, g => g.Name == "Sci-Fi");
 
-    var response = await Client.PutAsJsonAsync($"/api/genres/{genreId}", TestData.ValidGenre("Period Drama", "period-drama"));
+    var response = await Client.PutAsJsonAsync($"/api/v1/genres/{genreId}", TestData.ValidGenre("Period Drama", "period-drama"));
     response.EnsureSuccessStatusCode();
 
-    var secondFetch = await _anonymousClient.GetFromJsonAsync<List<MovieDto>>("/api/movies");
+    var secondFetch = await _anonymousClient.GetFromJsonAsync<List<MovieDto>>("/api/v1/movies");
     Assert.Contains(secondFetch!.Single().Genres, g => g.Name == "Period Drama");
   }
 
@@ -63,15 +63,15 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     var (genreId, personId) = await CreateGenreAndPersonAsync();
     var movie = await CreateMovieAsync(genreId, personId);
 
-    var afterCreate = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
+    var afterCreate = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/v1/movies/{movie.Id}");
     Assert.Equal(0, afterCreate!.AverageRating);
 
-    await Client.PostAsJsonAsync($"/api/movies/{movie.Id}/reviews", TestData.ValidReview(score: 8));
-    var afterFirstReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
+    await Client.PostAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews", TestData.ValidReview(score: 8));
+    var afterFirstReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/v1/movies/{movie.Id}");
     Assert.Equal(8, afterFirstReview!.AverageRating);
 
-    await Client.PostAsJsonAsync($"/api/movies/{movie.Id}/reviews", TestData.ValidReview("Second Reviewer", 4));
-    var afterSecondReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/movies/{movie.Id}");
+    await Client.PostAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews", TestData.ValidReview("Second Reviewer", 4));
+    var afterSecondReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/v1/movies/{movie.Id}");
     Assert.Equal(6, afterSecondReview!.AverageRating);
   }
 
@@ -86,16 +86,16 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
 
   private async Task<GenreDto> CreateGenreAsync(string name, string slug)
   {
-    var response = await Client.PostAsJsonAsync("/api/genres", TestData.ValidGenre(name, slug));
+    var response = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre(name, slug));
     return (await response.Content.ReadFromJsonAsync<GenreDto>())!;
   }
 
   private async Task<(Guid GenreId, Guid PersonId)> CreateGenreAndPersonAsync()
   {
-    var genreResponse = await Client.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var genreResponse = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
     var genre = (await genreResponse.Content.ReadFromJsonAsync<GenreDto>())!;
 
-    var personResponse = await Client.PostAsJsonAsync("/api/people", TestData.ValidPerson());
+    var personResponse = await Client.PostAsJsonAsync("/api/v1/people", TestData.ValidPerson());
     var person = (await personResponse.Content.ReadFromJsonAsync<PersonDto>())!;
 
     return (genre.Id, person.Id);
@@ -103,7 +103,7 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
 
   private async Task<MovieDto> CreateMovieAsync(Guid genreId, Guid personId)
   {
-    var response = await Client.PostAsJsonAsync("/api/movies", TestData.ValidMovie(genreId, personId));
+    var response = await Client.PostAsJsonAsync("/api/v1/movies", TestData.ValidMovie(genreId, personId));
     return (await response.Content.ReadFromJsonAsync<MovieDto>())!;
   }
 }
