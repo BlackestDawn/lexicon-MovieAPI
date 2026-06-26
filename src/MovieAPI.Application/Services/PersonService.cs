@@ -5,6 +5,7 @@ using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.Models.V1;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
 using MovieAPI.Infrastructure.Models;
@@ -92,6 +93,22 @@ public class PersonService(
 
     var dto = mapper.Map<PersonForChangeDto>(entity);
     patchDocument.ApplyTo(dto);
+
+    await ApplyUpdateAsync(entity, dto, token);
+  }
+
+  // Patches against the V1-shaped (FirstName, no MiddleName) view of the resource, then
+  // merges the result back onto the current canonical state - mapping onto an existing
+  // dto instance leaves ignored members (MiddleName) untouched, so a V1 patch that never
+  // mentions MiddleName can't wipe out a value set through V2.
+  public async Task Update(Guid id, JsonPatchDocument<PersonForChangeV1Dto> patchDocument, CancellationToken token = default)
+  {
+    var entity = await repository.GetPersonAsync(id, true, token) ?? throw new NotFoundException($"Person '{id}' not found");
+
+    var dto = mapper.Map<PersonForChangeDto>(entity);
+    var v1Dto = mapper.Map<PersonForChangeV1Dto>(dto);
+    patchDocument.ApplyTo(v1Dto);
+    mapper.Map(v1Dto, dto);
 
     await ApplyUpdateAsync(entity, dto, token);
   }

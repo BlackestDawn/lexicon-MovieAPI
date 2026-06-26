@@ -66,7 +66,7 @@ public class PersonsController(
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
+  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeV1Dto> patch,
     CancellationToken cancellationToken = default)
   {
     await service.Update(id, patch, cancellationToken);

@@ -18,6 +18,8 @@ public class PersonProfiles : Profile
     CreateMap<PersonForChangeV1Dto, PersonForChangeDto>()
       .ForMember(dest => dest.GivenName, opt => opt.MapFrom(src => src.FirstName))
       .ForMember(dest => dest.MiddleName, opt => opt.Ignore());
+    CreateMap<PersonForChangeDto, PersonForChangeV1Dto>()
+      .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.GivenName));
 
     CreateMap<CastCrew, CastCrewDto>()
       .ForMember(dest => dest.PersonId, opt => opt.MapFrom(src => src.Person.Id))
@@ -31,13 +33,12 @@ public class PersonProfiles : Profile
       .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Movie.Title));
 
     CreateMap<Person, PersonExtendedDto>()
-      .ForMember(dest => dest.MovieRoles,
-        opt => opt.MapFrom(src => src.CastCrews));
+      .ForMember(dest => dest.MovieRoles, opt => opt.MapFrom(src => src.CastCrews));
+    CreateMap<PersonExtendedDto, PersonExtendedV1Dto>()
+      .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.GivenName));
 
     CreateMap<PersonForChangeDto, Person>()
       .ForMember(dest => dest.CastCrews, opt => opt.Ignore());
-    CreateMap<PersonForChangeV1Dto, PersonForChangeDto>()
-      .ForMember(dest => dest.MiddleName, opt => opt.Ignore());
 
     CreateMap<MovieRoleForCreationDto, CastCrew>();
     CreateMap<CastCrew, MovieRoleForCreationDto>();
