@@ -1,11 +1,13 @@
 using System.Text.Json;
 using Asp.Versioning;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.Models.V1;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
@@ -14,7 +16,10 @@ namespace MovieAPI.Api.Controllers.V1;
 [ApiController]
 [Route("api/v{version:apiVersion}/movies")]
 [ApiVersion("1.0")]
-public class MoviesController(IMovieService service, IOutputCacheStore cacheStore) : ControllerBase
+public class MoviesController(
+  IMovieService service,
+  IOutputCacheStore cacheStore,
+  IMapper mapper) : ControllerBase
 {
   [HttpGet]
   [OutputCache(PolicyName = "CatalogCache")]
@@ -41,7 +46,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
     CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includePeople, cancellationToken);
-    return Ok(result);
+    return Ok(mapper.Map<MovieExtendedV1Dto>(result));
   }
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
@@ -51,7 +56,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
   {
     var result = await service.Create(newMovie, cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
-    return CreatedAtRoute("GetMovie", new { result.Id }, result);
+    return CreatedAtRoute("GetMovie", new { result.Id }, mapper.Map<MovieExtendedV1Dto>(result));
   }
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
