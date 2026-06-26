@@ -56,7 +56,7 @@ public class MoviesController(
   {
     var result = await service.Create(newMovie, cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
-    return CreatedAtRoute("GetMovie", new { result.Id }, mapper.Map<MovieExtendedV1Dto>(result));
+    return CreatedAtRoute("GetMovie", new { result.Id }, result);
   }
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
