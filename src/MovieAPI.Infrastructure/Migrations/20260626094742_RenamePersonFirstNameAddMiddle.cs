@@ -10,54 +10,49 @@ namespace MovieAPI.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Persons_FirstName",
-                table: "Persons");
-
             migrationBuilder.RenameColumn(
                 name: "FirstName",
                 table: "Persons",
                 newName: "GivenName");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Persons_FirstName",
+                table: "Persons",
+                newName: "IX_Persons_GivenName");
 
             migrationBuilder.AddColumn<string>(
                 name: "MiddleName",
                 table: "Persons",
                 type: "nvarchar(50)",
                 maxLength: 50,
-                nullable: true,
-                defaultValue: "");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Persons_GivenName",
-                table: "Persons",
-                column: "GivenName");
+                nullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Persons_MiddleName",
                 table: "Persons",
-                column: "GivenName");
+                column: "MiddleName");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_Persons_GivenName",
+                name: "IX_Persons_MiddleName",
                 table: "Persons");
 
             migrationBuilder.DropColumn(
-                name: "GivenName",
+                name: "MiddleName",
                 table: "Persons");
 
             migrationBuilder.RenameColumn(
-                name: "MiddleName",
+                name: "GivenName",
                 table: "Persons",
                 newName: "FirstName");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Persons_FirstName",
+            migrationBuilder.RenameIndex(
+                name: "IX_Persons_GivenName",
                 table: "Persons",
-                column: "FirstName");
+                newName: "IX_Persons_FirstName");
         }
     }
 }

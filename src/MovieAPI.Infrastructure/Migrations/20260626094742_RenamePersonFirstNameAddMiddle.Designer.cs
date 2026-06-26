@@ -12,7 +12,7 @@ using MovieAPI.Infrastructure;
 namespace MovieAPI.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260625144821_RenamePersonFirstNameAddMiddle")]
+    [Migration("20260626094742_RenamePersonFirstNameAddMiddle")]
     partial class RenamePersonFirstNameAddMiddle
     {
         /// <inheritdoc />
@@ -442,7 +442,6 @@ namespace MovieAPI.Infrastructure.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("MiddleName")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -456,6 +455,8 @@ namespace MovieAPI.Infrastructure.Migrations
                     b.HasIndex("GivenName");
 
                     b.HasIndex("LastName");
+
+                    b.HasIndex("MiddleName");
 
                     b.ToTable("Persons");
                 });
