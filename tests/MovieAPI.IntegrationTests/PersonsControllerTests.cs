@@ -17,13 +17,13 @@ public class PersonsControllerTests(IntegrationTestWebAppFactory factory) : Inte
 
     var created = await response.Content.ReadFromJsonAsync<PersonDto>();
     Assert.NotNull(created);
-    Assert.Equal("Ada", created!.FirstName);
+    Assert.Equal("Ada", created!.GivenName);
   }
 
   [Fact]
   public async Task CreatePerson_WithEmptyFirstName_Returns400()
   {
-    var response = await Client.PostAsJsonAsync("/api/people", TestData.ValidPerson(firstName: ""));
+    var response = await Client.PostAsJsonAsync("/api/people", TestData.ValidPerson(givenName: ""));
 
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
   }
@@ -73,7 +73,7 @@ public class PersonsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
     var fetched = await Client.GetFromJsonAsync<PersonExtendedDto>($"/api/people/{created.Id}");
-    Assert.Equal("Updated", fetched!.FirstName);
+    Assert.Equal("Updated", fetched!.GivenName);
   }
 
   [Fact]

@@ -30,7 +30,7 @@ public class PersonServiceTests
 
   private static PersonForChangeDto MakeDto(Guid? movieId = null) => new()
   {
-    FirstName = "Leonardo",
+    GivenName = "Leonardo",
     LastName = "DiCaprio",
     DateOfBirth = new DateOnly(1974, 11, 11),
     MovieRoles = [new MovieRoleForCreationDto { MovieId = movieId ?? Guid.NewGuid(), Role = PersonRole.Cast }]
@@ -57,7 +57,7 @@ public class PersonServiceTests
   {
     _validator
       .Setup(v => v.ValidateAsync(It.IsAny<PersonForChangeDto>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new ValidationResult([new ValidationFailure("FirstName", "Required")]));
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("GivenName", "Required")]));
 
     await Assert.ThrowsAsync<ValidationException>(() => _sut.Create(MakeDto()));
   }
@@ -81,7 +81,7 @@ public class PersonServiceTests
   {
     var dto = MakeDto();
     var entity = MakePersonEntity();
-    var personDto = new PersonDto { Id = entity.Id, FirstName = dto.FirstName, LastName = dto.LastName };
+    var personDto = new PersonDto { Id = entity.Id, GivenName = dto.GivenName, LastName = dto.LastName };
 
     SetupValidatorValid();
     _movieRepo
@@ -163,7 +163,7 @@ public class PersonServiceTests
   public async Task GetOne_WhenFound_ReturnsMappedDto()
   {
     var entity = MakePersonEntity();
-    var dto = new PersonExtendedDto { Id = entity.Id, FirstName = entity.GivenName };
+    var dto = new PersonExtendedDto { Id = entity.Id, GivenName = entity.GivenName };
 
     _repo.Setup(r => r.GetPersonReadOnlyAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<PersonExtendedDto>(entity)).Returns(dto);
@@ -222,7 +222,7 @@ public class PersonServiceTests
     _repo.Setup(r => r.GetPersonAsync(entity.Id, true, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _validator
       .Setup(v => v.ValidateAsync(It.IsAny<PersonForChangeDto>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new ValidationResult([new ValidationFailure("FirstName", "Required")]));
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("GivenName", "Required")]));
 
     await Assert.ThrowsAsync<ValidationException>(() => _sut.Update(entity.Id, MakeDto()));
   }

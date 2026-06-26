@@ -8,8 +8,8 @@ public static class TestData
   public static GenreForChangeDto ValidGenre(string name = "Sci-Fi", string slug = "sci-fi") =>
     new() { Name = name, Slug = slug };
 
-  public static PersonForChangeDto ValidPerson(string firstName = "Ada", string lastName = "Lovelace") =>
-    new() { FirstName = firstName, LastName = lastName, DateOfBirth = new DateOnly(1980, 1, 1) };
+  public static PersonForChangeDto ValidPerson(string givenName = "Ada", string lastName = "Lovelace") =>
+    new() { GivenName = givenName, LastName = lastName, DateOfBirth = new DateOnly(1980, 1, 1) };
 
   public static ReviewForChangeDto ValidReview(string author = "Reviewer", int score = 8) =>
     new() { AuthorName = author, Body = "A solid watch.", Score = score };
