@@ -1,5 +1,6 @@
 using AutoMapper;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.Models.V1;
 using MovieAPI.Domain.Entities;
 
 namespace MovieAPI.Application.Profiles;
@@ -22,6 +23,7 @@ public class MovieProfiles : Profile
         opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.Genre)))
       .ForMember(dest => dest.CastCrews,
         opt => opt.MapFrom(src => src.CastCrews));
+    CreateMap<MovieExtendedDto, MovieExtendedV1Dto>();
 
     CreateMap<MovieForChangeDto, Movie>()
       .ForMember(dest => dest.Details,

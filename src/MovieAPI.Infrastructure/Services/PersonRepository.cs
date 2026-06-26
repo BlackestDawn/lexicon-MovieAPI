@@ -30,7 +30,7 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
 
     if (!string.IsNullOrWhiteSpace(searchParams.Name))
     {
-      query = query.Where(p => p.FirstName.Contains(searchParams.Name) || p.LastName.Contains(searchParams.Name));
+      query = query.Where(p => p.GivenName.Contains(searchParams.Name) || p.LastName.Contains(searchParams.Name));
     }
 
     if (!string.IsNullOrWhiteSpace(searchParams.Genre))
@@ -49,7 +49,7 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
     var pagination = new PaginationMetadata(totalCount, pageSize, page);
 
     var people = await query
-      .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
+      .OrderBy(p => p.LastName).ThenBy(p => p.GivenName)
       .Skip((page - 1) * pageSize)
       .Take(pageSize)
       .ToListAsync(cancellationToken);

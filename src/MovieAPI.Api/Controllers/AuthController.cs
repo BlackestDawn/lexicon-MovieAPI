@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Api.Extensions;
@@ -7,7 +8,9 @@ using MovieAPI.Application.Models;
 namespace MovieAPI.Api.Controllers;
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/v{version:apiVersion}/auth")]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
 public class AuthController(IAuthService service) : ControllerBase
 {
   [HttpPost("register")]

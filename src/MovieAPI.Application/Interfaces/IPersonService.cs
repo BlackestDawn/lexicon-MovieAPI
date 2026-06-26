@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.Models.V1;
 using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Application.Interfaces;
@@ -11,5 +12,6 @@ public interface IPersonService
   Task<PersonDto> Create(PersonForChangeDto newPerson, CancellationToken token = default);
   Task Update(Guid id, PersonForChangeDto updatedPerson, CancellationToken token = default);
   Task Update(Guid id, JsonPatchDocument<PersonForChangeDto> patchDocument, CancellationToken token = default);
+  Task Update(Guid id, JsonPatchDocument<PersonForChangeV1Dto> patchDocument, CancellationToken token = default);
   Task Remove(Guid id, CancellationToken token = default);
 }

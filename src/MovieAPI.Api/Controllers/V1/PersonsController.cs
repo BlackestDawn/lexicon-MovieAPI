@@ -1,18 +1,25 @@
 using System.Text.Json;
+using Asp.Versioning;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.Models.V1;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
-namespace MovieAPI.Api.Controllers;
+namespace MovieAPI.Api.Controllers.V1;
 
 [ApiController]
-[Route("api/people")]
-public class PersonsController(IPersonService service, IOutputCacheStore cacheStore) : ControllerBase
+[Route("api/v{version:apiVersion}/people")]
+[ApiVersion("1.0")]
+public class PersonsController(
+  IPersonService service,
+  IOutputCacheStore cacheStore,
+  IMapper mapper) : ControllerBase
 {
   [HttpGet]
   [OutputCache(PolicyName = "CatalogCache")]
@@ -27,7 +34,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
       Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(pagination));
     }
 
-    return Ok(result);
+    return Ok(mapper.Map<IEnumerable<PersonV1Dto>>(result));
   }
 
   [HttpGet("{id}", Name = "GetPerson")]
@@ -35,31 +42,31 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   public async Task<IActionResult> GetPerson(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(id, includeMovies, cancellationToken);
-    return Ok(result);
+    return Ok(mapper.Map<PersonExtendedV1Dto>(result));
   }
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPost]
-  public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
+  public async Task<IActionResult> CreatePerson(PersonForChangeV1Dto newPerson, CancellationToken cancellationToken = default)
   {
-    var result = await service.Create(newPerson, cancellationToken);
+    var result = await service.Create(mapper.Map<PersonForChangeDto>(newPerson), cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
-    return CreatedAtRoute("GetPerson", new { result.Id }, result);
+    return CreatedAtRoute("GetPerson", new { result.Id }, mapper.Map<PersonV1Dto>(result));
   }
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPut("{id}")]
-  public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeDto updatedPerson,
+  public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeV1Dto updatedPerson,
     CancellationToken cancellationToken = default)
   {
-    await service.Update(id, updatedPerson, cancellationToken);
+    await service.Update(id, mapper.Map<PersonForChangeDto>(updatedPerson), cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
     return NoContent();
   }
 
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPatch("{id}")]
-  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
+  public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeV1Dto> patch,
     CancellationToken cancellationToken = default)
   {
     await service.Update(id, patch, cancellationToken);

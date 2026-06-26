@@ -13,7 +13,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.GetAsync("/api/genres");
+    var response = await anonymous.GetAsync("/api/v1/genres");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
   }
@@ -23,7 +23,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var response = await anonymous.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
@@ -33,7 +33,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
   {
     var user = await CreateClientWithRoleAsync(Roles.User);
 
-    var response = await user.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var response = await user.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -43,7 +43,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
   {
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
 
-    var response = await moderator.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var response = await moderator.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
 
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
   }
@@ -54,7 +54,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateGenreAsync();
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
 
-    var response = await moderator.DeleteAsync($"/api/genres/{created.Id}");
+    var response = await moderator.DeleteAsync($"/api/v1/genres/{created.Id}");
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -65,7 +65,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateGenreAsync();
     var admin = await CreateClientWithRoleAsync(Roles.Administrator);
 
-    var response = await admin.DeleteAsync($"/api/genres/{created.Id}");
+    var response = await admin.DeleteAsync($"/api/v1/genres/{created.Id}");
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
@@ -76,7 +76,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var (genreId, personId) = await CreateGenreAndPersonAsync();
     var user = await CreateClientWithRoleAsync(Roles.User);
 
-    var response = await user.PostAsJsonAsync("/api/movies", TestData.ValidMovie(genreId, personId));
+    var response = await user.PostAsJsonAsync("/api/v1/movies", TestData.ValidMovie(genreId, personId));
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -87,7 +87,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var (genreId, personId) = await CreateGenreAndPersonAsync();
     var powerUser = await CreateClientWithRoleAsync(Roles.PowerUser);
 
-    var response = await powerUser.PostAsJsonAsync("/api/movies", TestData.ValidMovie(genreId, personId));
+    var response = await powerUser.PostAsJsonAsync("/api/v1/movies", TestData.ValidMovie(genreId, personId));
 
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
   }
@@ -99,7 +99,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var movie = await CreateMovieAsync(genreId, personId);
     var powerUser = await CreateClientWithRoleAsync(Roles.PowerUser);
 
-    var response = await powerUser.DeleteAsync($"/api/movies/{movie.Id}");
+    var response = await powerUser.DeleteAsync($"/api/v1/movies/{movie.Id}");
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -111,7 +111,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var movie = await CreateMovieAsync(genreId, personId);
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
 
-    var response = await moderator.DeleteAsync($"/api/movies/{movie.Id}");
+    var response = await moderator.DeleteAsync($"/api/v1/movies/{movie.Id}");
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
@@ -123,7 +123,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var movie = await CreateMovieAsync(genreId, personId);
     var user = await CreateClientWithRoleAsync(Roles.User);
 
-    var response = await user.PostAsJsonAsync($"/api/movies/{movie.Id}/reviews", TestData.ValidReview());
+    var response = await user.PostAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
   }
@@ -136,7 +136,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var owner = await CreateClientWithRoleAsync(Roles.User);
     var created = await CreateReviewAsync(owner, movie.Id);
 
-    var response = await owner.PutAsJsonAsync($"/api/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Owner Updated"));
+    var response = await owner.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Owner Updated"));
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
@@ -150,7 +150,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateReviewAsync(owner, movie.Id);
 
     var otherUser = await CreateClientWithRoleAsync(Roles.User);
-    var response = await otherUser.PutAsJsonAsync($"/api/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Hijacked"));
+    var response = await otherUser.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Hijacked"));
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -164,7 +164,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateReviewAsync(owner, movie.Id);
 
     var otherUser = await CreateClientWithRoleAsync(Roles.User);
-    var response = await otherUser.DeleteAsync($"/api/movies/{movie.Id}/reviews/{created.Id}");
+    var response = await otherUser.DeleteAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}");
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -178,7 +178,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateReviewAsync(owner, movie.Id);
 
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
-    var response = await moderator.PutAsJsonAsync($"/api/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Moderated"));
+    var response = await moderator.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Moderated"));
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
@@ -192,23 +192,23 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateReviewAsync(owner, movie.Id);
 
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
-    var response = await moderator.DeleteAsync($"/api/movies/{movie.Id}/reviews/{created.Id}");
+    var response = await moderator.DeleteAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}");
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
 
   private async Task<GenreDto> CreateGenreAsync()
   {
-    var response = await Client.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var response = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
     return (await response.Content.ReadFromJsonAsync<GenreDto>())!;
   }
 
   private async Task<(Guid GenreId, Guid PersonId)> CreateGenreAndPersonAsync()
   {
-    var genreResponse = await Client.PostAsJsonAsync("/api/genres", TestData.ValidGenre());
+    var genreResponse = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
     var genre = (await genreResponse.Content.ReadFromJsonAsync<GenreDto>())!;
 
-    var personResponse = await Client.PostAsJsonAsync("/api/people", TestData.ValidPerson());
+    var personResponse = await Client.PostAsJsonAsync("/api/v1/people", TestData.ValidPerson());
     var person = (await personResponse.Content.ReadFromJsonAsync<PersonDto>())!;
 
     return (genre.Id, person.Id);
@@ -216,13 +216,13 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
 
   private async Task<MovieDto> CreateMovieAsync(Guid genreId, Guid personId)
   {
-    var response = await Client.PostAsJsonAsync("/api/movies", TestData.ValidMovie(genreId, personId));
+    var response = await Client.PostAsJsonAsync("/api/v1/movies", TestData.ValidMovie(genreId, personId));
     return (await response.Content.ReadFromJsonAsync<MovieDto>())!;
   }
 
   private static async Task<ReviewDto> CreateReviewAsync(HttpClient client, Guid movieId)
   {
-    var response = await client.PostAsJsonAsync($"/api/movies/{movieId}/reviews", TestData.ValidReview());
+    var response = await client.PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview());
     return (await response.Content.ReadFromJsonAsync<ReviewDto>())!;
   }
 }

@@ -16,7 +16,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.PutAsJsonAsync("/api/auth/me/password",
+    var response = await anonymous.PutAsJsonAsync("/api/v1/auth/me/password",
       new ChangePasswordDto { CurrentPassword = Password, NewPassword = "NewPassword123!" });
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -28,7 +28,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var anonymous = Factory.CreateClient();
     await RegisterAsync(anonymous);
 
-    var response = await anonymous.PutAsJsonAsync("/api/auth/me/password",
+    var response = await anonymous.PutAsJsonAsync("/api/v1/auth/me/password",
       new ChangePasswordDto { CurrentPassword = "WrongPassword123!", NewPassword = "NewPassword123!" });
 
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -40,16 +40,16 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var response = await client.PutAsJsonAsync("/api/auth/me/password",
+    var response = await client.PutAsJsonAsync("/api/v1/auth/me/password",
       new ChangePasswordDto { CurrentPassword = Password, NewPassword = "NewPassword123!" });
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-    var loginWithOldPassword = await Factory.CreateClient().PostAsJsonAsync("/api/auth/login",
+    var loginWithOldPassword = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login",
       new LoginDto { Email = auth.User.Email, Password = Password });
     Assert.Equal(HttpStatusCode.Unauthorized, loginWithOldPassword.StatusCode);
 
-    var loginWithNewPassword = await Factory.CreateClient().PostAsJsonAsync("/api/auth/login",
+    var loginWithNewPassword = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login",
       new LoginDto { Email = auth.User.Email, Password = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.OK, loginWithNewPassword.StatusCode);
   }
@@ -60,11 +60,11 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var response = await client.PutAsJsonAsync("/api/auth/me/password",
+    var response = await client.PutAsJsonAsync("/api/v1/auth/me/password",
       new ChangePasswordDto { CurrentPassword = Password, NewPassword = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-    var refreshWithOldToken = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var refreshWithOldToken = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
     Assert.Equal(HttpStatusCode.Unauthorized, refreshWithOldToken.StatusCode);
   }
@@ -74,7 +74,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.PostAsJsonAsync("/api/auth/forgot-password",
+    var response = await anonymous.PostAsJsonAsync("/api/v1/auth/forgot-password",
       new ForgotPasswordDto { Email = $"nobody_{Guid.NewGuid():N}@test.com" });
 
     // Same response whether the email exists or not - the endpoint must not leak
@@ -88,7 +88,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/forgot-password",
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/forgot-password",
       new ForgotPasswordDto { Email = auth.User.Email });
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -100,7 +100,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/reset-password",
       new ResetPasswordDto { Email = auth.User.Email, Token = "not-a-real-token", NewPassword = "NewPassword123!" });
 
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -113,15 +113,15 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var auth = await RegisterAsync(client);
     var resetToken = await Factory.GeneratePasswordResetTokenAsync(auth.User.Email);
 
-    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/reset-password",
       new ResetPasswordDto { Email = auth.User.Email, Token = resetToken, NewPassword = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-    var loginWithOldPassword = await Factory.CreateClient().PostAsJsonAsync("/api/auth/login",
+    var loginWithOldPassword = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login",
       new LoginDto { Email = auth.User.Email, Password = Password });
     Assert.Equal(HttpStatusCode.Unauthorized, loginWithOldPassword.StatusCode);
 
-    var loginWithNewPassword = await Factory.CreateClient().PostAsJsonAsync("/api/auth/login",
+    var loginWithNewPassword = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/login",
       new LoginDto { Email = auth.User.Email, Password = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.OK, loginWithNewPassword.StatusCode);
   }
@@ -133,11 +133,11 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var auth = await RegisterAsync(client);
     var resetToken = await Factory.GeneratePasswordResetTokenAsync(auth.User.Email);
 
-    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/reset-password",
       new ResetPasswordDto { Email = auth.User.Email, Token = resetToken, NewPassword = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-    var refreshWithOldToken = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var refreshWithOldToken = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
     Assert.Equal(HttpStatusCode.Unauthorized, refreshWithOldToken.StatusCode);
   }
@@ -148,7 +148,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -161,7 +161,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
   [Fact]
   public async Task Refresh_WithUnknownToken_Returns401()
   {
-    var response = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var response = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = "not-a-real-token" });
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -173,18 +173,18 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var firstRefresh = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var firstRefresh = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
     var rotated = (await firstRefresh.Content.ReadFromJsonAsync<AuthResponseDto>())!;
 
     // Reusing the now-rotated-away original token simulates a stolen token being
     // replayed - the API should treat this as theft and kill the whole chain,
     // including the token that was legitimately issued by the call just above.
-    var reuseAttempt = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var reuseAttempt = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
     Assert.Equal(HttpStatusCode.Unauthorized, reuseAttempt.StatusCode);
 
-    var rotatedNowRevokedToo = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var rotatedNowRevokedToo = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = rotated.RefreshToken });
     Assert.Equal(HttpStatusCode.Unauthorized, rotatedNowRevokedToo.StatusCode);
   }
@@ -195,11 +195,11 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var logoutResponse = await client.PostAsJsonAsync("/api/auth/logout",
+    var logoutResponse = await client.PostAsJsonAsync("/api/v1/auth/logout",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
     Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
 
-    var refreshAfterLogout = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var refreshAfterLogout = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = auth.RefreshToken });
     Assert.Equal(HttpStatusCode.Unauthorized, refreshAfterLogout.StatusCode);
   }
@@ -209,7 +209,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.PostAsJsonAsync("/api/auth/logout", new RefreshTokenDto { RefreshToken = "irrelevant" });
+    var response = await anonymous.PostAsJsonAsync("/api/v1/auth/logout", new RefreshTokenDto { RefreshToken = "irrelevant" });
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
@@ -226,11 +226,11 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     // Logout is a no-op for tokens that aren't yours rather than an error - it
     // shouldn't leak whether the token exists, and the attacker's own logout call
     // succeeding has no bearing on the victim's session.
-    var logoutResponse = await attackerClient.PostAsJsonAsync("/api/auth/logout",
+    var logoutResponse = await attackerClient.PostAsJsonAsync("/api/v1/auth/logout",
       new RefreshTokenDto { RefreshToken = owner.RefreshToken });
     Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
 
-    var ownerCanStillRefresh = await Factory.CreateClient().PostAsJsonAsync("/api/auth/refresh",
+    var ownerCanStillRefresh = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/refresh",
       new RefreshTokenDto { RefreshToken = owner.RefreshToken });
     Assert.Equal(HttpStatusCode.OK, ownerCanStillRefresh.StatusCode);
   }
@@ -244,7 +244,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var response = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = auth.User.Email });
+    var response = await client.PutAsJsonAsync("/api/v1/auth/me", new UserForUpdateDto { Email = auth.User.Email });
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
   }
@@ -255,12 +255,12 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var client = Factory.CreateClient();
     var auth = await RegisterAsync(client);
 
-    var changeResponse = await client.PutAsJsonAsync("/api/auth/me/password",
+    var changeResponse = await client.PutAsJsonAsync("/api/v1/auth/me/password",
       new ChangePasswordDto { CurrentPassword = Password, NewPassword = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.NoContent, changeResponse.StatusCode);
 
     // client still carries the access token issued before the password change.
-    var staleTokenResponse = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = auth.User.Email });
+    var staleTokenResponse = await client.PutAsJsonAsync("/api/v1/auth/me", new UserForUpdateDto { Email = auth.User.Email });
 
     Assert.Equal(HttpStatusCode.Unauthorized, staleTokenResponse.StatusCode);
   }
@@ -272,11 +272,11 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var auth = await RegisterAsync(client);
     var resetToken = await Factory.GeneratePasswordResetTokenAsync(auth.User.Email);
 
-    var resetResponse = await Factory.CreateClient().PostAsJsonAsync("/api/auth/reset-password",
+    var resetResponse = await Factory.CreateClient().PostAsJsonAsync("/api/v1/auth/reset-password",
       new ResetPasswordDto { Email = auth.User.Email, Token = resetToken, NewPassword = "NewPassword123!" });
     Assert.Equal(HttpStatusCode.NoContent, resetResponse.StatusCode);
 
-    var staleTokenResponse = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = auth.User.Email });
+    var staleTokenResponse = await client.PutAsJsonAsync("/api/v1/auth/me", new UserForUpdateDto { Email = auth.User.Email });
 
     Assert.Equal(HttpStatusCode.Unauthorized, staleTokenResponse.StatusCode);
   }
@@ -288,10 +288,10 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     var adminClient = await CreateClientWithRoleAsync(Roles.Administrator);
 
     // Delete the user out from under their own still-valid, unexpired access token.
-    var deleteResponse = await adminClient.DeleteAsync($"/api/admin/users/{userId}");
+    var deleteResponse = await adminClient.DeleteAsync($"/api/v1/admin/users/{userId}");
     Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-    var response = await client.PutAsJsonAsync("/api/auth/me", new UserForUpdateDto { Email = "irrelevant@test.com" });
+    var response = await client.PutAsJsonAsync("/api/v1/auth/me", new UserForUpdateDto { Email = "irrelevant@test.com" });
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
@@ -299,7 +299,7 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
   private static async Task<AuthResponseDto> RegisterAsync(HttpClient client)
   {
     var email = $"test_{Guid.NewGuid():N}@test.com";
-    var response = await client.PostAsJsonAsync("/api/auth/register",
+    var response = await client.PostAsJsonAsync("/api/v1/auth/register",
       new RegisterDto { Email = email, Password = Password });
 
     var auth = (await response.Content.ReadFromJsonAsync<AuthResponseDto>())!;

@@ -9,7 +9,7 @@ public class PersonChangeValidatorTests
 
   private static PersonForChangeDto ValidDto() => new()
   {
-    FirstName = "Leonardo",
+    GivenName = "Leonardo",
     LastName = "DiCaprio",
     DateOfBirth = new DateOnly(1974, 11, 11)
   };
@@ -23,10 +23,10 @@ public class PersonChangeValidatorTests
   [Theory]
   [InlineData("")]
   [InlineData("   ")]
-  public void EmptyFirstName_Fails(string firstName)
+  public void EmptyGivenName_Fails(string givenName)
   {
     var dto = ValidDto();
-    dto.FirstName = firstName;
+    dto.GivenName = givenName;
     Assert.False(_sut.Validate(dto).IsValid);
   }
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using Asp.Versioning;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MovieAPI.Api.Middleware;
+using MovieAPI.Api.Swagger;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
@@ -56,7 +58,25 @@ try
   builder.Services.AddProblemDetails();
 
   builder.Services.AddOpenApi();
+  builder.Services.AddApiVersioning(options =>
+  {
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+      new UrlSegmentApiVersionReader(),
+      new QueryStringApiVersionReader("apiversion"),
+      new HeaderApiVersionReader("X_API_VERSION")
+    );
+  })
+  .AddMvc()
+  .AddApiExplorer(options =>
+  {
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+  });
   builder.Services.AddEndpointsApiExplorer();
+  builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
   builder.Services.AddSwaggerGen(options =>
   {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -215,13 +235,49 @@ try
 
   app.UseSerilogRequestLogging();
 
+  // Defaults an unversioned request (e.g. /api/people) to /api/v1/people. This has to be
+  // a path rewrite rather than a second [Route] template on the v1 controllers: ASP.NET
+  // Core requires every attribute route sharing a Name (e.g. "GetPerson", used by
+  // CreatedAtRoute) to resolve to the exact same template string, so a versioned and an
+  // unversioned template can't coexist under one name - the app fails at startup.
+  //
+  // This must run before endpoint matching, so UseRouting is called explicitly right
+  // after it - the minimal-hosting model otherwise auto-inserts routing as the very
+  // first middleware in the pipeline, ahead of anything added here via app.Use.
+  app.Use((context, next) =>
+  {
+    var path = context.Request.Path.Value;
+
+    if (path is not null && path.StartsWith("/api/", StringComparison.Ordinal))
+    {
+      var afterApi = path["/api/".Length..];
+      var firstSegmentEnd = afterApi.IndexOf('/');
+      var firstSegment = firstSegmentEnd >= 0 ? afterApi[..firstSegmentEnd] : afterApi;
+      var isVersioned = firstSegment.Length > 1 && firstSegment[0] is 'v' or 'V' && char.IsDigit(firstSegment[1]);
+
+      if (!isVersioned)
+      {
+        context.Request.Path = "/api/v1/" + afterApi;
+      }
+    }
+
+    return next(context);
+  });
+  app.UseRouting();
+
   app.UseExceptionHandler();
 
   if (app.Environment.IsDevelopment())
   {
     app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+      foreach (var desc in app.DescribeApiVersions().Reverse())
+      {
+        options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json", desc.GroupName.ToUpperInvariant());
+      }
+    });
     await DbSeeder.SeedAsync(app.Services);
   }
 
