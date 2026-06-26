@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using MovieAPI.Application.Models;
+using MovieAPI.Application.Models.V1;
 using MovieAPI.IntegrationTests.Infrastructure;
 
 namespace MovieAPI.IntegrationTests;
@@ -72,6 +73,23 @@ public class MoviesControllerTests(IntegrationTestWebAppFactory factory) : Integ
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     var movie = await response.Content.ReadFromJsonAsync<MovieExtendedDto>();
     Assert.Equal(created.Id, movie!.Id);
+  }
+
+  // V1's MovieExtendedV1Dto translates the embedded cast/crew back to FirstName -
+  // contrast with GetMovie_WithExistingId_ReturnsCastCrewWithGivenNameAndMiddleName
+  // in MoviesV2ControllerTests.cs, which uses the same fixture data on /api/v2/movies.
+  [Fact]
+  public async Task GetMovie_WithExistingId_ReturnsCastCrewWithFirstName()
+  {
+    var (genreId, personId) = await CreateGenreAndPersonAsync();
+    var created = await CreateMovieAsync(genreId, personId);
+
+    var response = await Client.GetAsync($"/api/v1/movies/{created.Id}");
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    var movie = await response.Content.ReadFromJsonAsync<MovieExtendedV1Dto>();
+    var castCrew = Assert.Single(movie!.CastCrews!);
+    Assert.Equal("Ada", castCrew.FirstName);
   }
 
   [Fact]
