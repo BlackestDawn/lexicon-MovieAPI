@@ -12,7 +12,7 @@ using MovieAPI.Infrastructure.Models;
 namespace MovieAPI.Api.Controllers.V2;
 
 /// <summary>
-/// V2 Controller for handling person in/with movies
+/// V2 Controller for handling people associated with movies
 /// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/people")]
@@ -25,8 +25,8 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   /// <param name="name">Filter on name</param>
   /// <param name="genre">Filter on genre for movie they've been part of</param>
   /// <param name="year">Filter on birth year</param>
-  /// <param name="page">page to display, defaults to 1</param>
-  /// <param name="pageSize">Amount per page, defaults to 1</param>
+  /// <param name="page">Page to display, defaults to 1</param>
+  /// <param name="pageSize">Amount per page, defaults to 10</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>List of PersonDto objects</returns>
   [HttpGet]
@@ -49,7 +49,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   /// Get specific person with extended information
   /// </summary>
   /// <param name="id">GUID of person</param>
-  /// <param name="includeMovies">if to include movie they've been part of</param>
+  /// <param name="includeMovies">Whether to include movies they've been part of</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>PersonExtendedDto object</returns>
   [HttpGet("{id}", Name = "GetPerson")]
@@ -61,11 +61,11 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Create a new person, needs power user or above
+  /// Create a new person, only available to power users and above
   /// </summary>
   /// <param name="newPerson">PersonForChangeDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>PersonDto object with route to said object</returns>
+  /// <returns>PersonDto object and route to said object</returns>
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPost]
   public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
@@ -76,7 +76,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Whole object update of person, needs power user or above
+  /// Full object update of person, only available to power users and above
   /// </summary>
   /// <param name="id">GUID of person</param>
   /// <param name="updatedPerson">PersonForChangeDto object</param>
@@ -93,7 +93,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Update person through JSON patch, needs power user or above
+  /// Update person through JSON patch, only available to power users and above
   /// </summary>
   /// <param name="id">GUID of person</param>
   /// <param name="patch">JSON patch document</param>
@@ -110,7 +110,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Remove a person, needs moderator or above
+  /// Remove a person, only available to moderators and above
   /// </summary>
   /// <param name="id">GUID of person</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>

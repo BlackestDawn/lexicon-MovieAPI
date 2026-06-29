@@ -30,11 +30,11 @@ public class AuthController(IAuthService service) : ControllerBase
   }
 
   /// <summary>
-  /// Login to system
+  /// Log in to system
   /// </summary>
   /// <param name="credentials">LoginDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>AuthResponseDto</returns>
+  /// <returns>AuthResponseDto object</returns>
   [HttpPost("login")]
   public async Task<IActionResult> Login(LoginDto credentials, CancellationToken cancellationToken = default)
   {
@@ -56,7 +56,7 @@ public class AuthController(IAuthService service) : ControllerBase
   }
 
   /// <summary>
-  /// Log out of system
+  /// Log out of system, only available to logged in users
   /// </summary>
   /// <param name="request">RefreshTokenDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
@@ -70,7 +70,7 @@ public class AuthController(IAuthService service) : ControllerBase
   }
 
   /// <summary>
-  /// Update self
+  /// Update self, only available to logged in users
   /// </summary>
   /// <param name="updatedUser">UserForUpdateDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
@@ -84,7 +84,7 @@ public class AuthController(IAuthService service) : ControllerBase
   }
 
   /// <summary>
-  /// Change own password
+  /// Change own password, only available to logged in users
   /// </summary>
   /// <param name="changePassword">ChangePasswordDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>

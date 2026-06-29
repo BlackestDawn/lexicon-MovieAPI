@@ -32,7 +32,7 @@ public class MoviesController(
   /// <param name="genre">Filter on genre</param>
   /// <param name="year">Filter on release year</param>
   /// <param name="minRating">Filter on minimum rating</param>
-  /// <param name="page">page to display, defaults to 1</param>
+  /// <param name="page">Page to display, defaults to 1</param>
   /// <param name="pageSize">Amount per page, defaults to 10</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>List of MovieDto objects</returns>
@@ -59,7 +59,7 @@ public class MoviesController(
   /// Get specific movie with extended information
   /// </summary>
   /// <param name="id">GUID of movie</param>
-  /// <param name="includePeople">If to include persons participating in movie</param>
+  /// <param name="includePeople">Whether to include persons participating in movie</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>MovieExtendedV1Dto object</returns>
   [HttpGet("{id}", Name = "GetMovie")]
@@ -72,7 +72,7 @@ public class MoviesController(
   }
 
   /// <summary>
-  /// Create new movie, needs power user or above
+  /// Create new movie, only available to power users and above
   /// </summary>
   /// <param name="newMovie">MovieForChangeDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
@@ -88,7 +88,7 @@ public class MoviesController(
   }
 
   /// <summary>
-  /// Whole object update of a movie, needs power user or above
+  /// Full object update of a movie, only available to power users and above
   /// </summary>
   /// <param name="id">GUID of movie</param>
   /// <param name="updatedMovie">MovieForChangeDto object</param>
@@ -105,7 +105,7 @@ public class MoviesController(
   }
 
   /// <summary>
-  /// Update movie through JSON patch, needs power user or above
+  /// Update movie through JSON patch, only available to power users and above
   /// </summary>
   /// <param name="id">GUID of movie</param>
   /// <param name="patch">JSON patch document</param>
@@ -122,7 +122,7 @@ public class MoviesController(
   }
 
   /// <summary>
-  /// Remove a movie
+  /// Remove a movie, only available to moderators and above
   /// </summary>
   /// <param name="id">GUID of movie</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>

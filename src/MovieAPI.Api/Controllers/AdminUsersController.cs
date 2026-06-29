@@ -22,10 +22,10 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
   /// <summary>
   /// Fetch a lists of users in paginated format
   /// </summary>
-  /// <param name="page">page to view, defaults to 1</param>
-  /// <param name="pageSize">amount per page, defaults to 10</param>
+  /// <param name="page">Page to view, defaults to 1</param>
+  /// <param name="pageSize">Amount per page, defaults to 10</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>IEnumerable of AdminUserDto objects</returns>
+  /// <returns>List of AdminUserDto objects</returns>
   [HttpGet]
   public async Task<IActionResult> GetUsers(int? page, int? pageSize, CancellationToken cancellationToken = default)
   {
@@ -37,7 +37,7 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
   /// <summary>
   /// Fetch a specific user
   /// </summary>
-  /// <param name="id">GUID of user to fetch</param>
+  /// <param name="id">GUID of user</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>AdminUserDto object</returns>
   [HttpGet("{id}", Name = "GetAdminUser")]
@@ -63,10 +63,10 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
   /// <summary>
   /// Updates specified user
   /// </summary>
-  /// <param name="id">GUID of user to update</param>
+  /// <param name="id">GUID of user</param>
   /// <param name="updatedUser">AdminUserForUpdateDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>updated AdminUserObject</returns>
+  /// <returns>Updated AdminUserDto object</returns>
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateUser(Guid id, AdminUserForUpdateDto updatedUser, CancellationToken cancellationToken = default)
   {
@@ -77,7 +77,7 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
   /// <summary>
   /// Removes a user
   /// </summary>
-  /// <param name="id">GUID of user to remove</param>
+  /// <param name="id">GUID of user</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>HTTP code: 204</returns>
   [HttpDelete("{id}")]

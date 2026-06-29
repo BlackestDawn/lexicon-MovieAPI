@@ -25,7 +25,7 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   /// Fetch a paginated and filterable list of reviews for a specific movie
   /// </summary>
   /// <param name="movieId">GUID of movie</param>
-  /// <param name="search">Fritext search of review content</param>
+  /// <param name="search">Free-text search of review content</param>
   /// <param name="minScore">Filter on minimum score</param>
   /// <param name="maxScore">Filter on maximum score</param>
   /// <param name="page">Page to view, defaults to 1</param>
@@ -67,12 +67,12 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Create a new review for specified movie, need to be logged in
+  /// Create a new review for specified movie, only available to logged in users
   /// </summary>
   /// <param name="movieId">GUID of movie</param>
   /// <param name="newReview">ReviewForChangeDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>ReviewDto object and route for said object</returns>
+  /// <returns>ReviewDto object and route to said object</returns>
   [Authorize]
   [HttpPost]
   public async Task<IActionResult> CreateReview(Guid movieId, ReviewForChangeDto newReview,
@@ -84,7 +84,7 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Whole object update of reviews, need to be logged in
+  /// Full object update of review, only available to logged in users
   /// </summary>
   /// <param name="movieId">GUID of movie</param>
   /// <param name="id">GUID of review</param>
@@ -102,7 +102,7 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Update object through JSON patch, need to be logged in
+  /// Update review through JSON patch, only available to logged in users
   /// </summary>
   /// <param name="movieId">GUID of movie</param>
   /// <param name="id">GUID of review</param>
@@ -120,7 +120,7 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   }
 
   /// <summary>
-  /// Remove a review, need to be logged in
+  /// Remove a review, only available to logged in users
   /// </summary>
   /// <param name="movieId">GUID of movie</param>
   /// <param name="id">GUID of review</param>

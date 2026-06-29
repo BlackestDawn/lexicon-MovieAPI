@@ -35,7 +35,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
   /// Get single genre with optionally a list of movies for that genre
   /// </summary>
   /// <param name="id">GUID of genre</param>
-  /// <param name="includeMovies">if to include movies</param>
+  /// <param name="includeMovies">Whether to include movies</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>GenreExtendedDto object</returns>
   [HttpGet("{id}", Name = "GetGenre")]
@@ -51,7 +51,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
   /// </summary>
   /// <param name="newGenre">GenreForChangeDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>GenreDto object with route to it</returns>
+  /// <returns>GenreDto object and route to said object</returns>
   [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpPost]
   public async Task<IActionResult> CreateGenre(GenreForChangeDto newGenre, CancellationToken cancellationToken = default)
@@ -64,7 +64,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
   /// <summary>
   /// Full object update of existing genre, only available to moderators and above
   /// </summary>
-  /// <param name="id">GUID of genre to update</param>
+  /// <param name="id">GUID of genre</param>
   /// <param name="updatedGenre">GenreForChangeDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>HTTP code: 204</returns>
@@ -80,7 +80,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
   /// <summary>
   /// Update existing genre through JSON patch, only available to moderators and above
   /// </summary>
-  /// <param name="id">GUID of genre to update</param>
+  /// <param name="id">GUID of genre</param>
   /// <param name="patch">JSON patch document of changes</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>HTTP code: 204</returns>
@@ -96,7 +96,7 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
   /// <summary>
   /// Remove a genre, only available to administrators
   /// </summary>
-  /// <param name="id">GUID of genre to remove</param>
+  /// <param name="id">GUID of genre</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>HTTP code: 204</returns>
   [Authorize(Roles = Roles.Administrator)]
