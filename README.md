@@ -73,7 +73,7 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data â
 - **JWT Bearer authentication** (`Microsoft.AspNetCore.Authentication.JwtBearer`, `System.IdentityModel.Tokens.Jwt`)
 - **AutoMapper** for DTO mapping
 - **FluentValidation** for request validation
-- **Swagger / OpenAPI** (Swashbuckle + `Microsoft.AspNetCore.OpenApi`) for API docs, with JWT bearer auth wired into the UI
+- **Swagger / OpenAPI** (Swashbuckle + `Microsoft.AspNetCore.OpenApi`) for API docs, with JWT bearer auth wired into the UI. Every controller action has an XML doc comment (`<summary>`/`<param>`/`<returns>`) describing what it does, its parameters, and its response, surfaced in Swagger UI via `GenerateDocumentationFile` + `IncludeXmlComments`
 - **ASP.NET Core Output Caching**, with `Microsoft.AspNetCore.OutputCaching.StackExchangeRedis` for the Production store
 - **Serilog** (`Serilog.AspNetCore`) for structured logging, with `Serilog.Sinks.Elasticsearch` as the external log store in Production
 - **xUnit + Moq** for unit testing

@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using Asp.Versioning;
@@ -93,6 +94,10 @@ try
     {
       [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
     });
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
   });
 
   builder.Services.AddDbContext<AppDbContext>(options =>
