@@ -7,12 +7,21 @@ using MovieAPI.Application.Models;
 
 namespace MovieAPI.Api.Controllers;
 
+/// <summary>
+/// Controller for user authentication and self-service options
+/// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/auth")]
 [ApiVersion("1.0")]
 [ApiVersion("2.0")]
 public class AuthController(IAuthService service) : ControllerBase
 {
+  /// <summary>
+  /// Self-registration for new users
+  /// </summary>
+  /// <param name="newUser">RegisterDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>AuthResponseDto object</returns>
   [HttpPost("register")]
   public async Task<IActionResult> Register(RegisterDto newUser, CancellationToken cancellationToken = default)
   {
@@ -20,6 +29,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Login to system
+  /// </summary>
+  /// <param name="credentials">LoginDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>AuthResponseDto</returns>
   [HttpPost("login")]
   public async Task<IActionResult> Login(LoginDto credentials, CancellationToken cancellationToken = default)
   {
@@ -27,6 +42,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Refresh access token
+  /// </summary>
+  /// <param name="request">RefreshTokenDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>AuthResponseDto object</returns>
   [HttpPost("refresh")]
   public async Task<IActionResult> Refresh(RefreshTokenDto request, CancellationToken cancellationToken = default)
   {
@@ -34,6 +55,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Log out of system
+  /// </summary>
+  /// <param name="request">RefreshTokenDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [Authorize]
   [HttpPost("logout")]
   public async Task<IActionResult> Logout(RefreshTokenDto request, CancellationToken cancellationToken = default)
@@ -42,6 +69,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return NoContent();
   }
 
+  /// <summary>
+  /// Update self
+  /// </summary>
+  /// <param name="updatedUser">UserForUpdateDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>UserDto object</returns>
   [Authorize]
   [HttpPut("me")]
   public async Task<IActionResult> UpdateMe(UserForUpdateDto updatedUser, CancellationToken cancellationToken = default)
@@ -50,6 +83,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Change own password
+  /// </summary>
+  /// <param name="changePassword">ChangePasswordDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [Authorize]
   [HttpPut("me/password")]
   public async Task<IActionResult> ChangePassword(ChangePasswordDto changePassword, CancellationToken cancellationToken = default)
@@ -58,6 +97,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return NoContent();
   }
 
+  /// <summary>
+  /// Initiate password change request without need for login
+  /// </summary>
+  /// <param name="request">ForgotPasswordDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [HttpPost("forgot-password")]
   public async Task<IActionResult> ForgotPassword(ForgotPasswordDto request, CancellationToken cancellationToken = default)
   {
@@ -65,6 +110,12 @@ public class AuthController(IAuthService service) : ControllerBase
     return NoContent();
   }
 
+  /// <summary>
+  /// Reset password
+  /// </summary>
+  /// <param name="request">ResetPasswordDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [HttpPost("reset-password")]
   public async Task<IActionResult> ResetPassword(ResetPasswordDto request, CancellationToken cancellationToken = default)
   {
