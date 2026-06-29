@@ -11,11 +11,24 @@ using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Api.Controllers.V2;
 
+/// <summary>
+/// V2 Controller for handling person in/with movies
+/// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/people")]
 [ApiVersion("2.0")]
 public class PersonsController(IPersonService service, IOutputCacheStore cacheStore) : ControllerBase
 {
+  /// <summary>
+  /// Fetch paginated and filterable list of persons
+  /// </summary>
+  /// <param name="name">Filter on name</param>
+  /// <param name="genre">Filter on genre for movie they've been part of</param>
+  /// <param name="year">Filter on birth year</param>
+  /// <param name="page">page to display, defaults to 1</param>
+  /// <param name="pageSize">Amount per page, defaults to 1</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>List of PersonDto objects</returns>
   [HttpGet]
   [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetPeople(string? name, string? genre, int? year,
@@ -32,6 +45,13 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return Ok(result);
   }
 
+  /// <summary>
+  /// Get specific person with extended information
+  /// </summary>
+  /// <param name="id">GUID of person</param>
+  /// <param name="includeMovies">if to include movie they've been part of</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>PersonExtendedDto object</returns>
   [HttpGet("{id}", Name = "GetPerson")]
   [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetPerson(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
@@ -40,6 +60,12 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return Ok(result);
   }
 
+  /// <summary>
+  /// Create a new person, needs power user or above
+  /// </summary>
+  /// <param name="newPerson">PersonForChangeDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>PersonDto object with route to said object</returns>
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPost]
   public async Task<IActionResult> CreatePerson(PersonForChangeDto newPerson, CancellationToken cancellationToken = default)
@@ -49,6 +75,13 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return CreatedAtRoute("GetPerson", new { result.Id }, result);
   }
 
+  /// <summary>
+  /// Whole object update of person, needs power user or above
+  /// </summary>
+  /// <param name="id">GUID of person</param>
+  /// <param name="updatedPerson">PersonForChangeDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdatePerson(Guid id, PersonForChangeDto updatedPerson,
@@ -59,6 +92,13 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return NoContent();
   }
 
+  /// <summary>
+  /// Update person through JSON patch, needs power user or above
+  /// </summary>
+  /// <param name="id">GUID of person</param>
+  /// <param name="patch">JSON patch document</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [Authorize(Roles = Roles.PowerUserAndAbove)]
   [HttpPatch("{id}")]
   public async Task<IActionResult> PatchPerson(Guid id, JsonPatchDocument<PersonForChangeDto> patch,
@@ -69,6 +109,12 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
     return NoContent();
   }
 
+  /// <summary>
+  /// Remove a person, needs moderator or above
+  /// </summary>
+  /// <param name="id">GUID of person</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [Authorize(Roles = Roles.ModeratorAndAbove)]
   [HttpDelete("{id}")]
   public async Task<IActionResult> DeletePerson(Guid id, CancellationToken cancellationToken = default)
