@@ -9,6 +9,9 @@ using MovieAPI.Domain.Constants;
 
 namespace MovieAPI.Api.Controllers;
 
+/// <summary>
+/// Controller for handling users, only accessible to Administrators
+/// </summary>
 [ApiController]
 [Route("api/v{version:apiVersion}/admin/users")]
 [Authorize(Roles = Roles.Administrator)]
@@ -16,6 +19,13 @@ namespace MovieAPI.Api.Controllers;
 [ApiVersion("2.0")]
 public class AdminUsersController(IAdminUserService service) : ControllerBase
 {
+  /// <summary>
+  /// Fetch a lists of users in paginated format
+  /// </summary>
+  /// <param name="page">page to view, defaults to 1</param>
+  /// <param name="pageSize">amount per page, defaults to 10</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>IEnumerable of AdminUserDto objects</returns>
   [HttpGet]
   public async Task<IActionResult> GetUsers(int? page, int? pageSize, CancellationToken cancellationToken = default)
   {
@@ -24,6 +34,12 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Fetch a specific user
+  /// </summary>
+  /// <param name="id">GUID of user to fetch</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>AdminUserDto object</returns>
   [HttpGet("{id}", Name = "GetAdminUser")]
   public async Task<IActionResult> GetUser(Guid id, CancellationToken cancellationToken = default)
   {
@@ -31,6 +47,12 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Create a new user
+  /// </summary>
+  /// <param name="newUser">AdminForCreationDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>AdminUserDto object and route to said object</returns>
   [HttpPost]
   public async Task<IActionResult> CreateUser(AdminUserForCreationDto newUser, CancellationToken cancellationToken = default)
   {
@@ -38,6 +60,13 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
     return CreatedAtRoute("GetAdminUser", new { result.Id }, result);
   }
 
+  /// <summary>
+  /// Updates specified user
+  /// </summary>
+  /// <param name="id">GUID of user to update</param>
+  /// <param name="updatedUser">AdminUserForUpdateDto object</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>updated AdminUserObject</returns>
   [HttpPut("{id}")]
   public async Task<IActionResult> UpdateUser(Guid id, AdminUserForUpdateDto updatedUser, CancellationToken cancellationToken = default)
   {
@@ -45,6 +74,12 @@ public class AdminUsersController(IAdminUserService service) : ControllerBase
     return Ok(result);
   }
 
+  /// <summary>
+  /// Removes a user
+  /// </summary>
+  /// <param name="id">GUID of user to remove</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>HTTP code: 204</returns>
   [HttpDelete("{id}")]
   public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken = default)
   {
