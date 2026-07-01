@@ -1,0 +1,99 @@
+# Demo/local environment only. It wires the API container up to real instances
+# of every external service it talks to (SQL Server, Redis, Elasticsearch) with
+# throwaway demo credentials - a real deployment supplies its own connection
+# strings/secrets via its orchestrator/secret manager instead of this file.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__sqlserver: "Server=tcp:sqlserver,1433;Database=MovieAPI;Uid=sa;Pwd=${MSSQL_SA_PASSWORD:-P@ssw0rd_Demo1};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30"
+      ConnectionStrings__redis: "redis:6379"
+      Elasticsearch__Uri: "http://elasticsearch:9200"
+      Jwt__Issuer: MovieAPI
+      Jwt__Audience: MovieAPI
+      Jwt__Key: ${JWT_KEY:-Demo0nlySigningKey_DoNotUseInProduction_1234567890}
+      Jwt__ExpiryMinutes: "60"
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@movieapi.local}
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin123!}
+      # No separate migration step in this demo stack, so let the API apply
+      # migrations itself on startup - see Program.cs.
+      ApplyMigrationsOnStartup: "true"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - movieapi-net
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-P@ssw0rd_Demo1}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      # Newer mssql-server images ship sqlcmd under mssql-tools18 (requires -C to
+      # trust the server cert); fall back to the older mssql-tools path so this
+      # keeps working against older image tags too.
+      test: >
+        bash -c '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b -o /dev/null
+        || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - movieapi-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - movieapi-net
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    environment:
+      discovery.type: single-node
+      # Demo-only: real deployments should enable xpack security and give the
+      # API its own credentials rather than an anonymous/open Elasticsearch.
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - movieapi-net
+
+networks:
+  movieapi-net:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+  elasticsearch-data:
