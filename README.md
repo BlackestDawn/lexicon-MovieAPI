@@ -78,12 +78,15 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **Serilog** (`Serilog.AspNetCore`) for structured logging, with `Serilog.Sinks.Elasticsearch` as the external log store in Production
 - **xUnit + Moq** for unit testing
 - **xUnit + Testcontainers + Respawn** for integration testing
+- **Docker / Docker Compose** — a production `Dockerfile` plus a `docker-compose.yml` demo stack (API + SQL Server + Redis + Elasticsearch), see [Running with Docker](#running-with-docker)
 
 ## Project Structure
 
 ```
 MovieAPI/
 ├── MovieAPI.slnx
+├── Dockerfile                     # Production image build (see Running with Docker)
+├── docker-compose.yml             # Local demo stack: API + SQL Server + Redis + Elasticsearch
 ├── src/
 │   ├── MovieAPI.Api/              # Controllers (V1/, V2/ subfolders for resources with version-specific shapes;
 │   │                              #   version-neutral resources live directly under Controllers/), program entry
@@ -135,6 +138,34 @@ dotnet test
 ```
 
 Unit tests run with no external dependencies. Integration tests require a running Docker daemon — they spin up a disposable SQL Server container via Testcontainers for each test run.
+
+## Running with Docker
+
+The `Dockerfile` builds a production image: a multi-stage build (SDK → `aspnet` runtime) that publishes only `MovieAPI.Api`, runs as the image's non-root `app` user, and listens on port 8080. It bakes in no secrets or service endpoints — everything the app already reads from configuration (`ConnectionStrings:sqlserver`, `ConnectionStrings:redis`, `Elasticsearch:Uri`, `Jwt:*`, `Seed:*`) is supplied at container-start time via ASP.NET Core's double-underscore environment variable convention, e.g.:
+
+```
+docker build -t movieapi .
+docker run -p 8080:8080 \
+  -e ConnectionStrings__sqlserver="Server=tcp:...;Database=MovieAPI;..." \
+  -e ConnectionStrings__redis="redis-host:6379" \
+  -e Elasticsearch__Uri="http://elasticsearch-host:9200" \
+  -e Jwt__Issuer=MovieAPI -e Jwt__Audience=MovieAPI -e Jwt__Key="..." \
+  movieapi
+```
+
+Since the image carries no migration step of its own, set `ApplyMigrationsOnStartup=true` if you want the container to apply pending EF Core migrations itself on boot (off by default — a real deployment normally applies migrations through its release pipeline instead, so multiple replicas don't race each other against the same database at startup).
+
+### Demo environment (`docker-compose.yml`)
+
+`docker-compose.yml` runs the API image alongside real instances of every external service it needs — SQL Server, Redis, and Elasticsearch — for a self-contained local demo:
+
+```
+docker compose up -d --build
+```
+
+The API becomes available at `http://localhost:8080` once all three dependencies report healthy; it applies migrations and seeds roles/the default admin account (`admin@movieapi.local` / `Admin123!` by default) on startup. Elasticsearch runs with security disabled and everything uses throwaway demo credentials (overridable via a `.env` file — see `MSSQL_SA_PASSWORD`, `JWT_KEY`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` in `docker-compose.yml`) — **this stack is for local demo/testing only**, not a template for a real deployment's secrets handling.
+
+If port `1433`, `6379`, or `9200` is already in use on your machine (e.g. by another SQL Server/Redis/Elasticsearch instance), either stop that service first or remap the conflicting port(s) in `docker-compose.yml` — the API always talks to its dependencies over the internal compose network regardless of what's published to the host.
 
 ## API Overview
 

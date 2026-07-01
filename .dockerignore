@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/logs/
+**/[Tt]est[Rr]esult*/
+
+tests/
+.git/
+.gitignore
+.vscode/
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+*.md
+LICENSE

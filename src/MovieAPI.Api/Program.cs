@@ -292,6 +292,17 @@ try
   // test factory seeds roles itself once migration is done.
   if (!app.Environment.IsEnvironment("Testing"))
   {
+    // Off by default - a real production deployment applies migrations through its
+    // own release pipeline, not by racing multiple container replicas against the
+    // same database at boot. The demo docker-compose stack turns this on since it
+    // has no separate migration step.
+    if (builder.Configuration.GetValue<bool>("ApplyMigrationsOnStartup"))
+    {
+      using var scope = app.Services.CreateScope();
+      var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+      await db.Database.MigrateAsync();
+    }
+
     await RoleSeeder.SeedAsync(app.Services);
     // No-op unless Seed:AdminEmail/Seed:AdminPassword are configured - see
     // AdminUserSeeder for why that's the deliberate default outside Development.
