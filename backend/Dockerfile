@@ -4,10 +4,10 @@ WORKDIR /src
 
 # Copy just the project files first so `dotnet restore` is cached independently
 # of source-code changes.
-COPY src/MovieAPI.Api/MovieAPI.Api.csproj src/MovieAPI.Api/
-COPY src/MovieAPI.Application/MovieAPI.Application.csproj src/MovieAPI.Application/
-COPY src/MovieAPI.Domain/MovieAPI.Domain.csproj src/MovieAPI.Domain/
-COPY src/MovieAPI.Infrastructure/MovieAPI.Infrastructure.csproj src/MovieAPI.Infrastructure/
+COPY backend/src/MovieAPI.Api/MovieAPI.Api.csproj src/MovieAPI.Api/
+COPY backend/src/MovieAPI.Application/MovieAPI.Application.csproj src/MovieAPI.Application/
+COPY backend/src/MovieAPI.Domain/MovieAPI.Domain.csproj src/MovieAPI.Domain/
+COPY backend/src/MovieAPI.Infrastructure/MovieAPI.Infrastructure.csproj src/MovieAPI.Infrastructure/
 RUN dotnet restore src/MovieAPI.Api/MovieAPI.Api.csproj
 
 COPY src/ src/

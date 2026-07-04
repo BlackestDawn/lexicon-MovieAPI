@@ -84,29 +84,31 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 
 ```
 MovieAPI/
-├── MovieAPI.slnx
-├── Dockerfile                     # Production image build (see Running with Docker)
-├── docker-compose.yml             # Local demo stack: API + SQL Server + Redis + Elasticsearch
-├── src/
-│   ├── MovieAPI.Api/              # Controllers (V1/, V2/ subfolders for resources with version-specific shapes;
-│   │                              #   version-neutral resources live directly under Controllers/), program entry
-│   │                              #   point (incl. the unversioned-request path-rewrite middleware), appsettings,
-│   │                              #   global exception handler middleware
-│   ├── MovieAPI.Application/      # Services, validators, DTOs (Models/V1/ holds the legacy v1-only Person/Movie
-│   │                              #   shapes), AutoMapper profiles, custom exceptions
-│   ├── MovieAPI.Domain/           # Entities (Movie, Person, Genre, Review, CastCrew, MovieDetail, ApplicationUser,
-│   │                              #   ApplicationRole, RefreshToken), Constants (Roles, CustomClaimTypes)
-│   └── MovieAPI.Infrastructure/   # AppDbContext, EF Fluent configs, migrations, repositories, seeders
-│                                 #   (DbSeeder, RoleSeeder, AdminUserSeeder), TokenService, LoggingEmailSender
-└── tests/
-    ├── MovieAPI.UnitTests/        # Service tests for every resource + Auth/AdminUser, validator tests
-    └── MovieAPI.IntegrationTests/ # WebApplicationFactory tests for every controller (Testcontainers + Respawn)
+├── docker-compose.yml              # Local demo stack: API + SQL Server + Redis + Elasticsearch
+├── backend/
+│   ├── MovieAPI.slnx
+│   ├── Dockerfile                  # Production image build (see Running with Docker)
+│   ├── src/
+│   │   ├── MovieAPI.Api/           # Controllers (V1/, V2/ subfolders for resources with version-specific shapes;
+│   │   │                          #   version-neutral resources live directly under Controllers/), program entry
+│   │   │                          #   point (incl. the unversioned-request path-rewrite middleware), appsettings,
+│   │   │                          #   global exception handler middleware
+│   │   ├── MovieAPI.Application/   # Services, validators, DTOs (Models/V1/ holds the legacy v1-only Person/Movie
+│   │   │                          #   shapes), AutoMapper profiles, custom exceptions
+│   │   ├── MovieAPI.Domain/        # Entities (Movie, Person, Genre, Review, CastCrew, MovieDetail, ApplicationUser,
+│   │   │                          #   ApplicationRole, RefreshToken), Constants (Roles, CustomClaimTypes)
+│   │   └── MovieAPI.Infrastructure/ # AppDbContext, EF Fluent configs, migrations, repositories, seeders
+│   │                              #   (DbSeeder, RoleSeeder, AdminUserSeeder), TokenService, LoggingEmailSender
+│   └── tests/
+│       ├── MovieAPI.UnitTests/        # Service tests for every resource + Auth/AdminUser, validator tests
+│       └── MovieAPI.IntegrationTests/ # WebApplicationFactory tests for every controller (Testcontainers + Respawn)
+└── frontend/                       # Next.js SPA (see Frontend below) — early skeleton, not yet wired to the API
 ```
 
 ## Getting Started
 
 1. Clone the repository
-2. Set the SQL Server connection string in `src/MovieAPI.Api/appsettings.Development.json`:
+2. Set the SQL Server connection string in `backend/src/MovieAPI.Api/appsettings.Development.json`:
    ```json
    {
      "ConnectionStrings": {
@@ -117,11 +119,11 @@ MovieAPI/
    The same file already has dev-only defaults for the `Jwt` section (signing key, issuer/audience, token lifetimes) and a `Seed` section (`AdminEmail`/`AdminPassword`) that bootstraps a default Administrator account on first run — no extra setup needed locally.
 3. Apply database migrations:
    ```
-   dotnet ef database update --project src/MovieAPI.Infrastructure --startup-project src/MovieAPI.Api
+   dotnet ef database update --project backend/src/MovieAPI.Infrastructure --startup-project backend/src/MovieAPI.Api
    ```
 4. Run the API:
    ```
-   dotnet run --project src/MovieAPI.Api
+   dotnet run --project backend/src/MovieAPI.Api
    ```
 5. Browse the API docs at `https://localhost:<port>/swagger` — use the dropdown in the top-right to switch between the `v1` and `v2` OpenAPI documents. Register a user (or log in with the seeded admin account from `appsettings.Development.json`) via `/api/v1/auth/register` or `/api/v1/auth/login`, then paste the returned `accessToken` into Swagger's **Authorize** button to call protected endpoints from the docs page.
 
@@ -134,7 +136,7 @@ Logging similarly needs no extra setup in Development (console + a rolling file 
 ### Running Tests
 
 ```
-dotnet test
+dotnet test backend/MovieAPI.slnx
 ```
 
 Unit tests run with no external dependencies. Integration tests require a running Docker daemon — they spin up a disposable SQL Server container via Testcontainers for each test run.
@@ -144,7 +146,7 @@ Unit tests run with no external dependencies. Integration tests require a runnin
 The `Dockerfile` builds a production image: a multi-stage build (SDK → `aspnet` runtime) that publishes only `MovieAPI.Api`, runs as the image's non-root `app` user, and listens on port 8080. It bakes in no secrets or service endpoints — everything the app already reads from configuration (`ConnectionStrings:sqlserver`, `ConnectionStrings:redis`, `Elasticsearch:Uri`, `Jwt:*`, `Seed:*`) is supplied at container-start time via ASP.NET Core's double-underscore environment variable convention, e.g.:
 
 ```
-docker build -t movieapi .
+docker build -t movieapi -f backend/Dockerfile .
 docker run -p 8080:8080 \
   -e ConnectionStrings__sqlserver="Server=tcp:...;Database=MovieAPI;..." \
   -e ConnectionStrings__redis="redis-host:6379" \
@@ -224,6 +226,16 @@ People routes also exist under `/api/v2/...` with `givenName`/`middleName` repla
 | `PUT`    | `/api/v1/movies/{movieId}/reviews/{id}` | Owner or Moderator+ | Full update of a review                          |
 | `PATCH`  | `/api/v1/movies/{movieId}/reviews/{id}` | Owner or Moderator+ | Partial update via JSON Patch                    |
 | `DELETE` | `/api/v1/movies/{movieId}/reviews/{id}` | Owner or Moderator+ | Delete a review                                  |
+
+## Frontend
+
+`frontend/` holds a React + TypeScript SPA built with **Next.js** (App Router), currently an early skeleton — it renders a static overview page and has no wiring to the API yet.
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4** for styling, React Compiler enabled
+- **ESLint** (`eslint-config-next`) for linting
+
+See [frontend/README.md](frontend/README.md) for setup and available scripts.
 
 ## License
 
