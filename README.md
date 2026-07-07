@@ -11,9 +11,9 @@ A RESTful Web API built with ASP.NET Core for browsing and managing movie data �
 - **Movies** — Full CRUD: list with filtering/pagination, get by ID, create, full update (PUT), partial update (PATCH via JSON Patch), delete
 - **People** — Full CRUD for actors/directors/crew, with filtering by name/genre/year and optional filmography inclusion. `v2` named the person a `givenName` and added an optional `middleName`; `v1` still exposes the original `firstName` field (see [API Versioning](#api-versioning))
 - **Reviews** — Full CRUD scoped to a movie (`/api/v1/movies/{movieId}/reviews`), with filtering by search text and score range. Each review is tied to the authenticated user who created it; updating or deleting someone else's review requires Moderator/Administrator privileges
-- **Genres** — Full CRUD: list, get by ID (optional `includeMovies`), create, full update (PUT), partial update (PATCH via JSON Patch), delete
+- **Genres** — Full CRUD: list, get by ID (optional `includeMovies`, paginated with `page`/`pageSize`), create, full update (PUT), partial update (PATCH via JSON Patch), delete
 - **Filtering** — Movies by name, free-text search (title + plot), genre, release year, minimum rating; People by name, genre, year; Reviews by search text and min/max score
-- **Pagination** — Configurable page/pageSize with metadata returned in `X-Pagination` response header (Movies, People, Reviews, and the admin user list)
+- **Pagination** — Configurable page/pageSize with metadata returned in `X-Pagination` response header (Movies, People, Reviews, the admin user list, and the movie list embedded in a single Genre)
 - **Validation** — FluentValidation on create/update requests for every resource, using a single shared "change" DTO/validator per resource for create and update
 - **Read-only query paths** — Each repository exposes both a tracked and a `AsNoTracking` read-only variant of its GET methods; read (GET) endpoints use the read-only versions, write flows use the tracked versions
 - **DTO Mapping** — AutoMapper profiles for movies, people, genres, reviews, and auth-related user DTOs
@@ -215,7 +215,7 @@ People routes also exist under `/api/v2/...` with `givenName`/`middleName` repla
 | `PATCH`  | `/api/v1/people/{id}`                   | PowerUser+ | Partial update via JSON Patch                    |
 | `DELETE` | `/api/v1/people/{id}`                   | Moderator+ | Delete a person                                  |
 | `GET`    | `/api/v1/genres`                        | Anonymous | List genres                                      |
-| `GET`    | `/api/v1/genres/{id}`                   | Anonymous | Get a single genre by ID (optional `includeMovies` query param) |
+| `GET`    | `/api/v1/genres/{id}`                   | Anonymous | Get a single genre by ID, with its movies (optional `includeMovies`, defaults to true; paginate the embedded movie list with `page`, `pageSize`) |
 | `POST`   | `/api/v1/genres`                        | Moderator+ | Create a new genre                               |
 | `PUT`    | `/api/v1/genres/{id}`                   | Moderator+ | Full update of a genre                           |
 | `PATCH`  | `/api/v1/genres/{id}`                   | Moderator+ | Partial update via JSON Patch                    |
