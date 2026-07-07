@@ -64,6 +64,38 @@ public class GenresControllerTests(IntegrationTestWebAppFactory factory) : Integ
   }
 
   [Fact]
+  public async Task GetGenre_WithIncludeMoviesTrue_ReturnsMoviesWithPaginationHeader()
+  {
+    var created = await CreateGenreAsync();
+    var personId = await CreatePersonAsync();
+    await CreateMovieAsync(created.Id, personId, "Movie One");
+    await CreateMovieAsync(created.Id, personId, "Movie Two");
+
+    var response = await Client.GetAsync($"/api/v1/genres/{created.Id}?includeMovies=true");
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    Assert.True(response.Headers.Contains("X-Pagination"));
+
+    var genre = await response.Content.ReadFromJsonAsync<GenreExtendedDto>();
+    Assert.Equal(2, genre!.Movies.Count);
+  }
+
+  [Fact]
+  public async Task GetGenre_WithIncludeMoviesFalse_ReturnsNoMovies()
+  {
+    var created = await CreateGenreAsync();
+    var personId = await CreatePersonAsync();
+    await CreateMovieAsync(created.Id, personId);
+
+    var response = await Client.GetAsync($"/api/v1/genres/{created.Id}?includeMovies=false");
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+    var genre = await response.Content.ReadFromJsonAsync<GenreExtendedDto>();
+    Assert.Empty(genre!.Movies);
+  }
+
+  [Fact]
   public async Task UpdateGenre_WithExistingId_Returns204AndPersistsChange()
   {
     var created = await CreateGenreAsync();
@@ -122,5 +154,18 @@ public class GenresControllerTests(IntegrationTestWebAppFactory factory) : Integ
   {
     var response = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
     return (await response.Content.ReadFromJsonAsync<GenreDto>())!;
+  }
+
+  private async Task<Guid> CreatePersonAsync()
+  {
+    var response = await Client.PostAsJsonAsync("/api/v1/people", TestData.ValidPerson());
+    var person = (await response.Content.ReadFromJsonAsync<PersonDto>())!;
+    return person.Id;
+  }
+
+  private async Task<MovieDto> CreateMovieAsync(Guid genreId, Guid personId, string title = "Test Movie")
+  {
+    var response = await Client.PostAsJsonAsync("/api/v1/movies", TestData.ValidMovie(genreId, personId, title));
+    return (await response.Content.ReadFromJsonAsync<MovieDto>())!;
   }
 }

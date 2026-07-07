@@ -8,19 +8,21 @@ using MovieAPI.Application.Models;
 using MovieAPI.Application.Services;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
+using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.UnitTests;
 
 public class GenreServiceTests
 {
   private readonly Mock<IGenreRepository> _repo = new();
+  private readonly Mock<IMovieRepository> _movieRepo = new();
   private readonly Mock<IMapper> _mapper = new();
   private readonly Mock<IValidator<GenreForChangeDto>> _validator = new();
   private readonly GenreService _sut;
 
   public GenreServiceTests()
   {
-    _sut = new GenreService(_repo.Object, _mapper.Object, _validator.Object);
+    _sut = new GenreService(_repo.Object, _movieRepo.Object, _mapper.Object, _validator.Object);
   }
 
   // Helpers
@@ -50,6 +52,12 @@ public class GenreServiceTests
     Id = entity.Id,
     Name = entity.Name,
     Slug = entity.Slug
+  };
+
+  private static Movie MakeMovieEntity(Guid? id = null) => new()
+  {
+    Id = id ?? Guid.NewGuid(),
+    Title = "Inception"
   };
 
   private void SetupValidatorValid() =>
@@ -154,10 +162,10 @@ public class GenreServiceTests
   public async Task GetOne_WhenNotFound_ThrowsNotFoundException()
   {
     _repo
-      .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
-    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None));
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false, null, null, CancellationToken.None));
   }
 
   [Fact]
@@ -166,27 +174,106 @@ public class GenreServiceTests
     var entity = MakeGenreEntity();
     var dto = MakeGenreExtendedDto(entity);
 
-    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
 
-    var result = await _sut.GetOne(entity.Id, false, CancellationToken.None);
+    var (result, pagination) = await _sut.GetOne(entity.Id, false, null, null, CancellationToken.None);
 
     Assert.NotNull(result);
     Assert.Equal(entity.Id, result.Id);
     Assert.Equal(entity.Name, result.Name);
     Assert.Equal(entity.Slug, result.Slug);
+    Assert.Null(pagination);
   }
 
   [Fact]
   public async Task GetOne_WhenNotFound_DoesNotCallMapper()
   {
     _repo
-      .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreReadOnlyAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
-    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false, CancellationToken.None));
+    await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetOne(Guid.NewGuid(), false, null, null, CancellationToken.None));
 
     _mapper.Verify(m => m.Map<GenreExtendedDto>(It.IsAny<Genre>()), Times.Never);
+  }
+
+  [Fact]
+  public async Task GetOne_WhenIncludeMoviesIsFalse_DoesNotCallMovieRepository()
+  {
+    var entity = MakeGenreEntity();
+    var dto = MakeGenreExtendedDto(entity);
+
+    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
+
+    await _sut.GetOne(entity.Id, false, null, null, CancellationToken.None);
+
+    _movieRepo.Verify(
+      r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+      Times.Never);
+  }
+
+  [Fact]
+  public async Task GetOne_WhenIncludeMoviesIsTrueAndPageAndSizeAreNull_UsesDefaults()
+  {
+    var entity = MakeGenreEntity();
+    var dto = MakeGenreExtendedDto(entity);
+    var movies = Enumerable.Empty<MovieListItem>();
+
+    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
+    _movieRepo
+      .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((movies, null));
+
+    await _sut.GetOne(entity.Id, true, null, null, CancellationToken.None);
+
+    _movieRepo.Verify(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task GetOne_WhenIncludeMoviesIsTrue_SearchesMoviesByGenreSlug()
+  {
+    var entity = MakeGenreEntity();
+    var dto = MakeGenreExtendedDto(entity);
+    var movies = Enumerable.Empty<MovieListItem>();
+    MovieSearchParams? capturedParams = null;
+
+    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
+    _movieRepo
+      .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 2, 5, It.IsAny<CancellationToken>()))
+      .Callback<MovieSearchParams, int, int, CancellationToken>((sp, _, _, _) => capturedParams = sp)
+      .ReturnsAsync((movies, null));
+
+    await _sut.GetOne(entity.Id, true, 2, 5, CancellationToken.None);
+
+    Assert.Equal(entity.Slug, capturedParams?.Genre);
+  }
+
+  [Fact]
+  public async Task GetOne_WhenIncludeMoviesIsTrue_ReturnsMappedMoviesWithAverageRatingAndPagination()
+  {
+    var entity = MakeGenreEntity();
+    var dto = MakeGenreExtendedDto(entity);
+    var movieEntity = MakeMovieEntity();
+    var movieDto = new MovieSimpleDto { Id = movieEntity.Id, Title = movieEntity.Title };
+    var movies = new[] { new MovieListItem(movieEntity, 8.5m) };
+    var pagination = new PaginationMetadata(1, 10, 1);
+
+    _repo.Setup(r => r.GetGenreReadOnlyAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _mapper.Setup(m => m.Map<GenreExtendedDto>(entity)).Returns(dto);
+    _movieRepo
+      .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((movies.AsEnumerable(), pagination));
+    _mapper.Setup(m => m.Map<MovieSimpleDto>(movieEntity)).Returns(movieDto);
+
+    var (result, meta) = await _sut.GetOne(entity.Id, true, null, null, CancellationToken.None);
+
+    var mappedMovie = Assert.Single(result.Movies);
+    Assert.Equal(8.5m, mappedMovie.AverageRating);
+    Assert.Same(pagination, meta);
   }
 
   // Remove
@@ -195,7 +282,7 @@ public class GenreServiceTests
   public async Task Remove_WhenNotFound_DoesNotDeleteOrSave()
   {
     _repo
-      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), false, It.IsAny<CancellationToken>()))
+      .Setup(r => r.GetGenreAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((Genre?)null);
 
     await _sut.Remove(Guid.NewGuid(), CancellationToken.None);
@@ -208,7 +295,7 @@ public class GenreServiceTests
   public async Task Remove_WhenFound_DeletesAndSaves()
   {
     var entity = MakeGenreEntity();
-    _repo.Setup(r => r.GetGenreAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
     await _sut.Remove(entity.Id, CancellationToken.None);
@@ -223,7 +310,7 @@ public class GenreServiceTests
   public async Task UpdatePut_WhenGenreNotFound_ThrowsNotFoundException()
   {
     var id = Guid.NewGuid();
-    _repo.Setup(r => r.GetGenreAsync(id, false, It.IsAny<CancellationToken>())).ReturnsAsync((Genre?)null);
+    _repo.Setup(r => r.GetGenreAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync((Genre?)null);
 
     var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(id, MakeDto(), CancellationToken.None));
 
@@ -234,7 +321,7 @@ public class GenreServiceTests
   public async Task UpdatePut_WhenValidationFails_ThrowsValidationException()
   {
     var entity = MakeGenreEntity();
-    _repo.Setup(r => r.GetGenreAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _validator
       .Setup(v => v.ValidateAsync(It.IsAny<GenreForChangeDto>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(new ValidationResult([new ValidationFailure("Name", "Required")]));
@@ -248,7 +335,7 @@ public class GenreServiceTests
     var entity = MakeGenreEntity();
     var dto = new GenreForChangeDto { Name = "Comedy", Slug = "comedy" };
 
-    _repo.Setup(r => r.GetGenreAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     SetupValidatorValid();
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
@@ -265,7 +352,7 @@ public class GenreServiceTests
   public async Task UpdatePatch_WhenGenreNotFound_ThrowsNotFoundException()
   {
     var id = Guid.NewGuid();
-    _repo.Setup(r => r.GetGenreAsync(id, false, It.IsAny<CancellationToken>())).ReturnsAsync((Genre?)null);
+    _repo.Setup(r => r.GetGenreAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync((Genre?)null);
 
     var error = await Assert.ThrowsAsync<NotFoundException>(() => _sut.Update(id, new JsonPatchDocument<GenreForChangeDto>(), CancellationToken.None));
 
@@ -278,7 +365,7 @@ public class GenreServiceTests
     var entity = MakeGenreEntity();
     var updateDto = MakeDto();
 
-    _repo.Setup(r => r.GetGenreAsync(entity.Id, false, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    _repo.Setup(r => r.GetGenreAsync(entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _mapper.Setup(m => m.Map<GenreForChangeDto>(entity)).Returns(updateDto);
     SetupValidatorValid();
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);

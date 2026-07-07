@@ -2,15 +2,18 @@ using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Exceptions;
+using MovieAPI.Application.Helpers;
 using MovieAPI.Application.Interfaces;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure.Interfaces;
+using MovieAPI.Infrastructure.Models;
 
 namespace MovieAPI.Application.Services;
 
 public class GenreService
   (IGenreRepository repository,
+  IMovieRepository movieRepository,
   IMapper mapper,
   IValidator<GenreForChangeDto> validator) : IGenreService
 {
@@ -36,15 +39,41 @@ public class GenreService
     return mapper.Map<IEnumerable<GenreDto>>(result);
   }
 
-  public async Task<GenreExtendedDto> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
+  public async Task<(GenreExtendedDto, PaginationMetadata?)> GetOne(Guid id, bool includeMovies, int? page, int? pageSize, CancellationToken token = default)
   {
-    var result = await repository.GetGenreReadOnlyAsync(id, includeMovies, token) ?? throw new NotFoundException($"Genre '{id}' not found");
-    return mapper.Map<GenreExtendedDto>(result);
+    if (page == null || page < DefaultValues.Page)
+    {
+      page = DefaultValues.Page;
+    }
+    if (pageSize == null || pageSize <= 0)
+    {
+      pageSize = DefaultValues.PageSize;
+    }
+
+    var result = await repository.GetGenreReadOnlyAsync(id, token) ?? throw new NotFoundException($"Genre '{id}' not found");
+    var dto = mapper.Map<GenreExtendedDto>(result);
+
+    PaginationMetadata? pagination = null;
+    if (includeMovies)
+    {
+      var searchParams = new MovieSearchParams(null, null, result.Slug, null, null);
+      var (movies, paginationData) = await movieRepository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
+
+      dto.Movies = [.. movies.Select(item =>
+      {
+        var movie = mapper.Map<MovieSimpleDto>(item.Movie);
+        movie.AverageRating = item.AverageRating;
+        return movie;
+      })];
+      pagination = paginationData;
+    }
+
+    return (dto, pagination);
   }
 
   public async Task Remove(Guid id, CancellationToken token = default)
   {
-    var entity = await repository.GetGenreAsync(id, false, token);
+    var entity = await repository.GetGenreAsync(id, token);
     if (entity == null)
     {
       return;
@@ -56,13 +85,13 @@ public class GenreService
 
   public async Task Update(Guid id, GenreForChangeDto updatedGenre, CancellationToken token = default)
   {
-    var entity = await repository.GetGenreAsync(id, false, token) ?? throw new NotFoundException($"Genre '{id}' not found");
+    var entity = await repository.GetGenreAsync(id, token) ?? throw new NotFoundException($"Genre '{id}' not found");
     await ApplyUpdateAsync(entity, updatedGenre, token);
   }
 
   public async Task Update(Guid id, JsonPatchDocument<GenreForChangeDto> patchDocument, CancellationToken token = default)
   {
-    var entity = await repository.GetGenreAsync(id, false, token) ?? throw new NotFoundException($"Genre '{id}' not found");
+    var entity = await repository.GetGenreAsync(id, token) ?? throw new NotFoundException($"Genre '{id}' not found");
 
     var dto = mapper.Map<GenreForChangeDto>(entity);
     patchDocument.ApplyTo(dto);

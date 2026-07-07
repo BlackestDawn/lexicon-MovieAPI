@@ -9,14 +9,14 @@ public class ReviewRepository(AppDbContext context) : RepositoryBase<Review>(con
 {
   protected override DbSet<Review> Set => Context.Reviews;
 
-  public async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await GetReviewsInternalAsync(movieId, searchParams, page, pageSize, false, cancellationToken);
+    return GetReviewsInternalAsync(movieId, searchParams, page, pageSize, false, cancellationToken);
   }
 
-  public async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieReadOnlyAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForMovieReadOnlyAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await GetReviewsInternalAsync(movieId, searchParams, page, pageSize, true, cancellationToken);
+    return GetReviewsInternalAsync(movieId, searchParams, page, pageSize, true, cancellationToken);
   }
 
   private async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsInternalAsync(Guid movieId, ReviewSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
@@ -56,15 +56,15 @@ public class ReviewRepository(AppDbContext context) : RepositoryBase<Review>(con
     return (reviews, pagination);
   }
 
-  public async Task<Review?> GetReviewAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
+  public Task<Review?> GetReviewAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
   {
-    return await Context.Reviews
+    return Context.Reviews
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
   }
 
-  public async Task<Review?> GetReviewReadOnlyAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
+  public Task<Review?> GetReviewReadOnlyAsync(Guid movieId, Guid reviewId, CancellationToken cancellationToken)
   {
-    return await Context.Reviews
+    return Context.Reviews
       .AsNoTracking()
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
   }

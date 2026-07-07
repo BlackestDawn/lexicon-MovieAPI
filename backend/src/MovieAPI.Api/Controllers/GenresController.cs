@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -35,14 +36,22 @@ public class GenresController(IGenreService service, IOutputCacheStore cacheStor
   /// Get single genre with optionally a list of movies for that genre
   /// </summary>
   /// <param name="id">GUID of genre</param>
-  /// <param name="includeMovies">Whether to include movies</param>
+  /// <param name="page">Page to display, defaults to 1</param>
+  /// <param name="pageSize">Amount per page, defaults to 10</param>
+  /// <param name="includeMovies">Whether to include movies, defaults to true</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>GenreExtendedDto object</returns>
   [HttpGet("{id}", Name = "GetGenre")]
   [OutputCache(PolicyName = "CatalogCache")]
-  public async Task<IActionResult> GetGenre(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
+  public async Task<IActionResult> GetGenre(Guid id, int? page, int? pageSize, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
-    var result = await service.GetOne(id, includeMovies, cancellationToken);
+    var (result, pagination) = await service.GetOne(id, includeMovies, page, pageSize, cancellationToken);
+
+    if (pagination != null)
+    {
+      Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(pagination));
+    }
+
     return Ok(result);
   }
 

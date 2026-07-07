@@ -9,14 +9,14 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
 {
   protected override DbSet<Movie> Set => Context.Movies;
 
-  public async Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await GetMoviesInternalAsync(searchParams, page, pageSize, false, cancellationToken);
+    return GetMoviesInternalAsync(searchParams, page, pageSize, false, cancellationToken);
   }
 
-  public async Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesReadOnlyAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesReadOnlyAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await GetMoviesInternalAsync(searchParams, page, pageSize, true, cancellationToken);
+    return GetMoviesInternalAsync(searchParams, page, pageSize, true, cancellationToken);
   }
 
   private async Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesInternalAsync(MovieSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
@@ -69,14 +69,14 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
     return (movies, pagination);
   }
 
-  public async Task<Movie?> GetMovieAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
+  public Task<Movie?> GetMovieAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
   {
-    return await GetMovieInternalAsync(id, includePeople, false, cancellationToken);
+    return GetMovieInternalAsync(id, includePeople, false, cancellationToken);
   }
 
-  public async Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
+  public Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
   {
-    return await GetMovieInternalAsync(id, includePeople, true, cancellationToken);
+    return GetMovieInternalAsync(id, includePeople, true, cancellationToken);
   }
 
   private async Task<Movie?> GetMovieInternalAsync(Guid id, bool includePeople, bool readOnly, CancellationToken cancellationToken)
