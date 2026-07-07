@@ -59,12 +59,12 @@ public class GenreService
       var searchParams = new MovieSearchParams(null, null, result.Slug, null, null);
       var (movies, paginationData) = await movieRepository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
 
-      dto.Movies = movies.Select(item =>
+      dto.Movies = [.. movies.Select(item =>
       {
         var movie = mapper.Map<MovieSimpleDto>(item.Movie);
         movie.AverageRating = item.AverageRating;
         return movie;
-      }).ToList();
+      })];
       pagination = paginationData;
     }
 

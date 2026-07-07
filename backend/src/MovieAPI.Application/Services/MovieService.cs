@@ -28,9 +28,9 @@ public class MovieService(
     }
 
     var invalidPersonIds = await personRepository.GetMissingIdsAsync(
-      newMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
+      [.. newMovie.CastCrews.Select(cc => cc.PersonId).Distinct()], token);
     var invalidGenreIds = await genreRepository.GetMissingIdsAsync(
-      newMovie.Genres.Distinct().ToList(), token);
+      [.. newMovie.Genres.Distinct()], token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
     {
@@ -120,9 +120,9 @@ public class MovieService(
     }
 
     var invalidPersonIds = await personRepository.GetMissingIdsAsync(
-      updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct().ToList(), token);
+      [.. updatedMovie.CastCrews.Select(cc => cc.PersonId).Distinct()], token);
     var invalidGenreIds = await genreRepository.GetMissingIdsAsync(
-      updatedMovie.Genres.Distinct().ToList(), token);
+      [.. updatedMovie.Genres.Distinct()], token);
 
     if (invalidPersonIds.Count > 0 || invalidGenreIds.Count > 0)
     {
