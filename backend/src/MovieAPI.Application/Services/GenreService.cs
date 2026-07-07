@@ -39,15 +39,25 @@ public class GenreService
     return mapper.Map<IEnumerable<GenreDto>>(result);
   }
 
-  public async Task<GenreExtendedDto> GetOne(Guid id, bool includeMovies, CancellationToken token = default)
+  public async Task<(GenreExtendedDto, PaginationMetadata?)> GetOne(Guid id, bool includeMovies, int? page, int? pageSize, CancellationToken token = default)
   {
+    if (page == null || page < DefaultValues.Page)
+    {
+      page = DefaultValues.Page;
+    }
+    if (pageSize == null || pageSize <= 0)
+    {
+      pageSize = DefaultValues.PageSize;
+    }
+
     var result = await repository.GetGenreReadOnlyAsync(id, token) ?? throw new NotFoundException($"Genre '{id}' not found");
     var dto = mapper.Map<GenreExtendedDto>(result);
 
+    PaginationMetadata? pagination = null;
     if (includeMovies)
     {
       var searchParams = new MovieSearchParams(null, null, result.Slug, null, null);
-      var (movies, _) = await movieRepository.GetMoviesReadOnlyAsync(searchParams, DefaultValues.Page, DefaultValues.PageSize, token);
+      var (movies, paginationData) = await movieRepository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
 
       dto.Movies = movies.Select(item =>
       {
@@ -55,9 +65,10 @@ public class GenreService
         movie.AverageRating = item.AverageRating;
         return movie;
       }).ToList();
+      pagination = paginationData;
     }
 
-    return dto;
+    return (dto, pagination);
   }
 
   public async Task Remove(Guid id, CancellationToken token = default)
