@@ -49,5 +49,10 @@ public class MovieProfiles : Profile
         opt => opt.MapFrom(src => src.Details.Language))
       .ForMember(dest => dest.Budget,
         opt => opt.MapFrom(src => src.Details.Budget));
-  }
+
+    CreateMap<Movie, MovieSimpleDto>()
+      // AverageRating is computed in SQL by the repository and assigned onto the DTO
+      // separately in GenreService (the genre query doesn't load Reviews).
+      .ForMember(dest => dest.AverageRating, opt => opt.Ignore());
+    }
 }

@@ -11,8 +11,9 @@ public class GenreProfiles : Profile
     CreateMap<Genre, GenreDto>();
 
     CreateMap<Genre, GenreExtendedDto>()
-      .ForMember(dest => dest.Movies,
-        opt => opt.MapFrom(src => src.MovieGenres.Select(mg => mg.Movie)));
+      // Movies is populated separately in GenreService via the paginated movie search
+      // (which also computes AverageRating in SQL), not from the Genre entity.
+      .ForMember(dest => dest.Movies, opt => opt.Ignore());
 
     CreateMap<GenreForChangeDto, Genre>();
     CreateMap<Genre, GenreForChangeDto>();
