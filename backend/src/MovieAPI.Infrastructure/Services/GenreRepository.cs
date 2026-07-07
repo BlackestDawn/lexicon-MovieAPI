@@ -18,13 +18,13 @@ public class GenreRepository(AppDbContext context) : RepositoryBase<Genre>(conte
     return await Context.Genres.AsNoTracking().ToListAsync(cancellationToken);
   }
 
-  public async Task<Genre?> GetGenreAsync(Guid id, CancellationToken cancellationToken)
+  public Task<Genre?> GetGenreAsync(Guid id, CancellationToken cancellationToken)
   {
-    return await Context.Genres.FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
+    return Context.Genres.FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
   }
 
-  public async Task<Genre?> GetGenreReadOnlyAsync(Guid id, CancellationToken cancellationToken)
+  public Task<Genre?> GetGenreReadOnlyAsync(Guid id, CancellationToken cancellationToken)
   {
-    return await Context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
+    return Context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
   }
 }

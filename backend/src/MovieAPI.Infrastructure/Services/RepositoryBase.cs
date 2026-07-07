@@ -11,9 +11,9 @@ public abstract class RepositoryBase<TEntity>(AppDbContext context) : IRepositor
 
   protected abstract DbSet<TEntity> Set { get; }
 
-  public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken)
+  public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken)
   {
-    return await Set.AnyAsync(e => e.Id == id, cancellationToken);
+    return Set.AnyAsync(e => e.Id == id, cancellationToken);
   }
 
   public async Task<IList<Guid>> GetMissingIdsAsync(ICollection<Guid> ids, CancellationToken cancellationToken)

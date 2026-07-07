@@ -9,14 +9,14 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
 {
   protected override DbSet<Person> Set => Context.Persons;
 
-  public async Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleAsync(PeopleSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleAsync(PeopleSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await GetPeopleInternalAsync(searchParams, page, pageSize, false, cancellationToken);
+    return GetPeopleInternalAsync(searchParams, page, pageSize, false, cancellationToken);
   }
 
-  public async Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleReadOnlyAsync(PeopleSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleReadOnlyAsync(PeopleSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return await GetPeopleInternalAsync(searchParams, page, pageSize, true, cancellationToken);
+    return GetPeopleInternalAsync(searchParams, page, pageSize, true, cancellationToken);
   }
 
   private async Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleInternalAsync(PeopleSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
@@ -57,14 +57,14 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
     return (people, pagination);
   }
 
-  public async Task<Person?> GetPersonAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
+  public Task<Person?> GetPersonAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
   {
-    return await GetPersonInternalAsync(id, includeMovies, false, cancellationToken);
+    return GetPersonInternalAsync(id, includeMovies, false, cancellationToken);
   }
 
-  public async Task<Person?> GetPersonReadOnlyAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
+  public Task<Person?> GetPersonReadOnlyAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)
   {
-    return await GetPersonInternalAsync(id, includeMovies, true, cancellationToken);
+    return GetPersonInternalAsync(id, includeMovies, true, cancellationToken);
   }
 
   private async Task<Person?> GetPersonInternalAsync(Guid id, bool includeMovies, bool readOnly, CancellationToken cancellationToken)

@@ -8,9 +8,9 @@ public class RefreshTokenRepository(AppDbContext context) : RepositoryBase<Refre
 {
   protected override DbSet<RefreshToken> Set => Context.RefreshTokens;
 
-  public async Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken token)
+  public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken token)
   {
-    return await Context.RefreshTokens.FirstOrDefaultAsync(r => r.TokenHash == tokenHash, token);
+    return Context.RefreshTokens.FirstOrDefaultAsync(r => r.TokenHash == tokenHash, token);
   }
 
   public async Task RevokeAllActiveForUserAsync(Guid userId, CancellationToken token)
