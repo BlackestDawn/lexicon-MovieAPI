@@ -9,7 +9,7 @@ export default function Home() {
         <SiteHeader />
       </div>
 
-      <BaseContainer>
+      <BaseContainer className="py-8">
         <section className="grid grid-cols-1 divide-y divide-black/[.08] border-y border-black/[.08] text-left sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-white/[.145] dark:border-white/[.145]">
           <div className="flex flex-col gap-2 px-8 py-8">
             <h2 className="font-medium text-black dark:text-zinc-50">
