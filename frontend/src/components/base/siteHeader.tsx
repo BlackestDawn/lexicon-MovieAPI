@@ -2,8 +2,8 @@ import { BaseContainer } from "./baseContainer";
 
 export function SiteHeader() {
   return (
-    <BaseContainer>
-      <header className="mt-8">
+    <BaseContainer className="pb-4">
+      <div className="mt-8">
         <h1 className="text-4xl font-semibold tracking-tight text-black dark:text-zinc-50">
           MovieAPI
         </h1>
@@ -11,7 +11,7 @@ export function SiteHeader() {
           A small-scale IMDB clone: browse and manage movies, people,
           genres, and reviews behind a JWT-secured, role-based API.
         </p>
-      </header>
+      </div>
     </BaseContainer>
   );
 }
