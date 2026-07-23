@@ -3,6 +3,13 @@
 **/logs/
 **/[Tt]est[Rr]esult*/
 
+**/node_modules/
+**/.next/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
+
 tests/
 .git/
 .gitignore
