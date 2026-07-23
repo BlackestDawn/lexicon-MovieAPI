@@ -42,12 +42,12 @@ public class UnversionedRoutingTests(IntegrationTestWebAppFactory factory) : Int
   }
 
   [Fact]
-  public async Task Login_Unversioned_RouteResolvesInsteadOf404()
+  public async Task UpdateMe_Unversioned_RouteResolvesInsteadOf404()
   {
-    var response = await Client.PostAsJsonAsync("/api/auth/login",
-      new { email = "admin@movieapi.local", password = "WrongPassword1!" });
+    var anonymous = Factory.CreateClient();
+    var response = await anonymous.PutAsJsonAsync("/api/auth/me", new { email = "irrelevant@test.com" });
 
-    // Wrong credentials, but the point is the route resolves at all (not 404) -
+    // No token, but the point is the route resolves at all (not 404) -
     // unauthenticated/unversioned and versioned should fail identically.
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }

@@ -17,56 +17,17 @@ namespace MovieAPI.Api.Controllers;
 public class AuthController(IAuthService service) : ControllerBase
 {
   /// <summary>
-  /// Self-registration for new users
+  /// Self-registration for new users. Log in afterwards via POST /connect/token
+  /// (grant_type=password) to obtain an access/refresh token pair.
   /// </summary>
   /// <param name="newUser">RegisterDto object</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>AuthResponseDto object</returns>
+  /// <returns>UserDto object</returns>
   [HttpPost("register")]
   public async Task<IActionResult> Register(RegisterDto newUser, CancellationToken cancellationToken = default)
   {
     var result = await service.Register(newUser, cancellationToken);
     return Ok(result);
-  }
-
-  /// <summary>
-  /// Log in to system
-  /// </summary>
-  /// <param name="credentials">LoginDto object</param>
-  /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>AuthResponseDto object</returns>
-  [HttpPost("login")]
-  public async Task<IActionResult> Login(LoginDto credentials, CancellationToken cancellationToken = default)
-  {
-    var result = await service.Login(credentials, cancellationToken);
-    return Ok(result);
-  }
-
-  /// <summary>
-  /// Refresh access token
-  /// </summary>
-  /// <param name="request">RefreshTokenDto object</param>
-  /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>AuthResponseDto object</returns>
-  [HttpPost("refresh")]
-  public async Task<IActionResult> Refresh(RefreshTokenDto request, CancellationToken cancellationToken = default)
-  {
-    var result = await service.Refresh(request, cancellationToken);
-    return Ok(result);
-  }
-
-  /// <summary>
-  /// Log out of system, only available to logged in users
-  /// </summary>
-  /// <param name="request">RefreshTokenDto object</param>
-  /// <param name="cancellationToken">Notification token for canceling operations</param>
-  /// <returns>HTTP code: 204</returns>
-  [Authorize]
-  [HttpPost("logout")]
-  public async Task<IActionResult> Logout(RefreshTokenDto request, CancellationToken cancellationToken = default)
-  {
-    await service.Logout(User.GetUserId(), request, cancellationToken);
-    return NoContent();
   }
 
   /// <summary>
