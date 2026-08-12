@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/base/siteHeader";
 import { SiteFooter } from "@/components/base/siteFooter";
+import CommonContext from "@/context/commonContext";
+import { fetchCurrentUser } from "@/lib/actions/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,26 +21,28 @@ export const metadata: Metadata = {
   description: "Frontend for the MovieAPI movie catalog service.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await fetchCurrentUser();
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header className="bg-gray-700">
-          <SiteHeader />
-        </header>
-
-        <main>{children}</main>
-
-        <footer className="bg-gray-700">
-          <SiteFooter />
-        </footer>
+        <CommonContext initialUser={user}>
+          <header className="bg-gray-700">
+            <SiteHeader />
+          </header>
+          <main>{children}</main>
+          <footer className="bg-gray-700">
+            <SiteFooter />
+          </footer>
+        </CommonContext>
       </body>
     </html>
   );
