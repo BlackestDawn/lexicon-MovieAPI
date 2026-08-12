@@ -17,6 +17,19 @@ namespace MovieAPI.Api.Controllers;
 public class AuthController(IAuthService service) : ControllerBase
 {
   /// <summary>
+  /// Fetch the currently authenticated user's profile
+  /// </summary>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>CurrentUserDto object</returns>
+  [Authorize]
+  [HttpGet("me")]
+  public async Task<IActionResult> GetMe(CancellationToken cancellationToken = default)
+  {
+    var result = await service.GetCurrent(User.GetUserId(), cancellationToken);
+    return Ok(result);
+  }
+
+  /// <summary>
   /// Self-registration for new users. Log in afterwards via POST /connect/token
   /// (grant_type=password) to obtain an access/refresh token pair.
   /// </summary>

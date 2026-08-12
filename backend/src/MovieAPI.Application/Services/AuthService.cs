@@ -23,6 +23,21 @@ public class AuthService(
   IValidator<ForgotPasswordDto> forgotPasswordValidator,
   IValidator<ResetPasswordDto> resetPasswordValidator) : IAuthService
 {
+  public async Task<CurrentUserDto> GetCurrent(Guid userId, CancellationToken token = default)
+  {
+    var user = await userManager.FindByIdAsync(userId.ToString())
+      ?? throw new NotFoundException($"User '{userId}' not found");
+
+    var roles = await userManager.GetRolesAsync(user);
+
+    return new CurrentUserDto
+    {
+      Id = user.Id,
+      Email = user.Email ?? string.Empty,
+      Role = roles.FirstOrDefault() ?? string.Empty,
+    };
+  }
+
   public async Task<UserDto> Register(RegisterDto newUser, CancellationToken token = default)
   {
     var validationResult = await registerValidator.ValidateAsync(newUser, token);
