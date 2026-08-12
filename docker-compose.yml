@@ -14,10 +14,10 @@ services:
       ConnectionStrings__sqlserver: "Server=tcp:sqlserver,1433;Database=MovieAPI;Uid=sa;Pwd=${MSSQL_SA_PASSWORD:-P@ssw0rd_Demo1};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30"
       ConnectionStrings__redis: "redis:6379"
       Elasticsearch__Uri: "http://elasticsearch:9200"
-      Jwt__Issuer: MovieAPI
-      Jwt__Audience: MovieAPI
-      Jwt__Key: ${JWT_KEY:-Demo0nlySigningKey_DoNotUseInProduction_1234567890}
-      Jwt__ExpiryMinutes: "60"
+      OpenIddict__AccessTokenLifetimeMinutes: "60"
+      OpenIddict__RefreshTokenLifetimeDays: "7"
+      OpenIddict__SigningKey: ${OPENIDDICT_SIGNING_KEY:-HBc3aTOI1XfBinOxiP2IVnJ7W24goXX8T4Lr5bb0o3c=}
+      OpenIddict__EncryptionKey: ${OPENIDDICT_ENCRYPTION_KEY:-vAyd5IU6grxTQ+jkp3yr46/4WvIfesjsIRo2D8m2Gog=}
       Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@movieapi.local}
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin123!}
       # No separate migration step in this demo stack, so let the API apply

@@ -15,11 +15,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
   public DbSet<CastCrew> CastCrews { get; set; }
   public DbSet<MovieGenre> MovieGenres { get; set; }
   public DbSet<MovieDetail> MovieDetails { get; set; }
-  public DbSet<RefreshToken> RefreshTokens { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);
     modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+    modelBuilder.UseOpenIddict();
   }
 }
