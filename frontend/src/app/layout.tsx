@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/base/siteHeader";
-import { SiteFooter } from "@/components/base/siteFooter";
+import { SiteHeader } from "@/components/general/siteHeader";
+import { SiteFooter } from "@/components/general/siteFooter";
 import CommonContext from "@/context/commonContext";
 import { fetchCurrentUser } from "@/lib/actions/auth";
 

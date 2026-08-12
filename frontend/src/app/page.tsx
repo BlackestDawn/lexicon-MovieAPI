@@ -1,5 +1,5 @@
-import { BaseContainer } from "@/components/base/baseContainer";
-import Welcome from "@/components/base/welcome";
+import { BaseContainer } from "@/components/general/baseContainer";
+import Welcome from "@/components/general/welcome";
 
 export default function Home() {
   return (

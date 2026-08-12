@@ -1,11 +1,11 @@
 import LoginForm from "@/components/auth/loginForm";
-import { BaseContainer } from "@/components/base/baseContainer";
+import { BaseContainer } from "@/components/general/baseContainer";
 
 export default function Login() {
   return (
     <BaseContainer>
       <div>
-      <LoginForm />
+        <LoginForm />
       </div>
     </BaseContainer>
   );
