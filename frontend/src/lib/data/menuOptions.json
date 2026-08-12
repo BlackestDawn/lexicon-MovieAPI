@@ -1,0 +1,8 @@
+{
+  "menu": [
+    { "label": "Home", "href": "/" },
+    { "label": "Movies", "href": "/movies" },
+    { "label": "Cast & Crew", "href": "/people" },
+    { "label": "Genres", "href": "/genres" }
+  ]
+}
