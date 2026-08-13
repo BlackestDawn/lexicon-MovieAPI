@@ -1,8 +1,13 @@
 {
-  "menu": [
+  "main": [
     { "label": "Home", "href": "/" },
     { "label": "Movies", "href": "/movies" },
     { "label": "Cast & Crew", "href": "/people" },
     { "label": "Genres", "href": "/genres" }
+  ],
+  "user": [
+    { "label": "User page", "href": "/user" },
+    { "label": "Settings", "href": "/user/settings" },
+    { "label": "Security", "href": "/user/security" }
   ]
 }
