@@ -1,11 +1,4 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRoles;
-}
-
-export type UserRoles = "User" | "PowerUser" | "Moderator" | "Administrator";
+import { User } from "../models/userTypes";
 
 export interface AuthContextValue {
   user: User | null;

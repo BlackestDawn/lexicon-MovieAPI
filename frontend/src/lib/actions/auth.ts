@@ -1,7 +1,10 @@
 "use server";
 
-import { CurrentUserDto } from "../data/dtos/userDtoTypes";
-import { User, UserRoles } from "../data/interfaces/auth";
+import type {
+  CurrentUserDto,
+  User,
+  UserRoles,
+} from "../data/models/userTypes";
 import { apiGet, isAuthenticated, login } from "./apiInteract";
 
 function toUser(dto: CurrentUserDto): User {
