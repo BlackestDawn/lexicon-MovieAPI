@@ -1,12 +1,29 @@
-export function toQueryParams(
-  params: Record<string, string | number | boolean | undefined | null>,
-): string {
-  if (params === undefined) return "";
+import { QueryParams } from "../interfaces/general";
 
+export function toQueryParams(params?: QueryParams): string | null {
+  if (params === undefined) return null;
   const query = new URLSearchParams();
 
-  for (const [key, value] of Object.entries(params))
-    if (value !== undefined && value !== null) query.append(key, String(value));
+  const append = (key: string, value: unknown) => {
+    if (value === undefined || value === null) return;
+
+    if (Array.isArray(value)) {
+      value.forEach((v) => append(key, v));
+    } else if (value instanceof Date) {
+      query.append(key, value.toISOString());
+    } else if (typeof value === "object") {
+      query.append(key, JSON.stringify(value));
+    } else {
+      query.append(key, String(value));
+    }
+  };
+
+  for (const [key, value] of Object.entries(params)) append(key, value);
+  if (query.size === 0) return null;
 
   return query.toString();
+}
+
+export function minsToDisplayRuntime(mins: number): string {
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }

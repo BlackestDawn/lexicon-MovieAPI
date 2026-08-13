@@ -1,5 +1,6 @@
 import { MovieDto } from "@/lib/data/models/movieTypes";
 import Link from "next/link";
+import GenreBadge from "../genres/genreBadge";
 
 export default function MovieList({ movies }: { movies: MovieDto[] }) {
   return (
@@ -16,7 +17,7 @@ export default function MovieList({ movies }: { movies: MovieDto[] }) {
               <p>{movie.plotSummery}</p>
               <div className="flex gap-2">
                 {movie.genres.map((g) => (
-                  <span key={g.id}>{g.name}</span>
+                  <GenreBadge key={g.id} name={g.name} />
                 ))}
               </div>
             </div>
