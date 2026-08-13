@@ -2,7 +2,8 @@
 
 import { logout as logoutRequest } from "@/lib/actions/apiInteract";
 import { loginRequest } from "@/lib/actions/auth";
-import type { AuthContextValue, User } from "@/lib/data/interfaces/auth";
+import type { AuthContextValue } from "@/lib/data/interfaces/auth";
+import type { User } from "@/lib/data/models/userTypes";
 import {
   createContext,
   ReactNode,

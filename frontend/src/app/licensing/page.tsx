@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BaseContainer } from "@/components/base/baseContainer";
+import { BaseContainer } from "@/components/general/baseContainer";
 
 export const metadata: Metadata = {
   title: "Licensing - MovieAPI",
