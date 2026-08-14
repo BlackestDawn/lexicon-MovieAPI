@@ -2,6 +2,7 @@ import z from "zod";
 import { castCrewDtoSchema, castCrewForChangeSchema } from "./castCrewTypes";
 import { genreDtoSchema } from "./genreTypes";
 import { reviewDtoSchema } from "./reviewTypes";
+import { ValidationError } from "../interfaces/errors";
 
 const movieDtoSchema = z.object({
   id: z.guid(),
@@ -83,7 +84,7 @@ export function validateMovieExtendedDto(item: unknown): MovieExtendedDto {
 
 // Mirrors MovieChangeValidator: release date window, positive runtime/budget,
 // and at least one genre and one cast/crew member.
-export const movieForChangeSchema = z.object({
+export const movieForChangeDtoSchema = z.object({
   title: z.string().min(1, "Title is required"),
   releaseDate: z.coerce
     .date()
@@ -100,4 +101,13 @@ export const movieForChangeSchema = z.object({
   budget: z.number().int().gt(0, "Budget must be positive"),
 });
 
-export type MovieForChange = z.infer<typeof movieForChangeSchema>;
+export type MovieForChangeDto = z.infer<typeof movieForChangeDtoSchema>;
+
+export function validateMovieForChangeDto(item: unknown): MovieForChangeDto {
+  const result = movieForChangeDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid MovieForChangeDto:", result.error);
+    throw new ValidationError("invalid MovieForChangeDto item", result.error.issues.map(e => e.message));
+  }
+  return result.data;
+}

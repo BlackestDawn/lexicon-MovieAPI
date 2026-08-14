@@ -143,7 +143,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
   if (contentLength === "0" || !contentType?.includes("application/json"))
     return null as T;
 
-  return response.json();
+  return response.json() as T;
 }
 
 async function extractErrorMessage(response: Response): Promise<string> {
