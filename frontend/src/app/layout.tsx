@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/general/siteHeader";
 import { SiteFooter } from "@/components/general/siteFooter";
 import CommonContext from "@/context/commonContext";
 import { fetchCurrentUser } from "@/lib/actions/auth";
+import { BaseContainer } from "@/components/general/baseContainer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,13 +41,19 @@ export default async function RootLayout({
 
           <div className="flex flex-1 flex-col min-w-0">
             <header className="bg-gray-200 dark:bg-gray-700 text-white">
-              <SiteHeader />
+              <BaseContainer className="py-4">
+                <SiteHeader />
+              </BaseContainer>
             </header>
 
-            <main className="md:h-full">{children}</main>
+            <main className="md:h-full">
+              <BaseContainer>{children}</BaseContainer>
+            </main>
 
             <footer className="bg-gray-200 dark:bg-gray-700">
-              <SiteFooter />
+              <BaseContainer className="py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                <SiteFooter />
+              </BaseContainer>
             </footer>
           </div>
         </CommonContext>

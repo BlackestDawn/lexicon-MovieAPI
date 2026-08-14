@@ -1,4 +1,3 @@
-import { BaseContainer } from "@/components/general/baseContainer";
 import LoadingSpinner from "@/components/general/loadingSpinner";
 import MovieList from "@/components/movies/movieList";
 import { fetchMovies } from "@/lib/actions/movie";
@@ -9,9 +8,7 @@ export default async function Page() {
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <BaseContainer>
-        <MovieList movies={movieList} />
-      </BaseContainer>
+      <MovieList movies={movieList} />
     </Suspense>
   );
 }
