@@ -18,7 +18,7 @@ public class MovieChangeValidatorTests
     Budget = 160_000_000,
     ReleaseDate = new DateOnly(2010, 7, 16),
     Genres = [Guid.NewGuid()],
-    CastCrews = [new CastCrewForCreationDto { PersonId = Guid.NewGuid(), Role = PersonRole.Director }]
+    CastCrews = [new CastCrewForChangeDto { PersonId = Guid.NewGuid(), Role = PersonRole.Director }]
   };
 
   [Fact]

@@ -1,5 +1,5 @@
 import z from "zod";
-import { castCrewDtoSchema, castCrewForCreationSchema } from "./castCrewTypes";
+import { castCrewDtoSchema, castCrewForChangeSchema } from "./castCrewTypes";
 import { genreDtoSchema } from "./genreTypes";
 import { reviewDtoSchema } from "./reviewTypes";
 
@@ -92,7 +92,7 @@ export const movieForChangeSchema = z.object({
   plotSummery: z.string().min(1, "Plot summary is required"),
   runtimeMinutes: z.number().int().gt(0, "Runtime must be positive"),
   castCrews: z
-    .array(castCrewForCreationSchema)
+    .array(castCrewForChangeSchema)
     .min(1, "Must have at least 1 person for cast or crew"),
   genres: z.array(z.guid()).min(1, "Must have at least 1 genre"),
   synopsis: z.string().min(1, "Synopsis is required"),

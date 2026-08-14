@@ -37,8 +37,8 @@ public class MovieProfiles : Profile
       .ForMember(dest => dest.MovieGenres, opt => opt.Ignore())
       .ForMember(dest => dest.Reviews, opt => opt.Ignore());
 
-    CreateMap<CastCrew, CastCrewForCreationDto>();
-    CreateMap<CastCrewForCreationDto, CastCrew>();
+    CreateMap<CastCrew, CastCrewForChangeDto>();
+    CreateMap<CastCrewForChangeDto, CastCrew>();
 
     CreateMap<Movie, MovieForChangeDto>()
       .ForMember(dest => dest.Genres,

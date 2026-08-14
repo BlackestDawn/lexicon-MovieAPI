@@ -39,7 +39,7 @@ public class MovieServiceTests
     Budget = 160_000_000,
     ReleaseDate = new DateOnly(2010, 7, 16),
     Genres = [genreId ?? Guid.NewGuid()],
-    CastCrews = [new CastCrewForCreationDto { PersonId = personId ?? Guid.NewGuid(), Role = PersonRole.Director }]
+    CastCrews = [new CastCrewForChangeDto { PersonId = personId ?? Guid.NewGuid(), Role = PersonRole.Director }]
   };
 
   private static Movie MakeMovieEntity(Guid? id = null) => new()
@@ -286,7 +286,7 @@ public class MovieServiceTests
     SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-    _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<CastCrewForCreationDto>>())).Returns([]);
+    _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<CastCrewForChangeDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
     await _sut.Update(entity.Id, MakeDto(personId: personId, genreId: genreId));
@@ -320,7 +320,7 @@ public class MovieServiceTests
     SetupValidatorValid();
     _personRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     _genreRepo.Setup(r => r.GetMissingIdsAsync(It.IsAny<ICollection<Guid>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-    _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<CastCrewForCreationDto>>())).Returns([]);
+    _mapper.Setup(m => m.Map<ICollection<CastCrew>>(It.IsAny<ICollection<CastCrewForChangeDto>>())).Returns([]);
     _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
     await _sut.Update(entity.Id, new JsonPatchDocument<MovieForChangeDto>());

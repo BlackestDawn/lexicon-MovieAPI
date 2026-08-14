@@ -31,9 +31,9 @@ export function validateCastCrewDto(
   return result.data;
 }
 
-export const castCrewForCreationSchema = z.object({
+export const castCrewForChangeSchema = z.object({
   personId: z.guid(),
   role: personRoleSchema,
 });
 
-export type CastCrewForCreation = z.infer<typeof castCrewForCreationSchema>;
+export type CastCrewForChange = z.infer<typeof castCrewForChangeSchema>;
