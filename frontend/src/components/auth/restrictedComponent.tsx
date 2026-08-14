@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/context/commonContext";
 import { AccessLevel } from "@/lib/data/interfaces/auth";
 import { ReactNode } from "react";

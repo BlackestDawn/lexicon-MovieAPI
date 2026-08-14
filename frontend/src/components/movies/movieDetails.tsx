@@ -1,13 +1,25 @@
 import { MovieExtendedDto } from "@/lib/data/models/movieTypes";
 import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
+import RestrictedComponent from "../auth/restrictedComponent";
+import MovieDeleteButton from "./movieDeleteButton";
 
 export default function MovieDetails({ movie }: { movie: MovieExtendedDto }) {
   return (
     <div className="w-full m-4 space-y-6">
-      <h3 className="text-center text-4xl text-slate-800 dark:text-slate-200">
-        {movie.title}
-      </h3>
+      <div className="flex justify-between">
+        <h3 className="text-center text-4xl text-slate-800 dark:text-slate-200">
+          {movie.title}
+        </h3>
+        <div className="space-x-4">
+          <RestrictedComponent accessLevel="PowerUserAndAbove">
+            <div></div> {/** edit form */}
+          </RestrictedComponent>
+          <RestrictedComponent accessLevel="ModeratorAndAbove">
+            <MovieDeleteButton id={movie.id} redirect={true} />
+          </RestrictedComponent>
+        </div>
+      </div>
       <div className="w-full flex flex-col md:flex-row justify-evenly">
         <p>Release date: {movie.releaseDate.toDateString()}</p>
         <p>Runtime: {minsToDisplayRuntime(movie.runtimeMinutes)}</p>
