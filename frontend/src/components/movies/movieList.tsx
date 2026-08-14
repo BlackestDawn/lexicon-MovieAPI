@@ -4,8 +4,11 @@ import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import MovieDeleteButton from "./movieDeleteButton";
+import { fetchMovies } from "@/lib/actions/movie";
 
-export default function MovieList({ movies }: { movies: MovieDto[] }) {
+export default async function MovieList() {
+  const movies: MovieDto[] = await fetchMovies();
+
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 my-8">

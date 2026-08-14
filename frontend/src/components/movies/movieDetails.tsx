@@ -3,8 +3,13 @@ import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import MovieDeleteButton from "./movieDeleteButton";
+import { notFound } from "next/navigation";
+import { getMovie } from "@/lib/actions/movie";
 
-export default function MovieDetails({ movie }: { movie: MovieExtendedDto }) {
+export default async function MovieDetails({ id }: { id:string }) {
+  const movie: MovieExtendedDto = await getMovie(id);
+  if (!movie) notFound();
+
   return (
     <div className="w-full m-4 space-y-6">
       <div className="flex justify-between">
