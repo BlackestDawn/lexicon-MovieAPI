@@ -6,6 +6,8 @@ import MovieDeleteButton from "./movieDeleteButton";
 import { notFound } from "next/navigation";
 import { getMovie } from "@/lib/actions/movie";
 import MovieEditButton from "./movieEditButton";
+import Link from "next/link";
+import { personRoleLabels } from "@/lib/data/models/personRoleTypes";
 
 export default async function MovieDetails({ id }: { id: string }) {
   const movie: MovieExtendedDto = await getMovie(id);
@@ -36,10 +38,29 @@ export default async function MovieDetails({ id }: { id: string }) {
         ))}
       </div>
       <div>
-        <p>Summery:</p>
+        <p className="mb-4">Summery:</p>
         <p>{movie.details?.synopsis ?? movie.plotSummery}</p>
       </div>
-      {/** TODO: add in people cards */}
+      <div className="p-4">
+        <p className="mb-4">Cast & Crew</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {movie.castCrews ? (
+            movie.castCrews.sort((a,b) => a.role - b.role).map((p) => (
+              <Link key={p.personId} href={`/persons/${p.personId}`}>
+                <div className="p-4 border border-slate-600 dark:border-slate-400 rounded-md text-center">
+                  <p>
+                    {personRoleLabels[p.role]}: {p.givenName}{" "}
+                    {p.middleName && p.middleName[0] + ". "}
+                    {p.lastName}
+                  </p>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p>No cast or crew registered</p>
+          )}
+        </div>
+      </div>
       <div>
         <p>Average rating: {movie.averageRating}/10</p>
         {/** TODO: add in reviews */}
