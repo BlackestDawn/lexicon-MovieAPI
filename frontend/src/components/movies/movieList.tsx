@@ -29,9 +29,6 @@ export default async function MovieList({ page }: { page?: number }) {
                   {movie.title} ({movie.releaseDate.getFullYear()})
                 </h3>
                 <div className="space-x-4">
-                  <RestrictedComponent accessLevel="PowerUserAndAbove">
-                    <div></div> {/** edit form */}
-                  </RestrictedComponent>
                   <RestrictedComponent accessLevel="ModeratorAndAbove">
                     <MovieDeleteButton id={movie.id} />
                   </RestrictedComponent>
