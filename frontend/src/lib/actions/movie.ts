@@ -12,19 +12,21 @@ import {
   validateMovieForChangeDto,
 } from "../data/models/movieTypes";
 import { toQueryParams } from "../data/utils/converters";
-import { apiDelete, apiGet, apiPost, apiPut } from "./apiInteract";
+import { apiDelete, apiGet, apiGetPaginated, apiPost, apiPut } from "./apiInteract";
 import { ValidationError } from "../data/interfaces/errors";
+import { PaginationMetadata } from "../data/models/paginationTypes";
 
-export async function fetchMovies(
-  options?: MovieSearchOptions,
-): Promise<MovieDto[]> {
+export async function fetchMovies(options?: MovieSearchOptions): Promise<{
+  movies: MovieDto[];
+  pagination: PaginationMetadata | null;
+}> {
   const qs = toQueryParams(options as QueryParams);
   const url = `/movies${qs}`;
 
-  const result = await apiGet<MovieDto[]>(url);
-  const validated = validateMovieDto(result);
+  const { data, pagination } = await apiGetPaginated<MovieDto[]>(url);
+  const validated = validateMovieDto(data);
 
-  return validated as MovieDto[];
+  return { movies: validated as MovieDto[], pagination };
 }
 
 export async function getMovie(

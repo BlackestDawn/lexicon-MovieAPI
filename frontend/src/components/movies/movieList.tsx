@@ -1,4 +1,3 @@
-import { MovieDto } from "@/lib/data/models/movieTypes";
 import Link from "next/link";
 import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
@@ -6,9 +5,10 @@ import RestrictedComponent from "../auth/restrictedComponent";
 import MovieDeleteButton from "./movieDeleteButton";
 import { fetchMovies } from "@/lib/actions/movie";
 import MovieCreateButton from "./movieCreateButton";
+import PaginationControls from "../general/paginationControls";
 
-export default async function MovieList() {
-  const movies: MovieDto[] = await fetchMovies();
+export default async function MovieList({ page }: { page?: number }) {
+  const { movies, pagination } = await fetchMovies({ page });
 
   return (
     <div className="my-8 space-y-4">
@@ -17,6 +17,9 @@ export default async function MovieList() {
           <MovieCreateButton />
         </RestrictedComponent>
       </div>
+      {pagination && (
+        <PaginationControls pagination={pagination} basePath="/movies" />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {movies.map((movie) => (
           <Link key={movie.id} href={`/movies/${movie.id}`}>

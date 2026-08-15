@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { API_BASE_URL, BACKEND_URL, CLIENT_ID } from "../data/consts";
 import { ApiInteractOptions, TokenResponse } from "../data/interfaces/api";
+import {
+  parsePaginationHeader,
+  PaginationMetadata,
+} from "../data/models/paginationTypes";
 
 const ACCESS_TOKEN_COOKIE = "access_token";
 const ACCESS_TOKEN_EXPIRY_COOKIE = "access_token_expires_at";
@@ -164,10 +168,10 @@ async function extractErrorMessage(response: Response): Promise<string> {
   return base;
 }
 
-async function apiInteract<T>(
+async function fetchWithAuth(
   endpoint: string,
   options: ApiInteractOptions = {},
-): Promise<T> {
+): Promise<Response> {
   const { skipAuth = false, skipRefresh = false, ...fetchOptions } = options;
 
   const accessToken = skipAuth ? null : await getAccessToken();
@@ -204,13 +208,21 @@ async function apiInteract<T>(
       throw new Error(await extractErrorMessage(retryResponse));
     }
 
-    return parseResponse<T>(retryResponse);
+    return retryResponse;
   }
 
   if (!response.ok) {
     throw new Error(await extractErrorMessage(response));
   }
 
+  return response;
+}
+
+async function apiInteract<T>(
+  endpoint: string,
+  options: ApiInteractOptions = {},
+): Promise<T> {
+  const response = await fetchWithAuth(endpoint, options);
   return parseResponse<T>(response);
 }
 
@@ -219,6 +231,19 @@ export async function apiGet<T>(
   options?: ApiInteractOptions,
 ): Promise<T> {
   return apiInteract<T>(endpoint, { ...options, method: "GET" });
+}
+
+// Same as apiGet, but also surfaces the X-Pagination response header for
+// paginated list endpoints, since parseResponse only returns the body.
+export async function apiGetPaginated<T>(
+  endpoint: string,
+  options?: ApiInteractOptions,
+): Promise<{ data: T; pagination: PaginationMetadata | null }> {
+  const response = await fetchWithAuth(endpoint, { ...options, method: "GET" });
+  const data = await parseResponse<T>(response);
+  const pagination = parsePaginationHeader(response.headers.get("X-Pagination"));
+
+  return { data, pagination };
 }
 
 export async function apiPost<T>(
