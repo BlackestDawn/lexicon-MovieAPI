@@ -1,7 +1,7 @@
 import { QueryParams } from "../interfaces/general";
 
-export function toQueryParams(params?: QueryParams): string | null {
-  if (params === undefined) return null;
+export function toQueryParams(params?: QueryParams): string {
+  if (params === undefined) return "";
   const query = new URLSearchParams();
 
   const append = (key: string, value: unknown) => {
@@ -19,9 +19,9 @@ export function toQueryParams(params?: QueryParams): string | null {
   };
 
   for (const [key, value] of Object.entries(params)) append(key, value);
-  if (query.size === 0) return null;
+  if (query.size === 0) return "";
 
-  return query.toString();
+  return "?" + query.toString();
 }
 
 export function minsToDisplayRuntime(mins: number): string {

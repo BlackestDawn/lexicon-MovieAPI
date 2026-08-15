@@ -19,7 +19,7 @@ export async function fetchMovies(
   options?: MovieSearchOptions,
 ): Promise<MovieDto[]> {
   const qs = toQueryParams(options as QueryParams);
-  const url = `/movies${qs ? "?" + qs : ""}`;
+  const url = `/movies${qs}`;
 
   const result = await apiGet<MovieDto[]>(url);
   const validated = validateMovieDto(result);
@@ -32,7 +32,7 @@ export async function getMovie(
   includePeople?: boolean,
 ): Promise<MovieExtendedDto> {
   const qs = toQueryParams({ includePeople });
-  const url = `/movies/${id}${qs ? "?" + qs : ""}`;
+  const url = `/movies/${id}${qs}`;
 
   const result = await apiGet<MovieExtendedDto>(url);
   const validated = validateMovieExtendedDto(result);
