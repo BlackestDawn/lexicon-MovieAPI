@@ -148,7 +148,20 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
 async function extractErrorMessage(response: Response): Promise<string> {
   const problem = await response.json().catch(() => null);
-  return problem?.detail || problem?.title || `API Error: ${response.status}`;
+  const base = problem?.detail || problem?.title || `API Error: ${response.status}`;
+
+  // ValidationProblemDetails (from [ApiController] model-binding failures, and
+  // FluentValidation's ProblemDetailsFactory integration) carries the actual
+  // per-field messages in `errors`, which `detail`/`title` alone don't surface.
+  const fieldErrors = problem?.errors as Record<string, string[]> | undefined;
+  if (fieldErrors) {
+    const details = Object.entries(fieldErrors)
+      .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+      .join("; ");
+    if (details) return `${base} - ${details}`;
+  }
+
+  return base;
 }
 
 async function apiInteract<T>(

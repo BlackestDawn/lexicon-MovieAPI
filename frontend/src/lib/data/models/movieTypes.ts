@@ -86,10 +86,14 @@ export function validateMovieExtendedDto(item: unknown): MovieExtendedDto {
 // and at least one genre and one cast/crew member.
 export const movieForChangeDtoSchema = z.object({
   title: z.string().min(1, "Title is required"),
+  // Validated as a Date (to compare against the min/max window) but sent to the
+  // API as a date-only "yyyy-MM-dd" string - the backend binds this to a
+  // System.DateOnly, which rejects a full ISO datetime string.
   releaseDate: z.coerce
     .date()
     .min(new Date(1850, 0, 1))
-    .max(new Date(new Date().getFullYear() + 10, 11, 31)),
+    .max(new Date(new Date().getFullYear() + 10, 11, 31))
+    .transform((d) => d.toISOString().slice(0, 10)),
   plotSummery: z.string().min(1, "Plot summary is required"),
   runtimeMinutes: z.number().int().gt(0, "Runtime must be positive"),
   castCrews: z

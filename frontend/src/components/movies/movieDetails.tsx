@@ -5,8 +5,9 @@ import RestrictedComponent from "../auth/restrictedComponent";
 import MovieDeleteButton from "./movieDeleteButton";
 import { notFound } from "next/navigation";
 import { getMovie } from "@/lib/actions/movie";
+import MovieEditButton from "./movieEditButton";
 
-export default async function MovieDetails({ id }: { id:string }) {
+export default async function MovieDetails({ id }: { id: string }) {
   const movie: MovieExtendedDto = await getMovie(id);
   if (!movie) notFound();
 
@@ -18,7 +19,7 @@ export default async function MovieDetails({ id }: { id:string }) {
         </h3>
         <div className="space-x-4">
           <RestrictedComponent accessLevel="PowerUserAndAbove">
-            <div></div> {/** edit form */}
+            <MovieEditButton movie={movie} />
           </RestrictedComponent>
           <RestrictedComponent accessLevel="ModeratorAndAbove">
             <MovieDeleteButton id={movie.id} redirect={true} />

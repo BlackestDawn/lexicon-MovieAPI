@@ -5,13 +5,19 @@ import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import MovieDeleteButton from "./movieDeleteButton";
 import { fetchMovies } from "@/lib/actions/movie";
+import MovieCreateButton from "./movieCreateButton";
 
 export default async function MovieList() {
   const movies: MovieDto[] = await fetchMovies();
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 my-8">
+    <div className="my-8 space-y-4">
+      <div className="w-full flex justify-center">
+        <RestrictedComponent accessLevel="PowerUserAndAbove">
+          <MovieCreateButton />
+        </RestrictedComponent>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {movies.map((movie) => (
           <Link key={movie.id} href={`/movies/${movie.id}`}>
             <div className="h-full p-4 border border-slate-600 dark:border-slate-300 rounded-lg space-y-2">
