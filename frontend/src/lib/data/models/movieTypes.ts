@@ -1,7 +1,8 @@
 import z from "zod";
-import { castCrewDtoSchema, castCrewForCreationSchema } from "./castCrewTypes";
+import { castCrewDtoSchema, castCrewForChangeSchema } from "./castCrewTypes";
 import { genreDtoSchema } from "./genreTypes";
 import { reviewDtoSchema } from "./reviewTypes";
+import { ValidationError } from "../interfaces/errors";
 
 const movieDtoSchema = z.object({
   id: z.guid(),
@@ -83,16 +84,20 @@ export function validateMovieExtendedDto(item: unknown): MovieExtendedDto {
 
 // Mirrors MovieChangeValidator: release date window, positive runtime/budget,
 // and at least one genre and one cast/crew member.
-export const movieForChangeSchema = z.object({
+export const movieForChangeDtoSchema = z.object({
   title: z.string().min(1, "Title is required"),
+  // Validated as a Date (to compare against the min/max window) but sent to the
+  // API as a date-only "yyyy-MM-dd" string - the backend binds this to a
+  // System.DateOnly, which rejects a full ISO datetime string.
   releaseDate: z.coerce
     .date()
     .min(new Date(1850, 0, 1))
-    .max(new Date(new Date().getFullYear() + 10, 11, 31)),
+    .max(new Date(new Date().getFullYear() + 10, 11, 31))
+    .transform((d) => d.toISOString().slice(0, 10)),
   plotSummery: z.string().min(1, "Plot summary is required"),
   runtimeMinutes: z.number().int().gt(0, "Runtime must be positive"),
   castCrews: z
-    .array(castCrewForCreationSchema)
+    .array(castCrewForChangeSchema)
     .min(1, "Must have at least 1 person for cast or crew"),
   genres: z.array(z.guid()).min(1, "Must have at least 1 genre"),
   synopsis: z.string().min(1, "Synopsis is required"),
@@ -100,4 +105,13 @@ export const movieForChangeSchema = z.object({
   budget: z.number().int().gt(0, "Budget must be positive"),
 });
 
-export type MovieForChange = z.infer<typeof movieForChangeSchema>;
+export type MovieForChangeDto = z.infer<typeof movieForChangeDtoSchema>;
+
+export function validateMovieForChangeDto(item: unknown): MovieForChangeDto {
+  const result = movieForChangeDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid MovieForChangeDto:", result.error);
+    throw new ValidationError("invalid MovieForChangeDto item", result.error.issues.map(e => e.message));
+  }
+  return result.data;
+}

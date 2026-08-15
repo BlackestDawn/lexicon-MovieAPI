@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { BaseContainer } from "./baseContainer";
 
 export function SiteFooter() {
   const currentYear = new Date().getUTCFullYear();
 
   return (
-    <BaseContainer className="py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+    <>
       <div className="pb-4">
         For the full picture — endpoints, auth flows, versioning, and how to run
         the API — see the project{" "}
@@ -40,6 +39,6 @@ export function SiteFooter() {
           </Link>
         </div>
       </div>
-    </BaseContainer>
+    </>
   );
 }

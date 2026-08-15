@@ -33,6 +33,6 @@ public static class TestData
       Language = "English",
       Budget = 1_000_000,
       Genres = [genreId],
-      CastCrews = [new CastCrewForCreationDto { PersonId = personId, Role = PersonRole.Director }],
+      CastCrews = [new CastCrewForChangeDto { PersonId = personId, Role = PersonRole.Director }],
     };
 }
