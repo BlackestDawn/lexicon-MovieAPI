@@ -1,4 +1,5 @@
 import z from "zod";
+import { ValidationError } from "../interfaces/errors";
 
 export const reviewDtoSchema = z.object({
   id: z.guid(),
@@ -32,10 +33,22 @@ export function validateReviewDto(
 }
 
 // Mirrors ReviewChangeValidator: score must be in (0, 10].
-export const reviewForChangeSchema = z.object({
+export const reviewForChangeDtoSchema = z.object({
   authorName: z.string().min(1, "Author name is required"),
   body: z.string().min(1, "Body is required"),
   score: z.number().int().gt(0).lte(10),
 });
 
-export type ReviewForChange = z.infer<typeof reviewForChangeSchema>;
+export type ReviewForChangeDto = z.infer<typeof reviewForChangeDtoSchema>;
+
+export function validateReviewForChangeDto(item: unknown) {
+  const result = reviewForChangeDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid ReviewForChangeDto:", result.error);
+    throw new ValidationError(
+      "invalid ReviewForChangeDto item:",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
