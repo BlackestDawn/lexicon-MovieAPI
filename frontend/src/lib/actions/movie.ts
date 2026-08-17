@@ -12,7 +12,13 @@ import {
   validateMovieForChangeDto,
 } from "../data/models/movieTypes";
 import { toQueryParams } from "../data/utils/converters";
-import { apiDelete, apiGet, apiGetPaginated, apiPost, apiPut } from "./apiInteract";
+import {
+  apiDelete,
+  apiGet,
+  apiGetPaginated,
+  apiPost,
+  apiPut,
+} from "./apiInteract";
 import { ValidationError } from "../data/interfaces/errors";
 import { PaginationMetadata } from "../data/models/paginationTypes";
 
@@ -47,7 +53,7 @@ export async function createMovie(formData: FormData) {
     const data = formToMovieChangeData(formData);
 
     const result = await apiPost<MovieDto>("/movies", data);
-    const validated = validateMovieDto(result)
+    const validated = validateMovieDto(result);
 
     revalidatePath("/movies");
     return { success: true, movie: validated };
@@ -80,18 +86,8 @@ export async function updateMovie(id: string, formData: FormData) {
 }
 
 export async function removeMovie(id: string) {
-  try {
-    await apiDelete<void>(`/movies/${id}`);
-
-    revalidatePath("/movies");
-    return { success: true };
-  } catch (e) {
-    console.error("Error deleting movie:", e);
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Movie deletion failed",
-    };
-  }
+  await apiDelete<void>(`/movies/${id}`);
+  revalidatePath("/movies");
 }
 
 function formToMovieChangeData(data: FormData): MovieForChangeDto {

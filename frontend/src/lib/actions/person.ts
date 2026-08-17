@@ -13,7 +13,13 @@ import {
   validatePersonForChangeDto,
 } from "../data/models/personTypes";
 import { toQueryParams } from "../data/utils/converters";
-import { apiDelete, apiGet, apiGetPaginated, apiPost, apiPut } from "./apiInteract";
+import {
+  apiDelete,
+  apiGet,
+  apiGetPaginated,
+  apiPost,
+  apiPut,
+} from "./apiInteract";
 import { ValidationError } from "../data/interfaces/errors";
 
 export async function fetchPersons(
@@ -48,7 +54,7 @@ export async function createPerson(formData: FormData) {
   }
 }
 
-export async function updatePerson(id:string,formData: FormData) {
+export async function updatePerson(id: string, formData: FormData) {
   try {
     const data = formToPersonChangeData(formData);
 
@@ -67,18 +73,8 @@ export async function updatePerson(id:string,formData: FormData) {
 }
 
 export async function removePerson(id: string) {
-  try {
-    await apiDelete<void>(`/persons/${id}`);
-
-    revalidatePath("/persons");
-    return { success: true };
-  } catch (e) {
-    console.error("Error deleting person:", e);
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Person deletion failed",
-    };
-  }
+  await apiDelete<void>(`/persons/${id}`);
+  revalidatePath("/persons");
 }
 
 function formToPersonChangeData(data: FormData) {

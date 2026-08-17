@@ -2,8 +2,8 @@ import Link from "next/link";
 import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
-import MovieDeleteButton from "./movieDeleteButton";
-import { fetchMovies } from "@/lib/actions/movie";
+import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
+import { fetchMovies, removeMovie } from "@/lib/actions/movie";
 import MovieCreateButton from "./movieCreateButton";
 import PaginationControls from "../general/paginationControls";
 
@@ -30,7 +30,7 @@ export default async function MovieList({ page }: { page?: number }) {
                 </h3>
                 <div className="space-x-4">
                   <RestrictedComponent accessLevel="ModeratorAndAbove">
-                    <MovieDeleteButton id={movie.id} />
+                    <SimpleDeleteButton id={movie.id} onDelete={removeMovie} />
                   </RestrictedComponent>
                 </div>
               </div>
