@@ -1,6 +1,8 @@
 import { fetchGenres } from "@/lib/actions/genre";
 import Link from "next/link";
 import GenreBadge from "./genreBadge";
+import RestrictedComponent from "../auth/restrictedComponent";
+import GenreCreateButton from "./genreCreateButton";
 
 export default async function GenreList() {
   const genres = await fetchGenres();
@@ -9,6 +11,11 @@ export default async function GenreList() {
     <div>
       <div className="my-6">
         <h3 className="w-full text-center text-3xl">All genres</h3>
+      </div>
+      <div className="w-full flex justify-center my-6">
+        <RestrictedComponent accessLevel="ModeratorAndAbove">
+          <GenreCreateButton />
+        </RestrictedComponent>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
         {genres.map((g) => (
