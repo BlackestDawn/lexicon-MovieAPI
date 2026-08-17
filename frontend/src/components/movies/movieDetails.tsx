@@ -8,6 +8,7 @@ import { getMovie, removeMovie } from "@/lib/actions/movie";
 import MovieEditButton from "./movieEditButton";
 import Link from "next/link";
 import { personRoleLabels } from "@/lib/data/models/personRoleTypes";
+import ReviewCreateButton from "../reviews/reviewCreateButton";
 
 export default async function MovieDetails({ id }: { id: string }) {
   const movie: MovieExtendedDto = await getMovie(id);
@@ -68,8 +69,27 @@ export default async function MovieDetails({ id }: { id: string }) {
         </div>
       </div>
       <div>
-        <p>Average rating: {movie.averageRating}/10</p>
-        {/** TODO: add in reviews */}
+        <div className="flex justify-between items-center">
+          <p>Average rating: {movie.averageRating}/10</p>
+          <RestrictedComponent accessLevel="LoggedIn">
+            <ReviewCreateButton movieId={movie.id} />
+          </RestrictedComponent>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 p-4 gap-4">
+          {movie.reviews.length > 0 ? (
+            movie.reviews.map((r) => (
+              <Link key={r.id} href={`/movies/${movie.id}/${r.id}`}>
+                <div className="border border-slate-600 dark:border-slate-400 rounded-md text-center p-4">
+                  <p>
+                    {r.authorName} {r.score} / 10
+                  </p>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div></div>
+          )}
+        </div>
       </div>
     </div>
   );

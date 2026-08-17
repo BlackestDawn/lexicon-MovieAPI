@@ -88,9 +88,12 @@ export type PersonForChangeDto = z.infer<typeof personForChangeDtoSchema>;
 
 export function validatePersonForChangeDto(item: unknown) {
   const result = personForChangeDtoSchema.safeParse(item);
-  if (!result.success){
+  if (!result.success) {
     console.error("Invalid PersonForChangeDto:", result.error);
-    throw new ValidationError("invalid PersonForChangeDto item", result.error.issues.map(e => e.message));
+    throw new ValidationError(
+      "invalid PersonForChangeDto item",
+      result.error.issues.map((e) => e.message),
+    );
   }
   return result.data;
 }
