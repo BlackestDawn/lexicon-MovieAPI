@@ -4,7 +4,6 @@ export interface MovieSearchOptions {
   genre?: string;
   year?: number;
   minRating?: number;
-  maxRating?: number;
   page?: number;
   pageSize?: number;
 }

@@ -5,13 +5,25 @@ import { Suspense } from "react";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    genre?: string;
+    year?: string;
+    minRating?: string;
+  }>;
 }) {
-  const { page } = await searchParams;
+  const { page, search, genre, year, minRating } = await searchParams;
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <MovieList page={page ? Number(page) : undefined} />
+      <MovieList
+        page={page ? Number(page) : undefined}
+        search={search}
+        genre={genre}
+        year={year ? Number(year) : undefined}
+        minRating={minRating ? Number(minRating) : undefined}
+      />
     </Suspense>
   );
 }
