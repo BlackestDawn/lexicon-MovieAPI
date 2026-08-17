@@ -8,6 +8,7 @@ export const reviewDtoSchema = z.object({
   authorName: z.string(),
   body: z.string(),
   score: z.number(),
+  userId: z.guid().nullable().optional(),
 });
 
 export type ReviewDto = z.infer<typeof reviewDtoSchema>;

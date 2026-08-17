@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using MovieAPI.Application.Models;
+using MovieAPI.Domain.Constants;
 using MovieAPI.IntegrationTests.Infrastructure;
 
 namespace MovieAPI.IntegrationTests;
@@ -20,6 +21,18 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     var created = await response.Content.ReadFromJsonAsync<ReviewDto>();
     Assert.NotNull(created);
     Assert.Equal(8, created!.Score);
+  }
+
+  [Fact]
+  public async Task CreateReview_ExposesCreatingUsersIdAsUserId()
+  {
+    var movieId = await CreateMovieAsync();
+    var (userId, client) = await CreateUserAndClientAsync(Roles.User);
+
+    var response = await client.PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview());
+
+    var created = await response.Content.ReadFromJsonAsync<ReviewDto>();
+    Assert.Equal(userId, created!.UserId);
   }
 
   [Fact]

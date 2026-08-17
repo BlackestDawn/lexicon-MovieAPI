@@ -7,12 +7,15 @@ import { ReactNode } from "react";
 export default function RestrictedComponent({
   children,
   accessLevel,
+  id,
 }: {
   children: ReactNode;
   accessLevel: AccessLevel;
+  id?: string | null;
 }) {
-  const { hasAccess } = useAuth();
-  if (!hasAccess(accessLevel)) return null;
+  const { user, hasAccess } = useAuth();
+  const isOwner = id != null && user?.id === id;
+  if (!isOwner && !hasAccess(accessLevel)) return null;
 
   return <>{children}</>;
 }

@@ -23,7 +23,7 @@ export default async function ReviewDetails({
           </h3>
           <p>Score: {review.score}/10</p>
         </div>
-        <RestrictedComponent accessLevel="LoggedIn">
+        <RestrictedComponent accessLevel="ModeratorAndAbove" id={review.userId}>
           <div className="space-x-4">
             <ReviewEditButton movieId={movieId} review={review} />
             <SimpleDeleteButton
