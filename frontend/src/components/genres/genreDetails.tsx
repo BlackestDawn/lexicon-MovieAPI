@@ -1,7 +1,10 @@
-import { getGenre } from "@/lib/actions/genre";
+import { getGenre, removeGenre } from "@/lib/actions/genre";
 import Link from "next/link";
 import PaginationControls from "../general/paginationControls";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
+import RestrictedComponent from "../auth/restrictedComponent";
+import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
+import GenreEditButton from "./genreEditButton";
 
 export default async function GenreDetails({
   id,
@@ -14,9 +17,21 @@ export default async function GenreDetails({
 
   return (
     <div>
-      <h3 className="w-full text-center text-3xl my-8">
-        All movies within genre {genre.name}
-      </h3>
+      <div className="flex justify-between items-center my-8 px-4">
+        <h3 className="text-3xl">All movies within genre {genre.name}</h3>
+        <div className="space-x-4">
+          <RestrictedComponent accessLevel="ModeratorAndAbove">
+            <GenreEditButton genre={genre} />
+          </RestrictedComponent>
+          <RestrictedComponent accessLevel="Administrator">
+            <SimpleDeleteButton
+              id={genre.id}
+              redirectTo="/genres"
+              onDelete={removeGenre}
+            />
+          </RestrictedComponent>
+        </div>
+      </div>
       <div className="w-full flex justify-center">
         {pagination && (
           <PaginationControls

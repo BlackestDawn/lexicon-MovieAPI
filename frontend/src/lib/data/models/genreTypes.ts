@@ -1,5 +1,6 @@
 import z from "zod";
 import { movieSimpleDtoSchema } from "./movieSimpleTypes";
+import { ValidationError } from "../interfaces/errors";
 
 export const genreDtoSchema = z.object({
   id: z.guid(),
@@ -48,9 +49,21 @@ export function validateGenreExtendedDto(item: unknown): GenreExtendedDto {
 }
 
 // Mirrors GenreChangeValidator: both fields required.
-export const genreForChangeSchema = z.object({
+export const genreForChangeDtoSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z.string().min(1, "Slug is required"),
 });
 
-export type GenreForChange = z.infer<typeof genreForChangeSchema>;
+export type GenreForChangeDto = z.infer<typeof genreForChangeDtoSchema>;
+
+export function validateGenreForChangeDto(item: unknown) {
+  const result = genreForChangeDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid GenreForChangeDto:", result.error);
+    throw new ValidationError(
+      "invalid GenreForChangeDto item",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
