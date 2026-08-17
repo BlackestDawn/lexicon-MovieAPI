@@ -29,7 +29,10 @@ export default async function ReviewDetails({
             <SimpleDeleteButton
               id={review.id}
               redirectTo={`/movies/${movieId}`}
-              onDelete={(reviewId) => removeReview(movieId, reviewId)}
+              onDelete={async (reviewId) => {
+                "use server";
+                removeReview(movieId, reviewId);
+              }}
             />
           </div>
         </RestrictedComponent>
