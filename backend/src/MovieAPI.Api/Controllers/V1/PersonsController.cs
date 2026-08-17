@@ -36,10 +36,10 @@ public class PersonsController(
   /// <returns>List of PersonV1Dto objects</returns>
   [HttpGet]
   [OutputCache(PolicyName = "CatalogCache")]
-  public async Task<IActionResult> GetPeople(string? name, string? genre, int? year,
+  public async Task<IActionResult> GetPersons(string? name, string? genre, int? year,
     int? page, int? pageSize, CancellationToken cancellationToken = default)
   {
-    var (result, pagination) = await service.GetMany(new PeopleSearchParams(name, genre, year),
+    var (result, pagination) = await service.GetMany(new PersonSearchParams(name, genre, year),
       page, pageSize, cancellationToken);
 
     if (pagination != null)

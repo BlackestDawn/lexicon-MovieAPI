@@ -29,7 +29,7 @@ public class PersonsControllerTests(IntegrationTestWebAppFactory factory) : Inte
   }
 
   [Fact]
-  public async Task GetPeople_ReturnsCreatedPeopleWithPaginationHeader()
+  public async Task GetPersons_ReturnsCreatedPersonsWithPaginationHeader()
   {
     await CreatePersonAsync("Ada", "Lovelace");
     await CreatePersonAsync("Grace", "Hopper");
@@ -39,8 +39,8 @@ public class PersonsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     Assert.True(response.Headers.Contains("X-Pagination"));
 
-    var people = await response.Content.ReadFromJsonAsync<List<PersonV1Dto>>();
-    Assert.Equal(2, people!.Count);
+    var persons = await response.Content.ReadFromJsonAsync<List<PersonV1Dto>>();
+    Assert.Equal(2, persons!.Count);
   }
 
   [Fact]

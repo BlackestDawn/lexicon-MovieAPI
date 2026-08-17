@@ -103,29 +103,29 @@ public class PersonServiceTests
   [Fact]
   public async Task GetMany_WhenPageAndSizeAreNull_UsesDefaults()
   {
-    var people = Enumerable.Empty<Person>();
+    var persons = Enumerable.Empty<Person>();
     _repo
-      .Setup(r => r.GetPeopleReadOnlyAsync(It.IsAny<PeopleSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
-      .ReturnsAsync((people, null));
-    _mapper.Setup(m => m.Map<IEnumerable<PersonDto>>(people)).Returns([]);
+      .Setup(r => r.GetPersonsReadOnlyAsync(It.IsAny<PersonSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((persons, null));
+    _mapper.Setup(m => m.Map<IEnumerable<PersonDto>>(persons)).Returns([]);
 
-    await _sut.GetMany(new PeopleSearchParams(null, null, null), null, null);
+    await _sut.GetMany(new PersonSearchParams(null, null, null), null, null);
 
-    _repo.Verify(r => r.GetPeopleReadOnlyAsync(It.IsAny<PeopleSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
+    _repo.Verify(r => r.GetPersonsReadOnlyAsync(It.IsAny<PersonSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
   public async Task GetMany_WhenPageIsZeroAndSizeIsNegative_UsesDefaults()
   {
-    var people = Enumerable.Empty<Person>();
+    var persons = Enumerable.Empty<Person>();
     _repo
-      .Setup(r => r.GetPeopleReadOnlyAsync(It.IsAny<PeopleSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
-      .ReturnsAsync((people, null));
-    _mapper.Setup(m => m.Map<IEnumerable<PersonDto>>(people)).Returns([]);
+      .Setup(r => r.GetPersonsReadOnlyAsync(It.IsAny<PersonSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((persons, null));
+    _mapper.Setup(m => m.Map<IEnumerable<PersonDto>>(persons)).Returns([]);
 
-    await _sut.GetMany(new PeopleSearchParams(null, null, null), 0, -5);
+    await _sut.GetMany(new PersonSearchParams(null, null, null), 0, -5);
 
-    _repo.Verify(r => r.GetPeopleReadOnlyAsync(It.IsAny<PeopleSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
+    _repo.Verify(r => r.GetPersonsReadOnlyAsync(It.IsAny<PersonSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
@@ -133,15 +133,15 @@ public class PersonServiceTests
   {
     var entity = MakePersonEntity();
     var personDto = new PersonDto { Id = entity.Id };
-    var people = new[] { entity };
+    var persons = new[] { entity };
     var pagination = new PaginationMetadata(1, 10, 1);
 
     _repo
-      .Setup(r => r.GetPeopleReadOnlyAsync(It.IsAny<PeopleSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
-      .ReturnsAsync((people.AsEnumerable(), pagination));
-    _mapper.Setup(m => m.Map<IEnumerable<PersonDto>>(people.AsEnumerable())).Returns([personDto]);
+      .Setup(r => r.GetPersonsReadOnlyAsync(It.IsAny<PersonSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((persons.AsEnumerable(), pagination));
+    _mapper.Setup(m => m.Map<IEnumerable<PersonDto>>(persons.AsEnumerable())).Returns([personDto]);
 
-    var (result, meta) = await _sut.GetMany(new PeopleSearchParams(null, null, null), null, null);
+    var (result, meta) = await _sut.GetMany(new PersonSearchParams(null, null, null), null, null);
 
     Assert.Single(result);
     Assert.NotNull(meta);

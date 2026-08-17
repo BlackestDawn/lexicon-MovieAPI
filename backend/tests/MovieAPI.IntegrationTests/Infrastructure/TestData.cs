@@ -14,8 +14,8 @@ public static class TestData
   public static PersonForChangeV1Dto ValidPerson(string firstName = "Ada", string lastName = "Lovelace") =>
     new() { FirstName = firstName, LastName = lastName, DateOfBirth = new DateOnly(1980, 1, 1) };
 
-  // For /api/v2/people, which binds the canonical PersonForChangeDto shape
-  // (GivenName + optional MiddleName) directly.
+  // For /api/v2/people and /api/v3/persons, which both bind the canonical
+  // PersonForChangeDto shape (GivenName + optional MiddleName) directly.
   public static PersonForChangeDto ValidPersonV2(string givenName = "Ada", string? middleName = null, string lastName = "Lovelace") =>
     new() { GivenName = givenName, MiddleName = middleName, LastName = lastName, DateOfBirth = new DateOnly(1980, 1, 1) };
 

@@ -10,15 +10,15 @@ namespace MovieAPI.IntegrationTests;
 public class UnversionedRoutingTests(IntegrationTestWebAppFactory factory) : IntegrationTestBase(factory)
 {
   [Fact]
-  public async Task GetPeople_Unversioned_ReturnsV1Shape()
+  public async Task GetPersons_Unversioned_ReturnsV1Shape()
   {
     await Client.PostAsJsonAsync("/api/people", TestData.ValidPerson());
 
     var response = await Client.GetAsync("/api/people");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    var people = await response.Content.ReadFromJsonAsync<List<PersonV1Dto>>();
-    Assert.Equal("Ada", Assert.Single(people!).FirstName);
+    var persons = await response.Content.ReadFromJsonAsync<List<PersonV1Dto>>();
+    Assert.Equal("Ada", Assert.Single(persons!).FirstName);
   }
 
   [Fact]

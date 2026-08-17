@@ -7,6 +7,6 @@ public interface IMovieRepository : IRepositoryBase<Movie>
 {
   Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken);
   Task<(IEnumerable<MovieListItem>, PaginationMetadata?)> GetMoviesReadOnlyAsync(MovieSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken);
-  Task<Movie?> GetMovieAsync(Guid id, bool includePeople, CancellationToken cancellationToken);
-  Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePeople, CancellationToken cancellationToken);
+  Task<Movie?> GetMovieAsync(Guid id, bool includePersons, CancellationToken cancellationToken);
+  Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePersons, CancellationToken cancellationToken);
 }

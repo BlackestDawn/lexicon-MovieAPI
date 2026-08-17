@@ -37,7 +37,7 @@ public static class DbSeeder
 
     db.Genres.AddRange(action, drama, thriller, comedy, scifi, horror, romance, adventure, crime, animation);
 
-    // --- People ---
+    // --- Persons ---
     Person P(string first, string last, int year, int month, int day) =>
       new() { Id = Guid.NewGuid(), GivenName = first, LastName = last, DateOfBirth = new DateOnly(year, month, day), CreatedAt = now, UpdatedAt = now };
 
@@ -289,7 +289,7 @@ public static class DbSeeder
     await db.SaveChangesAsync();
 
     logger.LogInformation(
-        "Seeded {MovieCount} movies, {PersonCount} people, {GenreCount} genres.",
+        "Seeded {MovieCount} movies, {PersonCount} persons, {GenreCount} genres.",
         movies.Count, db.Persons.Local.Count, db.Genres.Local.Count);
   }
 }

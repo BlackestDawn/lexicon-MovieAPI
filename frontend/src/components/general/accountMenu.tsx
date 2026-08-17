@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useAuth } from "@/context/commonContext";
 import { useDismissableMenu } from "@/hooks/useDismissableMenu";
-import menuData from "@/lib/data/menuOptions.json";
+import menuData from "@/lib/data/consts/menuOptions.json";
 
 export function AccountMenu() {
   const { isOpen, toggle, close, menuRef } = useDismissableMenu<HTMLDivElement>();

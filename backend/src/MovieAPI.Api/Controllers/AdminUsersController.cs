@@ -17,6 +17,7 @@ namespace MovieAPI.Api.Controllers;
 [Authorize(Roles = Roles.Administrator)]
 [ApiVersion("1.0")]
 [ApiVersion("2.0")]
+[ApiVersion("3.0")]
 public class AdminUsersController(IAdminUserService service) : ControllerBase
 {
   /// <summary>

@@ -31,9 +31,9 @@ export async function fetchMovies(options?: MovieSearchOptions): Promise<{
 
 export async function getMovie(
   id: string,
-  includePeople?: boolean,
+  includePersons?: boolean,
 ): Promise<MovieExtendedDto> {
-  const qs = toQueryParams({ includePeople });
+  const qs = toQueryParams({ includePersons });
   const url = `/movies/${id}${qs}`;
 
   const result = await apiGet<MovieExtendedDto>(url);

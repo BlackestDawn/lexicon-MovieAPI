@@ -1,4 +1,4 @@
-import { fetchPersons } from "@/lib/actions/people";
+import { fetchPersons } from "@/lib/actions/person";
 import PaginationControls from "../general/paginationControls";
 import Link from "next/link";
 

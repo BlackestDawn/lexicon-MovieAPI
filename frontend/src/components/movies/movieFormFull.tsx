@@ -2,7 +2,7 @@
 
 import { createMovie, updateMovie } from "@/lib/actions/movie";
 import { fetchGenres } from "@/lib/actions/genre";
-import { fetchPersons } from "@/lib/actions/people";
+import { fetchPersons } from "@/lib/actions/person";
 import { defaultBudget, defaultRuntime } from "@/lib/data/consts/general";
 import { GenreDto } from "@/lib/data/models/genreTypes";
 import { MovieExtendedDto } from "@/lib/data/models/movieTypes";
@@ -63,7 +63,7 @@ export default function MovieFormFull({
       .catch((e) => console.error("Failed to load genres:", e));
     fetchPersons()
       .then(r => setPersons(r.persons))
-      .catch((e) => console.error("Failed to load people:", e));
+      .catch((e) => console.error("Failed to load persons:", e));
   }, []);
 
   useEffect(() => {

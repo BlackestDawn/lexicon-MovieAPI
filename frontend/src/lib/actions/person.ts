@@ -1,6 +1,8 @@
+"use server";
+
 import { revalidatePath } from "next/cache";
 import { QueryParams } from "../data/interfaces/general";
-import { PeopleSearchOptions } from "../data/interfaces/people";
+import { PersonSearchOptions } from "../data/interfaces/person";
 import { PaginationMetadata } from "../data/models/paginationTypes";
 import {
   PersonDto,
@@ -15,16 +17,16 @@ import { apiDelete, apiGet, apiGetPaginated, apiPost, apiPut } from "./apiIntera
 import { ValidationError } from "../data/interfaces/errors";
 
 export async function fetchPersons(
-  options?: PeopleSearchOptions,
+  options?: PersonSearchOptions,
 ): Promise<{ persons: PersonDto[]; pagination: PaginationMetadata | null }> {
   const qs = toQueryParams(options as QueryParams);
-  const { data, pagination } = await apiGetPaginated(`/people${qs}`);
+  const { data, pagination } = await apiGetPaginated(`/persons${qs}`);
   const validated = validatePersonDto(data) as PersonDto[];
   return { persons: validated as PersonDto[], pagination };
 }
 
 export async function getPerson(id: string): Promise<PersonExtendedDto> {
-  const result = await apiGet(`/people/${id}`);
+  const result = await apiGet(`/persons/${id}`);
   return validatePersonExtendedDto(result) as PersonExtendedDto;
 }
 
@@ -32,9 +34,9 @@ export async function createPerson(formData: FormData) {
   try {
     const data = formToPersonChangeData(formData);
 
-    const result = await apiPost("/people", data);
+    const result = await apiPost("/persons", data);
     const validated = validatePersonDto(result);
-    revalidatePath("/people");
+    revalidatePath("/persons");
     return { success: true, person: validated };
   } catch (e) {
     console.error("Error creating person:", e);
@@ -50,9 +52,9 @@ export async function updatePerson(id:string,formData: FormData) {
   try {
     const data = formToPersonChangeData(formData);
 
-    const result = await apiPut(`/people/${id}`, data);
+    const result = await apiPut(`/persons/${id}`, data);
     const validated = validatePersonDto(result);
-    revalidatePath(`/people/${id}`);
+    revalidatePath(`/persons/${id}`);
     return { success: true, person: validated };
   } catch (e) {
     console.error("Error updating person:", e);
@@ -66,9 +68,9 @@ export async function updatePerson(id:string,formData: FormData) {
 
 export async function removePerson(id: string) {
   try {
-    await apiDelete<void>(`/people/${id}`);
+    await apiDelete<void>(`/persons/${id}`);
 
-    revalidatePath("/people");
+    revalidatePath("/persons");
     return { success: true };
   } catch (e) {
     console.error("Error deleting person:", e);

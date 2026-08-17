@@ -19,6 +19,7 @@ namespace MovieAPI.Api.Controllers;
 [Route("api/v{version:apiVersion}/movies/{movieId}/reviews")]
 [ApiVersion("1.0")]
 [ApiVersion("2.0")]
+[ApiVersion("3.0")]
 public class ReviewsController(IReviewService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   /// <summary>

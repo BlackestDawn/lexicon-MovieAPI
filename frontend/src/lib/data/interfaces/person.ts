@@ -1,4 +1,4 @@
-export interface PeopleSearchOptions {
+export interface PersonSearchOptions {
   name?: string;
   genre?: string;
   year?: number;
