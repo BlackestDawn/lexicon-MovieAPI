@@ -1,5 +1,6 @@
 import z from "zod";
 import { personRoleSchema } from "./personRoleTypes";
+import { ValidationError } from "../interfaces/errors";
 
 export const movieRoleDtoSchema = z.object({
   movieId: z.guid(),
@@ -9,12 +10,12 @@ export const movieRoleDtoSchema = z.object({
 
 export type MovieRoleDto = z.infer<typeof movieRoleDtoSchema>;
 
-export const movieRoleForCreationSchema = z.object({
+export const movieRoleForChangeSchema = z.object({
   movieId: z.guid(),
   role: personRoleSchema,
 });
 
-export type MovieRoleForCreation = z.infer<typeof movieRoleForCreationSchema>;
+export type MovieRoleForUpdate = z.infer<typeof movieRoleForChangeSchema>;
 
 const personDtoSchema = z.object({
   id: z.guid(),
@@ -71,12 +72,25 @@ export function validatePersonExtendedDto(item: unknown): PersonExtendedDto {
 }
 
 // Mirrors PersonChangeValidator: date-of-birth window, and middle name capped at 50 chars.
-export const personForChangeSchema = z.object({
+export const personForChangeDtoSchema = z.object({
   givenName: z.string().min(1, "Given name is required"),
   middleName: z.string().max(50).nullable().optional(),
   lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.coerce.date().min(new Date(1750, 0, 1)).max(new Date()),
-  movieRoles: z.array(movieRoleForCreationSchema),
+  dateOfBirth: z.coerce
+    .date()
+    .min(new Date(1750, 0, 1))
+    .max(new Date())
+    .transform((d) => d.toISOString().slice(0, 10)),
+  movieRoles: z.array(movieRoleForChangeSchema),
 });
 
-export type PersonForChange = z.infer<typeof personForChangeSchema>;
+export type PersonForChangeDto = z.infer<typeof personForChangeDtoSchema>;
+
+export function validatePersonForChangeDto(item: unknown) {
+  const result = personForChangeDtoSchema.safeParse(item);
+  if (!result.success){
+    console.error("Invalid PersonForChangeDto:", result.error);
+    throw new ValidationError("invalid PersonForChangeDto item", result.error.issues.map(e => e.message));
+  }
+  return result.data;
+}

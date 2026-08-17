@@ -52,10 +52,10 @@ export async function createMovie(formData: FormData) {
     revalidatePath("/movies");
     return { success: true, movie: validated };
   } catch (e) {
-    console.error("Error updating movie:", e);
+    console.error("Error creating movie:", e);
     return {
       success: false,
-      error: e instanceof Error ? e.message : "Movie update failed",
+      error: e instanceof Error ? e.message : "Movie creation failed",
       issues: e instanceof ValidationError ? e.issues : null,
     };
   }
