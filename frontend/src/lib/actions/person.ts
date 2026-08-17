@@ -58,10 +58,9 @@ export async function updatePerson(id: string, formData: FormData) {
   try {
     const data = formToPersonChangeData(formData);
 
-    const result = await apiPut(`/persons/${id}`, data);
-    const validated = validatePersonDto(result);
+    await apiPut(`/persons/${id}`, data);
     revalidatePath(`/persons/${id}`);
-    return { success: true, person: validated };
+    return { success: true, person: data };
   } catch (e) {
     console.error("Error updating person:", e);
     return {

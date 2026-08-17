@@ -4,6 +4,7 @@ import RestrictedComponent from "../auth/restrictedComponent";
 import Link from "next/link";
 import { personRoleLabels } from "@/lib/data/models/personRoleTypes";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
+import PersonEditButton from "./personEditButton";
 
 export default async function PersonDetails({ id }: { id: string }) {
   const person = await getPerson(id);
@@ -13,12 +14,12 @@ export default async function PersonDetails({ id }: { id: string }) {
     <div className="w-full m-4 space-y-6">
       <div className="flex justify-between">
         <h3>
-          {person.givenName} {person.middleName ? ` ${person.middleName}` : ""}
+          {person.givenName} {person.middleName ? `${person.middleName} ` : ""}
           {person.lastName}
         </h3>
         <div className="space-x-4">
           <RestrictedComponent accessLevel="PowerUserAndAbove">
-            <div></div> {/** TODO: add edit button */}
+            <PersonEditButton person={person} />
           </RestrictedComponent>
           <RestrictedComponent accessLevel="ModeratorAndAbove">
             <SimpleDeleteButton

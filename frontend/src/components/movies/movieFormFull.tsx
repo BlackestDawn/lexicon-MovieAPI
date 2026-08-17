@@ -78,6 +78,21 @@ export default function MovieFormFull({
     setError("");
     setIssues([]);
 
+    // If a person + role is selected but "Add" was never clicked, include it
+    // anyway rather than silently dropping it from the save.
+    const pendingPerson = newPersonId
+      ? persons.find((p) => p.id === newPersonId)
+      : undefined;
+    const effectiveCastCrew = pendingPerson
+      ? [...castCrew, { personId: pendingPerson.id, role: newRole, label: personLabel(pendingPerson) }]
+      : castCrew;
+    data.set(
+      "castCrewData",
+      JSON.stringify(
+        effectiveCastCrew.map(({ personId, role }) => ({ personId, role })),
+      ),
+    );
+
     startTransition(async () => {
       const result = existingMovie
         ? await updateMovie(existingMovie.id, data)

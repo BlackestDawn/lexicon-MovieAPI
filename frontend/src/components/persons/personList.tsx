@@ -1,12 +1,19 @@
 import { fetchPersons } from "@/lib/actions/person";
 import PaginationControls from "../general/paginationControls";
 import Link from "next/link";
+import RestrictedComponent from "../auth/restrictedComponent";
+import PersonCreateButton from "./personCreateButton";
 
 export default async function PersonsList({ page }: { page?: number }) {
   const { persons, pagination } = await fetchPersons({ page });
 
   return (
     <div>
+      <div className="w-full flex justify-center my-6">
+        <RestrictedComponent accessLevel="PowerUserAndAbove">
+          <PersonCreateButton />
+        </RestrictedComponent>
+      </div>
       <div className="w-full flex  justify-center my-6">
         {pagination && (
           <PaginationControls pagination={pagination} basePath="/persons" />
