@@ -72,7 +72,7 @@ export default async function MovieDetails({ id }: { id: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 p-4 gap-4">
           {movie.reviews.length > 0 ? (
             movie.reviews.map((r) => (
-              <Link key={r.id} href={`/movies/${movie.id}/reviews/${r.id}`}>
+              <Link key={r.id} href={`/movies/${movie.id}/${r.id}`}>
                 <div className="border border-slate-600 dark:border-slate-400 rounded-md text-center p-4">
                   <p>
                     {r.authorName} {r.score} / 10
