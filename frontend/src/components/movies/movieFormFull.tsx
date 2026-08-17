@@ -14,6 +14,7 @@ import { PersonDto } from "@/lib/data/models/personTypes";
 import { Plus, X } from "lucide-react";
 import Form from "next/form";
 import { useEffect, useState, useTransition } from "react";
+import { inputClass, labelClass } from "@/lib/data/consts/styles";
 
 interface CastCrewEntry {
   personId: string;
@@ -30,11 +31,6 @@ function personLabel(person: {
     .filter(Boolean)
     .join(" ");
 }
-
-const inputClass =
-  "block w-full px-3 py-2 border border-slate-400 dark:border-slate-600 rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50";
-const labelClass =
-  "block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1";
 
 export default function MovieFormFull({
   onClose,
@@ -66,7 +62,7 @@ export default function MovieFormFull({
       .then(setGenres)
       .catch((e) => console.error("Failed to load genres:", e));
     fetchPersons()
-      .then(setPersons)
+      .then(r => setPersons(r.persons))
       .catch((e) => console.error("Failed to load people:", e));
   }, []);
 
