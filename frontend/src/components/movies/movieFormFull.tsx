@@ -3,7 +3,7 @@
 import { createMovie, updateMovie } from "@/lib/actions/movie";
 import { fetchGenres } from "@/lib/actions/genre";
 import { fetchPersons } from "@/lib/actions/people";
-import { defaultBudget, defaultRuntime } from "@/lib/data/consts";
+import { defaultBudget, defaultRuntime } from "@/lib/data/consts/general";
 import { GenreDto } from "@/lib/data/models/genreTypes";
 import { MovieExtendedDto } from "@/lib/data/models/movieTypes";
 import {
