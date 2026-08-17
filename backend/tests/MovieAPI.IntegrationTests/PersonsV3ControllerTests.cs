@@ -39,6 +39,29 @@ public class PersonsV3ControllerTests(IntegrationTestWebAppFactory factory) : In
     Assert.Equal(2, persons!.Count);
   }
 
+  // Regression test: the year filter must match the person's own birth year, not the
+  // release year of a movie they appeared in. TestData.ValidPersonV2 sets DateOfBirth to
+  // 1980, while ValidMovie sets ReleaseDate to 2020, so the two years being disjoint
+  // exposes the bug where the query joined through CastCrews to the movie's ReleaseDate.
+  [Fact]
+  public async Task GetPersons_FiltersByBirthYear_NotMovieReleaseYear()
+  {
+    var genreResponse = await Client.PostAsJsonAsync("/api/v3/genres", TestData.ValidGenre());
+    var genre = (await genreResponse.Content.ReadFromJsonAsync<GenreDto>())!;
+
+    var created = await CreatePersonAsync("Ada", "Lovelace");
+    await Client.PostAsJsonAsync("/api/v3/movies", TestData.ValidMovie(genre.Id, created.Id));
+
+    var byBirthYear = await Client.GetAsync("/api/v3/persons?year=1980");
+    var byMovieReleaseYear = await Client.GetAsync("/api/v3/persons?year=2020");
+
+    var matchedByBirthYear = await byBirthYear.Content.ReadFromJsonAsync<List<PersonDto>>();
+    var matchedByReleaseYear = await byMovieReleaseYear.Content.ReadFromJsonAsync<List<PersonDto>>();
+
+    Assert.Single(matchedByBirthYear!);
+    Assert.Empty(matchedByReleaseYear!);
+  }
+
   [Fact]
   public async Task GetPerson_WithExistingId_ReturnsPerson()
   {

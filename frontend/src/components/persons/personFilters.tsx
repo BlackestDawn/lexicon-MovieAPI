@@ -53,7 +53,7 @@ export default async function PersonFilters({
       </div>
       <div className="flex-1">
         <label htmlFor="year" className={labelClass}>
-          Movie release year
+          Birth year
         </label>
         <input
           type="number"
