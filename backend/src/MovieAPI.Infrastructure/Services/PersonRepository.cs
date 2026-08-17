@@ -9,17 +9,17 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
 {
   protected override DbSet<Person> Set => Context.Persons;
 
-  public Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleAsync(PeopleSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<Person>, PaginationMetadata?)> GetPersonsAsync(PersonSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return GetPeopleInternalAsync(searchParams, page, pageSize, false, cancellationToken);
+    return GetPersonsInternalAsync(searchParams, page, pageSize, false, cancellationToken);
   }
 
-  public Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleReadOnlyAsync(PeopleSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
+  public Task<(IEnumerable<Person>, PaginationMetadata?)> GetPersonsReadOnlyAsync(PersonSearchParams searchParams, int page, int pageSize, CancellationToken cancellationToken)
   {
-    return GetPeopleInternalAsync(searchParams, page, pageSize, true, cancellationToken);
+    return GetPersonsInternalAsync(searchParams, page, pageSize, true, cancellationToken);
   }
 
-  private async Task<(IEnumerable<Person>, PaginationMetadata?)> GetPeopleInternalAsync(PeopleSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
+  private async Task<(IEnumerable<Person>, PaginationMetadata?)> GetPersonsInternalAsync(PersonSearchParams searchParams, int page, int pageSize, bool readOnly, CancellationToken cancellationToken)
   {
     var query = Context.Persons.AsQueryable();
 
@@ -48,13 +48,13 @@ public class PersonRepository(AppDbContext context) : RepositoryBase<Person>(con
     var totalCount = await query.CountAsync(cancellationToken);
     var pagination = new PaginationMetadata(totalCount, pageSize, page);
 
-    var people = await query
+    var persons = await query
       .OrderBy(p => p.LastName).ThenBy(p => p.GivenName)
       .Skip((page - 1) * pageSize)
       .Take(pageSize)
       .ToListAsync(cancellationToken);
 
-    return (people, pagination);
+    return (persons, pagination);
   }
 
   public Task<Person?> GetPersonAsync(Guid id, bool includeMovies, CancellationToken cancellationToken)

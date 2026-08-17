@@ -1,5 +1,5 @@
 import Link from "next/link";
-import menuData from "@/lib/data/menuOptions.json";
+import menuData from "@/lib/data/consts/menuOptions.json";
 
 export function DesktopNav() {
   return (

@@ -1,24 +1,26 @@
 "use client";
 
-import { removeMovie } from "@/lib/actions/movie";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { MouseEvent, useTransition } from "react";
 
-export default function MovieDeleteButton({
+export default function SimpleDeleteButton({
   id,
-  redirect = false,
+  redirectTo,
+  onDelete,
 }: {
   id: string;
-  redirect?: boolean;
+  redirectTo?: string;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const handleClick = () => {
+  const handleClick = (e: MouseEvent) => {
+    e.preventDefault();
     startTransition(async () => {
-      await removeMovie(id);
-      if (redirect) router.push("/movies");
+      await onDelete(id);
+      if (redirectTo) router.push(redirectTo);
     });
   };
 

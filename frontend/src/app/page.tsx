@@ -8,7 +8,7 @@ export default function Home() {
         MovieAPI
       </h1>
       <p className="mt-2 max-w-xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-        A small-scale IMDB clone: browse and manage movies, people, genres,
+        A small-scale IMDB clone: browse and manage movies, persons, genres,
         and reviews behind a JWT-secured, role-based API.
       </p>
 
@@ -19,9 +19,9 @@ export default function Home() {
         <div className="flex flex-col gap-2 px-8 py-8">
           <h2 className="font-medium text-black dark:text-zinc-50">Catalog</h2>
           <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Full CRUD for movies, people, genres, and reviews, with filtering,
+            Full CRUD for movies, persons, genres, and reviews, with filtering,
             pagination, and versioned responses (<code>/api/v1</code>,{" "}
-            <code>/api/v2</code>).
+            <code>/api/v2</code>, <code>/api/v3</code>).
           </p>
         </div>
         <div className="flex flex-col gap-2 px-8 py-8">

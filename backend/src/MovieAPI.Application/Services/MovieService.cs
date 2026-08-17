@@ -77,9 +77,9 @@ public class MovieService(
     return (movies, pagination);
   }
 
-  public async Task<MovieExtendedDto> GetOne(Guid id, bool includePeople = false, CancellationToken token = default)
+  public async Task<MovieExtendedDto> GetOne(Guid id, bool includePersons = false, CancellationToken token = default)
   {
-    var result = await repository.GetMovieReadOnlyAsync(id, includePeople, token) ?? throw new NotFoundException($"Movie '{id}' not found");
+    var result = await repository.GetMovieReadOnlyAsync(id, includePersons, token) ?? throw new NotFoundException($"Movie '{id}' not found");
     return mapper.Map<MovieExtendedDto>(result);
   }
 

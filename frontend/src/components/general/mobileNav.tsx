@@ -1,6 +1,6 @@
 "use client";
 
-import menuData from "@/lib/data/menuOptions.json";
+import menuData from "@/lib/data/consts/menuOptions.json";
 import Link from "next/link";
 import HamburgerButton from "./hamburgerButton";
 import { useDismissableMenu } from "@/hooks/useDismissableMenu";

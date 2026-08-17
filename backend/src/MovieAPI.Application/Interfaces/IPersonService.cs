@@ -7,7 +7,7 @@ namespace MovieAPI.Application.Interfaces;
 
 public interface IPersonService
 {
-  Task<(IEnumerable<PersonDto>, PaginationMetadata?)> GetMany(PeopleSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default);
+  Task<(IEnumerable<PersonDto>, PaginationMetadata?)> GetMany(PersonSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default);
   Task<PersonExtendedDto> GetOne(Guid id, bool includeMovies, CancellationToken token = default);
   Task<PersonDto> Create(PersonForChangeDto newPerson, CancellationToken token = default);
   Task Update(Guid id, PersonForChangeDto updatedPerson, CancellationToken token = default);

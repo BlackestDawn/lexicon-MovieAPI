@@ -1,6 +1,6 @@
 namespace MovieAPI.Infrastructure.Models;
 
-public class PeopleSearchParams(string? name, string? genre, int? year)
+public class PersonSearchParams(string? name, string? genre, int? year)
 {
   public string? Name { get; init; } = name;
   public string? Genre { get; init; } = genre;

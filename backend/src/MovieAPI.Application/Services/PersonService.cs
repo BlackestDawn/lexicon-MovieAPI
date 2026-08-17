@@ -47,7 +47,7 @@ public class PersonService(
     return mapper.Map<PersonDto>(personEntity);
   }
 
-  public async Task<(IEnumerable<PersonDto>, PaginationMetadata?)> GetMany(PeopleSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
+  public async Task<(IEnumerable<PersonDto>, PaginationMetadata?)> GetMany(PersonSearchParams searchParams, int? page, int? pageSize, CancellationToken token = default)
   {
     if (page == null || page < DefaultValues.Page)
     {
@@ -58,7 +58,7 @@ public class PersonService(
       pageSize = DefaultValues.PageSize;
     }
 
-    var (result, pagination) = await repository.GetPeopleReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
+    var (result, pagination) = await repository.GetPersonsReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
 
     return (mapper.Map<IEnumerable<PersonDto>>(result), pagination);
   }

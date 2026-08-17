@@ -9,14 +9,14 @@ using MovieAPI.Application.Models;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure.Models;
 
-namespace MovieAPI.Api.Controllers.V2;
+namespace MovieAPI.Api.Controllers.V3;
 
 /// <summary>
-/// V2 Controller for handling people associated with movies
+/// V3 Controller for handling persons associated with movies
 /// </summary>
 [ApiController]
-[Route("api/v{version:apiVersion}/people")]
-[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/persons")]
+[ApiVersion("3.0")]
 public class PersonsController(IPersonService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   /// <summary>
@@ -52,7 +52,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   /// <param name="includeMovies">Whether to include movies they've been part of</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
   /// <returns>PersonExtendedDto object</returns>
-  [HttpGet("{id}", Name = "GetPerson")]
+  [HttpGet("{id}", Name = "GetPersonV3")]
   [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetPerson(Guid id, bool includeMovies = true, CancellationToken cancellationToken = default)
   {
@@ -72,7 +72,7 @@ public class PersonsController(IPersonService service, IOutputCacheStore cacheSt
   {
     var result = await service.Create(newPerson, cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
-    return CreatedAtRoute("GetPerson", new { result.Id }, result);
+    return CreatedAtRoute("GetPersonV3", new { result.Id }, result);
   }
 
   /// <summary>

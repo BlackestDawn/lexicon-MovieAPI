@@ -2,8 +2,8 @@
 
 import { createMovie, updateMovie } from "@/lib/actions/movie";
 import { fetchGenres } from "@/lib/actions/genre";
-import { fetchPersons } from "@/lib/actions/people";
-import { defaultBudget, defaultRuntime } from "@/lib/data/consts";
+import { fetchPersons } from "@/lib/actions/person";
+import { defaultBudget, defaultRuntime } from "@/lib/data/consts/general";
 import { GenreDto } from "@/lib/data/models/genreTypes";
 import { MovieExtendedDto } from "@/lib/data/models/movieTypes";
 import {
@@ -14,6 +14,7 @@ import { PersonDto } from "@/lib/data/models/personTypes";
 import { Plus, X } from "lucide-react";
 import Form from "next/form";
 import { useEffect, useState, useTransition } from "react";
+import { inputClass, labelClass } from "@/lib/data/consts/styles";
 
 interface CastCrewEntry {
   personId: string;
@@ -30,11 +31,6 @@ function personLabel(person: {
     .filter(Boolean)
     .join(" ");
 }
-
-const inputClass =
-  "block w-full px-3 py-2 border border-slate-400 dark:border-slate-600 rounded-md bg-white dark:bg-gray-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50";
-const labelClass =
-  "block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1";
 
 export default function MovieFormFull({
   onClose,
@@ -66,8 +62,8 @@ export default function MovieFormFull({
       .then(setGenres)
       .catch((e) => console.error("Failed to load genres:", e));
     fetchPersons()
-      .then(setPersons)
-      .catch((e) => console.error("Failed to load people:", e));
+      .then(r => setPersons(r.persons))
+      .catch((e) => console.error("Failed to load persons:", e));
   }, []);
 
   useEffect(() => {
@@ -81,6 +77,21 @@ export default function MovieFormFull({
   const handleSubmit = async (data: FormData) => {
     setError("");
     setIssues([]);
+
+    // If a person + role is selected but "Add" was never clicked, include it
+    // anyway rather than silently dropping it from the save.
+    const pendingPerson = newPersonId
+      ? persons.find((p) => p.id === newPersonId)
+      : undefined;
+    const effectiveCastCrew = pendingPerson
+      ? [...castCrew, { personId: pendingPerson.id, role: newRole, label: personLabel(pendingPerson) }]
+      : castCrew;
+    data.set(
+      "castCrewData",
+      JSON.stringify(
+        effectiveCastCrew.map(({ personId, role }) => ({ personId, role })),
+      ),
+    );
 
     startTransition(async () => {
       const result = existingMovie

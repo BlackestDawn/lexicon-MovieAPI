@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { API_BASE_URL, BACKEND_URL, CLIENT_ID } from "../data/consts";
+import { API_BASE_URL, BACKEND_URL, CLIENT_ID } from "../data/consts/general";
 import { ApiInteractOptions, TokenResponse } from "../data/interfaces/api";
 import {
   parsePaginationHeader,

@@ -69,17 +69,17 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
     return (movies, pagination);
   }
 
-  public Task<Movie?> GetMovieAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
+  public Task<Movie?> GetMovieAsync(Guid id, bool includePersons, CancellationToken cancellationToken)
   {
-    return GetMovieInternalAsync(id, includePeople, false, cancellationToken);
+    return GetMovieInternalAsync(id, includePersons, false, cancellationToken);
   }
 
-  public Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePeople, CancellationToken cancellationToken)
+  public Task<Movie?> GetMovieReadOnlyAsync(Guid id, bool includePersons, CancellationToken cancellationToken)
   {
-    return GetMovieInternalAsync(id, includePeople, true, cancellationToken);
+    return GetMovieInternalAsync(id, includePersons, true, cancellationToken);
   }
 
-  private async Task<Movie?> GetMovieInternalAsync(Guid id, bool includePeople, bool readOnly, CancellationToken cancellationToken)
+  private async Task<Movie?> GetMovieInternalAsync(Guid id, bool includePersons, bool readOnly, CancellationToken cancellationToken)
   {
     var query = Context.Movies
       .Include(m => m.Details)
@@ -93,7 +93,7 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
       query = query.AsNoTracking();
     }
 
-    if (includePeople)
+    if (includePersons)
     {
       query = query.Include(m => m.CastCrews).ThenInclude(cc => cc.Person);
     }
