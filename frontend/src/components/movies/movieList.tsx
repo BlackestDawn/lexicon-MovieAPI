@@ -6,9 +6,28 @@ import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import { fetchMovies, removeMovie } from "@/lib/actions/movie";
 import MovieCreateButton from "./movieCreateButton";
 import PaginationControls from "../general/paginationControls";
+import MovieFilters from "./movieFilters";
 
-export default async function MovieList({ page }: { page?: number }) {
-  const { movies, pagination } = await fetchMovies({ page });
+export default async function MovieList({
+  page,
+  search,
+  genre,
+  year,
+  minRating,
+}: {
+  page?: number;
+  search?: string;
+  genre?: string;
+  year?: number;
+  minRating?: number;
+}) {
+  const { movies, pagination } = await fetchMovies({
+    page,
+    search,
+    genre,
+    year,
+    minRating,
+  });
 
   return (
     <div className="my-8 space-y-4">
@@ -17,8 +36,23 @@ export default async function MovieList({ page }: { page?: number }) {
           <MovieCreateButton />
         </RestrictedComponent>
       </div>
+      <MovieFilters
+        search={search}
+        genre={genre}
+        year={year}
+        minRating={minRating}
+      />
       {pagination && (
-        <PaginationControls pagination={pagination} basePath="/movies" />
+        <PaginationControls
+          pagination={pagination}
+          basePath="/movies"
+          queryParams={{ search, genre, year, minRating }}
+        />
+      )}
+      {movies.length === 0 && (
+        <p className="text-center text-slate-500 dark:text-slate-400">
+          No movies found matching your filters.
+        </p>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {movies.map((movie) => (

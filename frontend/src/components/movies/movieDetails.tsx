@@ -5,14 +5,34 @@ import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import { notFound } from "next/navigation";
 import { getMovie, removeMovie } from "@/lib/actions/movie";
+import { fetchReviews } from "@/lib/actions/review";
 import MovieEditButton from "./movieEditButton";
 import Link from "next/link";
 import { personRoleLabels } from "@/lib/data/models/personRoleTypes";
 import ReviewCreateButton from "../reviews/reviewCreateButton";
+import ReviewFilters from "../reviews/reviewFilters";
+import PaginationControls from "../general/paginationControls";
 
-export default async function MovieDetails({ id }: { id: string }) {
+export default async function MovieDetails({
+  id,
+  page,
+  search,
+  minScore,
+  maxScore,
+}: {
+  id: string;
+  page?: number;
+  search?: string;
+  minScore?: number;
+  maxScore?: number;
+}) {
   const movie: MovieExtendedDto = await getMovie(id);
   if (!movie) notFound();
+
+  const { reviews, pagination: reviewPagination } = await fetchReviews(
+    movie.id,
+    { page, search, minScore, maxScore },
+  );
 
   return (
     <div className="w-full m-4 space-y-6">
@@ -68,16 +88,29 @@ export default async function MovieDetails({ id }: { id: string }) {
           )}
         </div>
       </div>
-      <div>
+      <div className="space-y-4">
         <div className="flex justify-between items-center">
           <p>Average rating: {movie.averageRating}/10</p>
           <RestrictedComponent accessLevel="LoggedIn">
             <ReviewCreateButton movieId={movie.id} />
           </RestrictedComponent>
         </div>
+        <ReviewFilters
+          movieId={movie.id}
+          search={search}
+          minScore={minScore}
+          maxScore={maxScore}
+        />
+        {reviewPagination && (
+          <PaginationControls
+            pagination={reviewPagination}
+            basePath={`/movies/${movie.id}`}
+            queryParams={{ search, minScore, maxScore }}
+          />
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 p-4 gap-4">
-          {movie.reviews.length > 0 ? (
-            movie.reviews.map((r) => (
+          {reviews.length > 0 ? (
+            reviews.map((r) => (
               <Link key={r.id} href={`/movies/${movie.id}/${r.id}`}>
                 <div className="border border-slate-600 dark:border-slate-400 rounded-md text-center p-4">
                   <p>
@@ -87,7 +120,9 @@ export default async function MovieDetails({ id }: { id: string }) {
               </Link>
             ))
           ) : (
-            <div></div>
+            <p className="text-slate-500 dark:text-slate-400">
+              No reviews found matching your filters.
+            </p>
           )}
         </div>
       </div>

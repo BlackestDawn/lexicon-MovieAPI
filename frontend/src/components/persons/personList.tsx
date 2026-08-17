@@ -3,9 +3,25 @@ import PaginationControls from "../general/paginationControls";
 import Link from "next/link";
 import RestrictedComponent from "../auth/restrictedComponent";
 import PersonCreateButton from "./personCreateButton";
+import PersonFilters from "./personFilters";
 
-export default async function PersonsList({ page }: { page?: number }) {
-  const { persons, pagination } = await fetchPersons({ page });
+export default async function PersonsList({
+  page,
+  name,
+  genre,
+  year,
+}: {
+  page?: number;
+  name?: string;
+  genre?: string;
+  year?: number;
+}) {
+  const { persons, pagination } = await fetchPersons({
+    page,
+    name,
+    genre,
+    year,
+  });
 
   return (
     <div>
@@ -14,11 +30,21 @@ export default async function PersonsList({ page }: { page?: number }) {
           <PersonCreateButton />
         </RestrictedComponent>
       </div>
+      <PersonFilters name={name} genre={genre} year={year} />
       <div className="w-full flex  justify-center my-6">
         {pagination && (
-          <PaginationControls pagination={pagination} basePath="/persons" />
+          <PaginationControls
+            pagination={pagination}
+            basePath="/persons"
+            queryParams={{ name, genre, year }}
+          />
         )}
       </div>
+      {persons.length === 0 && (
+        <p className="text-center text-slate-500 dark:text-slate-400 mb-6">
+          No persons found matching your filters.
+        </p>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {persons.map((p) => (
           <Link key={p.id} href={`/persons/${p.id}`}>
