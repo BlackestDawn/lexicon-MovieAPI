@@ -5,6 +5,7 @@ const adminUserDtoSchema = z.object({
   id: z.guid(),
   email: z.string(),
   role: z.string(),
+  displayName: z.string(),
   createdAt: z.coerce.date(),
 });
 
@@ -30,19 +31,22 @@ export function validateAdminUserDto(
   return result.data;
 }
 
-// Mirrors AdminUserCreationValidator.
+// Mirrors AdminUserCreationValidator. displayName is optional - falls back to the
+// email's local part server-side when omitted.
 export const adminUserForCreationSchema = z.object({
   email: z.email("A valid email is required"),
   password: passwordSchema,
   role: userRoles,
+  displayName: z.string().max(100).optional(),
 });
 
 export type AdminUserForCreation = z.infer<typeof adminUserForCreationSchema>;
 
-// Mirrors AdminUserUpdateValidator.
+// Mirrors AdminUserUpdateValidator. displayName is optional - left unchanged when omitted.
 export const adminUserForUpdateSchema = z.object({
   email: z.email("A valid email is required"),
   role: userRoles,
+  displayName: z.string().max(100).optional(),
 });
 
 export type AdminUserForUpdate = z.infer<typeof adminUserForUpdateSchema>;

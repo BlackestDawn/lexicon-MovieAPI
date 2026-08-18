@@ -136,7 +136,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var owner = await CreateClientWithRoleAsync(Roles.User);
     var created = await CreateReviewAsync(owner, movie.Id);
 
-    var response = await owner.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Owner Updated"));
+    var response = await owner.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
@@ -150,7 +150,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateReviewAsync(owner, movie.Id);
 
     var otherUser = await CreateClientWithRoleAsync(Roles.User);
-    var response = await otherUser.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Hijacked"));
+    var response = await otherUser.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
   }
@@ -178,7 +178,7 @@ public class AuthorizationTests(IntegrationTestWebAppFactory factory) : Integrat
     var created = await CreateReviewAsync(owner, movie.Id);
 
     var moderator = await CreateClientWithRoleAsync(Roles.Moderator);
-    var response = await moderator.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview("Moderated"));
+    var response = await moderator.PutAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews/{created.Id}", TestData.ValidReview());
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }

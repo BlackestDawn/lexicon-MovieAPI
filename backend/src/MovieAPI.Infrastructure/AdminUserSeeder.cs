@@ -33,7 +33,7 @@ public static class AdminUserSeeder
       return;
     }
 
-    var user = new ApplicationUser { UserName = email, Email = email };
+    var user = new ApplicationUser { UserName = email, Email = email, DisplayName = email.Split('@')[0] };
     var result = await userManager.CreateAsync(user, password);
     if (!result.Succeeded)
     {

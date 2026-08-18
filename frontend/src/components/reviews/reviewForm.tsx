@@ -78,20 +78,6 @@ export default function ReviewForm({
 
           <Form action={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="authorName" className={labelClass}>
-                Name
-              </label>
-              <input
-                type="text"
-                id="authorName"
-                name="authorName"
-                placeholder="Enter your name"
-                defaultValue={existingReview?.authorName ?? ""}
-                disabled={isPending}
-                className={inputClass}
-              />
-            </div>
-            <div>
               <label htmlFor="body" className={labelClass}>
                 Review
               </label>

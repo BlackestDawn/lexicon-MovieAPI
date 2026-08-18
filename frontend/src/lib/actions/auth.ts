@@ -11,7 +11,7 @@ function toUser(dto: CurrentUserDto): User {
   return {
     id: dto.id,
     email: dto.email,
-    name: dto.email.split("@")[0],
+    name: dto.displayName,
     role: dto.role as UserRoles,
   };
 }

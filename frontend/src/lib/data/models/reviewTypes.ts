@@ -33,9 +33,9 @@ export function validateReviewDto(
   return result.data;
 }
 
-// Mirrors ReviewChangeValidator: score must be in (0, 10].
+// Mirrors ReviewChangeValidator: score must be in (0, 10]. authorName isn't part of
+// this - it's derived server-side from the poster's account DisplayName.
 export const reviewForChangeDtoSchema = z.object({
-  authorName: z.string().min(1, "Author name is required"),
   body: z.string().min(1, "Body is required"),
   score: z.number().int().gt(0).lte(10),
 });

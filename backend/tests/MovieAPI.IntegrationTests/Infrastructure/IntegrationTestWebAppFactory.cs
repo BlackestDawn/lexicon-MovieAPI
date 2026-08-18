@@ -91,7 +91,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
     var email = $"test_{Guid.NewGuid():N}@test.com";
     const string password = "Password123!";
-    var user = new ApplicationUser { UserName = email, Email = email };
+    var user = new ApplicationUser { UserName = email, Email = email, DisplayName = email.Split('@')[0] };
 
     var result = await userManager.CreateAsync(user, password);
     if (!result.Succeeded)

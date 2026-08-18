@@ -22,6 +22,7 @@ export const passwordSchema = z
 const userDtoSchema = z.object({
   id: z.guid(),
   email: z.string(),
+  displayName: z.string(),
 });
 
 export type UserDto = z.infer<typeof userDtoSchema>;
@@ -40,6 +41,7 @@ const currentUserDtoSchema = z.object({
   id: z.guid(),
   email: z.string(),
   role: userRoles,
+  displayName: z.string(),
 });
 
 export type CurrentUserDto = z.infer<typeof currentUserDtoSchema>;
@@ -73,17 +75,20 @@ export function validateUser(item: unknown): User {
   return result.data as User;
 }
 
-// Mirrors UserUpdateValidator.
+// Mirrors UserUpdateValidator. displayName is optional - left unchanged when omitted.
 export const userForUpdateSchema = z.object({
   email: z.email("A valid email is required"),
+  displayName: z.string().max(100).optional(),
 });
 
 export type UserForUpdate = z.infer<typeof userForUpdateSchema>;
 
-// Mirrors RegisterValidator.
+// Mirrors RegisterValidator. displayName is optional - falls back to the email's
+// local part server-side when omitted.
 export const registerSchema = z.object({
   email: z.email("A valid email is required"),
   password: passwordSchema,
+  displayName: z.string().max(100).optional(),
 });
 
 export type Register = z.infer<typeof registerSchema>;

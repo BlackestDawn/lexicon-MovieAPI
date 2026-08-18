@@ -19,8 +19,8 @@ public static class TestData
   public static PersonForChangeDto ValidPersonV2(string givenName = "Ada", string? middleName = null, string lastName = "Lovelace") =>
     new() { GivenName = givenName, MiddleName = middleName, LastName = lastName, DateOfBirth = new DateOnly(1980, 1, 1) };
 
-  public static ReviewForChangeDto ValidReview(string author = "Reviewer", int score = 8) =>
-    new() { AuthorName = author, Body = "A solid watch.", Score = score };
+  public static ReviewForChangeDto ValidReview(int score = 8) =>
+    new() { Body = "A solid watch.", Score = score };
 
   public static MovieForChangeDto ValidMovie(Guid genreId, Guid personId, string title = "Test Movie") =>
     new()

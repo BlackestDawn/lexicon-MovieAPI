@@ -9,7 +9,6 @@ public class ReviewChangeValidatorTests
 
   private static ReviewForChangeDto ValidDto() => new()
   {
-    AuthorName = "Roger Ebert",
     Body = "A masterpiece.",
     Score = 5
   };
@@ -18,16 +17,6 @@ public class ReviewChangeValidatorTests
   public void ValidDto_Passes()
   {
     Assert.True(_sut.Validate(ValidDto()).IsValid);
-  }
-
-  [Theory]
-  [InlineData("")]
-  [InlineData("   ")]
-  public void EmptyAuthorName_Fails(string authorName)
-  {
-    var dto = ValidDto();
-    dto.AuthorName = authorName;
-    Assert.False(_sut.Validate(dto).IsValid);
   }
 
   [Theory]

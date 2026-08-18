@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Moq;
 using MovieAPI.Application.Exceptions;
@@ -16,20 +17,26 @@ public class ReviewServiceTests
 {
   private readonly Mock<IReviewRepository> _repo = new();
   private readonly Mock<IMovieRepository> _movieRepo = new();
+  private readonly Mock<UserManager<ApplicationUser>> _userManager;
   private readonly Mock<IMapper> _mapper = new();
   private readonly Mock<IValidator<ReviewForChangeDto>> _validator = new();
   private readonly ReviewService _sut;
 
   public ReviewServiceTests()
   {
-    _sut = new ReviewService(_repo.Object, _movieRepo.Object, _mapper.Object, _validator.Object);
+    _userManager = IdentityMocks.MockUserManager();
+    // Default author lookup for tests that don't care about the resolved name
+    // specifically (e.g. Create tests) - matches MakeReviewEntity's AuthorName below.
+    _userManager
+      .Setup(m => m.FindByIdAsync(It.IsAny<string>()))
+      .ReturnsAsync(new ApplicationUser { DisplayName = "Roger Ebert" });
+    _sut = new ReviewService(_repo.Object, _movieRepo.Object, _userManager.Object, _mapper.Object, _validator.Object);
   }
 
   // Helpers
 
   private static ReviewForChangeDto MakeDto() => new()
   {
-    AuthorName = "Roger Ebert",
     Body = "A masterpiece.",
     Score = 5
   };
@@ -58,7 +65,7 @@ public class ReviewServiceTests
 
     _validator
       .Setup(v => v.ValidateAsync(It.IsAny<ReviewForChangeDto>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new ValidationResult([new ValidationFailure("AuthorName", "Required")]));
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("Body", "Required")]));
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
     await Assert.ThrowsAsync<ValidationException>(() => _sut.Create(movieId, MakeDto(), Guid.NewGuid()));
@@ -83,7 +90,7 @@ public class ReviewServiceTests
     var currentUserId = Guid.NewGuid();
     var dto = MakeDto();
     var entity = MakeReviewEntity(movieId: movieId);
-    var reviewDto = new ReviewDto { Id = entity.Id, AuthorName = dto.AuthorName, Body = dto.Body, Score = dto.Score };
+    var reviewDto = new ReviewDto { Id = entity.Id, AuthorName = entity.AuthorName, Body = dto.Body, Score = dto.Score };
 
     SetupValidatorValid();
     _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -341,7 +348,7 @@ public class ReviewServiceTests
     _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
     _validator
       .Setup(v => v.ValidateAsync(It.IsAny<ReviewForChangeDto>(), It.IsAny<CancellationToken>()))
-      .ReturnsAsync(new ValidationResult([new ValidationFailure("AuthorName", "Required")]));
+      .ReturnsAsync(new ValidationResult([new ValidationFailure("Body", "Required")]));
 
     await Assert.ThrowsAsync<ValidationException>(() => _sut.Update(movieId, entity.Id, MakeDto(), ownerId, canModerate: false));
   }
@@ -361,10 +368,29 @@ public class ReviewServiceTests
     var dto = MakeDto();
     await _sut.Update(movieId, entity.Id, dto, ownerId, canModerate: false);
 
-    Assert.Equal(dto.AuthorName, entity.AuthorName);
     Assert.Equal(dto.Body, entity.Body);
     Assert.Equal(dto.Score, entity.Score);
     _repo.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task UpdatePut_WhenOwner_ResyncsAuthorNameFromOwnersCurrentDisplayName()
+  {
+    var movieId = Guid.NewGuid();
+    var ownerId = Guid.NewGuid();
+    var entity = MakeReviewEntity(movieId: movieId, userId: ownerId);
+    _userManager
+      .Setup(m => m.FindByIdAsync(ownerId.ToString()))
+      .ReturnsAsync(new ApplicationUser { Id = ownerId, DisplayName = "Updated Display Name" });
+
+    _movieRepo.Setup(r => r.ExistsAsync(movieId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+    _repo.Setup(r => r.GetReviewAsync(movieId, entity.Id, It.IsAny<CancellationToken>())).ReturnsAsync(entity);
+    SetupValidatorValid();
+    _repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+    await _sut.Update(movieId, entity.Id, MakeDto(), ownerId, canModerate: false);
+
+    Assert.Equal("Updated Display Name", entity.AuthorName);
   }
 
   [Fact]

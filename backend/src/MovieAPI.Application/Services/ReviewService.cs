@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using MovieAPI.Application.Exceptions;
 using MovieAPI.Application.Helpers;
@@ -14,6 +15,7 @@ namespace MovieAPI.Application.Services;
 public class ReviewService(
   IReviewRepository repository,
   IMovieRepository movieRepository,
+  UserManager<ApplicationUser> userManager,
   IMapper mapper,
   IValidator<ReviewForChangeDto> validator) : IReviewService
 {
@@ -36,6 +38,7 @@ public class ReviewService(
     var reviewEntity = mapper.Map<Review>(newReview);
     reviewEntity.MovieId = movieId;
     reviewEntity.UserId = currentUserId;
+    reviewEntity.AuthorName = await ResolveAuthorNameAsync(currentUserId);
 
     await repository.AddAsync(reviewEntity, token);
     await repository.SaveChangesAsync(token);
@@ -121,6 +124,17 @@ public class ReviewService(
     }
   }
 
+  // Reviews seeded as sample/demo data have no UserId to resolve a name from, so their
+  // AuthorName (freeform, set at seed time) is left as-is - only account-linked reviews
+  // get their AuthorName kept in sync with the owner's current display name.
+  private async Task<string> ResolveAuthorNameAsync(Guid userId)
+  {
+    var user = await userManager.FindByIdAsync(userId.ToString())
+      ?? throw new NotFoundException($"User '{userId}' not found");
+
+    return user.DisplayName;
+  }
+
   private async Task ApplyUpdateAsync(Review entity, ReviewForChangeDto updatedReview, CancellationToken token)
   {
     var validationResult = await validator.ValidateAsync(updatedReview, token);
@@ -130,7 +144,11 @@ public class ReviewService(
       throw new ValidationException(validationResult.Errors);
     }
 
-    entity.AuthorName = updatedReview.AuthorName;
+    if (entity.UserId.HasValue)
+    {
+      entity.AuthorName = await ResolveAuthorNameAsync(entity.UserId.Value);
+    }
+
     entity.Body = updatedReview.Body;
     entity.Score = updatedReview.Score;
 

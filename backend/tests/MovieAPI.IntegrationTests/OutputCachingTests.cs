@@ -70,7 +70,7 @@ public class OutputCachingTests(IntegrationTestWebAppFactory factory) : Integrat
     var afterFirstReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/v1/movies/{movie.Id}");
     Assert.Equal(8, afterFirstReview!.AverageRating);
 
-    await Client.PostAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews", TestData.ValidReview("Second Reviewer", 4));
+    await Client.PostAsJsonAsync($"/api/v1/movies/{movie.Id}/reviews", TestData.ValidReview(4));
     var afterSecondReview = await _anonymousClient.GetFromJsonAsync<MovieExtendedDto>($"/api/v1/movies/{movie.Id}");
     Assert.Equal(6, afterSecondReview!.AverageRating);
   }
