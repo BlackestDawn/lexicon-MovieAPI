@@ -67,9 +67,11 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore dotnet tools
+      - name: Restore dotnet tools and dependencies
         working-directory: backend
-        run: dotnet tool restore
+        run: |
+          dotnet tool restore
+          dotnet restore MovieAPI.slnx
 
       # Same fetch-from-Secret-Manager approach as deploy-staging.yml - see the
       # comment there. Runs against the exact promoted commit's migration files,
@@ -81,8 +83,6 @@ jobs:
           dotnet tool run dotnet-ef database update \
             --project src/MovieAPI.Infrastructure --startup-project src/MovieAPI.Api
 
-      # Backend has no build-time environment baked in, so the exact image
-      # tested on staging is promoted unchanged — no rebuild.
       - name: Deploy backend to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v3
         with:
@@ -100,10 +100,6 @@ jobs:
             OpenIddict__SigningKey=${{ env.APP_NAME }}-prod-openiddict-signing-key:latest
             OpenIddict__EncryptionKey=${{ env.APP_NAME }}-prod-openiddict-encryption-key:latest
 
-      # BACKEND_URL is read at runtime by src/proxy.ts (not baked in at build
-      # time), so - like the backend above - the exact image already tested
-      # on staging is promoted unchanged, just pointed at the prod backend
-      # via env_vars instead.
       - name: Deploy frontend to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v3
         with:
