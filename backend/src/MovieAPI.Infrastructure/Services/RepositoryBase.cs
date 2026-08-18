@@ -22,7 +22,7 @@ public abstract class RepositoryBase<TEntity>(AppDbContext context) : IRepositor
       .Where(e => ids.Contains(e.Id))
       .Select(e => e.Id)
       .ToListAsync(cancellationToken);
-    return [..ids.Except(found)];
+    return [.. ids.Except(found)];
   }
 
   public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken)

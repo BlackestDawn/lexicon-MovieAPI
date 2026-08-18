@@ -10,7 +10,7 @@ COPY backend/src/MovieAPI.Domain/MovieAPI.Domain.csproj src/MovieAPI.Domain/
 COPY backend/src/MovieAPI.Infrastructure/MovieAPI.Infrastructure.csproj src/MovieAPI.Infrastructure/
 RUN dotnet restore src/MovieAPI.Api/MovieAPI.Api.csproj
 
-COPY src/ src/
+COPY backend/src/ src/
 RUN dotnet publish src/MovieAPI.Api/MovieAPI.Api.csproj \
     -c Release \
     -o /app/publish \
@@ -27,9 +27,12 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
 # External services are wired up entirely through configuration, not baked into
 # the image - override these at `docker run`/compose time via ASP.NET Core's
 # double-underscore env var convention:
-#   ConnectionStrings__sqlserver   SQL Server connection string (required)
-#   ConnectionStrings__redis       Redis connection string, backs the output cache (required)
-#   Elasticsearch__Uri             Elasticsearch endpoint for Serilog (required)
+#   ConnectionStrings__postgres     Postgres connection string (required)
+#   OutputCache__Provider           "Memory" (default) or "Redis"
+#   ConnectionStrings__redis        Redis connection string, only read if OutputCache__Provider=Redis
+#   Logging__Sink                   "Console" (default), "GoogleCloudLogging", or "Elasticsearch"
+#   GoogleCloudLogging__ProjectId   Only read if Logging__Sink=GoogleCloudLogging
+#   Elasticsearch__Uri              Only read if Logging__Sink=Elasticsearch
 #   OpenIddict__SigningKey          Base64 symmetric signing key (required, keep secret)
 #   OpenIddict__EncryptionKey       Base64 symmetric encryption key (required, keep secret)
 #   OpenIddict__AccessTokenLifetimeMinutes / OpenIddict__RefreshTokenLifetimeDays

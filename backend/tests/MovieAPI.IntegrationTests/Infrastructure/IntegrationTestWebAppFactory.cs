@@ -3,23 +3,23 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Domain.Entities;
 using MovieAPI.Infrastructure;
+using Npgsql;
 using Respawn;
 using Respawn.Graph;
-using Testcontainers.MsSql;
+using Testcontainers.PostgreSql;
 
 namespace MovieAPI.IntegrationTests.Infrastructure;
 
 public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-  private readonly MsSqlContainer _dbContainer =
-    new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").Build();
+  private readonly PostgreSqlContainer _dbContainer =
+    new PostgreSqlBuilder("postgres:17-alpine").Build();
   private Respawner _respawner = null!;
   private string _connectionString = null!;
 
@@ -34,7 +34,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     {
       configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
       {
-        ["ConnectionStrings:sqlserver"] = _connectionString,
+        ["ConnectionStrings:postgres"] = _connectionString,
       });
     });
   }
@@ -54,11 +54,11 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     await RoleSeeder.SeedAsync(Services);
     await OpenIddictClientSeeder.SeedAsync(Services);
 
-    using var respawnConnection = new SqlConnection(_connectionString);
+    using var respawnConnection = new NpgsqlConnection(_connectionString);
     await respawnConnection.OpenAsync();
     _respawner = await Respawner.CreateAsync(respawnConnection, new RespawnerOptions
     {
-      DbAdapter = DbAdapter.SqlServer,
+      DbAdapter = DbAdapter.Postgres,
       // AspNetRoles and OpenIddictApplications are reference data seeded once above,
       // not per-test fixture data - resetting them on every test would break role
       // lookups and the seeded OpenIddict client for the rest of the run.
@@ -68,7 +68,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
   public async Task ResetDatabaseAsync()
   {
-    using var connection = new SqlConnection(_connectionString);
+    using var connection = new NpgsqlConnection(_connectionString);
     await connection.OpenAsync();
     await _respawner.ResetAsync(connection);
   }

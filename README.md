@@ -11,16 +11,17 @@ Both halves are functional end to end. The backend has full CRUD for all four ca
 
 ## Tech Stack
 
-- **Backend**: ASP.NET Core (.NET 10), Entity Framework Core + SQL Server, ASP.NET Core Identity + OpenIddict (OAuth2), AutoMapper, FluentValidation, Swagger/OpenAPI, Serilog, output caching (Redis in Production)
+- **Backend**: ASP.NET Core (.NET 10), Entity Framework Core + PostgreSQL, ASP.NET Core Identity + OpenIddict (OAuth2), AutoMapper, FluentValidation, Swagger/OpenAPI, Serilog, output caching (config-driven: in-memory or Redis)
 - **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Zod
 - **Testing**: xUnit + Moq (unit), xUnit + Testcontainers + Respawn (integration)
-- **Infra**: Docker / Docker Compose (API + frontend + SQL Server + Redis + Elasticsearch)
+- **Infra**: Docker / Docker Compose for local dev; GCP Cloud Run + Neon Postgres for deployment (see [Deployment](#deployment))
 
 ## Project Structure
 
 ```
 MovieAPI/
-├── docker-compose.yml   # Local demo stack: frontend + API + SQL Server + Redis + Elasticsearch
+├── docker-compose.yml   # Local demo stack: frontend + API + Postgres + Redis + Elasticsearch
+├── deploy/               # Terraform (GCP + Neon) and the deployment bootstrap runbook
 ├── backend/              # ASP.NET Core Web API - see backend/README.md
 └── frontend/             # Next.js client - see frontend/README.md
 ```
@@ -33,12 +34,18 @@ The fastest way to see the whole thing running is Docker Compose:
 docker compose up -d --build
 ```
 
-This builds and runs both the API (`http://localhost:8080`) and the frontend (`http://localhost:3000`), plus SQL Server, Redis, and Elasticsearch, seeding a demo admin account (`admin@movieapi.local` / `Admin123!`) on first boot. See [Running with Docker](backend/README.md#running-with-docker) in the backend README for configuration details and caveats (it's a local demo stack, not a deployment template).
+This builds and runs both the API (`http://localhost:8080`) and the frontend (`http://localhost:3000`), plus Postgres, Redis, and Elasticsearch, seeding a demo admin account (`admin@movieapi.local` / `Admin123!`) on first boot. See [Running with Docker](backend/README.md#running-with-docker) in the backend README for configuration details and caveats (it's a local demo stack, not a deployment template).
 
 To run either half directly against your own tooling instead:
 
-- Backend: see [Getting Started](backend/README.md#getting-started) in the backend README (needs a SQL Server instance and the .NET 10 SDK)
+- Backend: see [Getting Started](backend/README.md#getting-started) in the backend README (needs a Postgres instance and the .NET 10 SDK)
 - Frontend: see [Getting Started](frontend/README.md#getting-started) in the frontend README (needs `pnpm` and a running backend to talk to)
+
+A `Makefile` at the repo root wraps the common commands across both stacks (`make help` lists them).
+
+## Deployment
+
+Deploys to Google Cloud Run (backend + frontend) backed by [Neon](https://neon.tech) serverless Postgres, via GitHub Actions + Workload Identity Federation. See [deploy/README.md](deploy/README.md) for the one-time bootstrap runbook and an overview of the pipeline.
 
 ## License
 

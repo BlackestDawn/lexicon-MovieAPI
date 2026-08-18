@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security.Cryptography;
 using Asp.Versioning;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +20,7 @@ using MovieAPI.Infrastructure.Services;
 using OpenIddict.Validation.AspNetCore;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
+using Serilog.Sinks.GoogleCloudLogging;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 // Bootstrap logger captures startup failures (e.g. missing config) that happen
@@ -35,21 +37,44 @@ try
   {
     loggerConfig.ReadFrom.Configuration(context.Configuration);
 
-    // The Elasticsearch sink is added in code rather than appsettings because it's
-    // required in Production only; this mirrors the fail-fast pattern used for the
-    // Redis output-cache connection string below.
-    if (context.HostingEnvironment.IsProduction())
+    // Extra sinks beyond what appsettings.json's Serilog:WriteTo already declares
+    // (Console always, File in dev) are chosen via config instead of gated on
+    // environment name, so any environment can opt in - mirrors the fail-fast
+    // pattern used for OpenIddict's signing/encryption keys below.
+    var logSink = context.Configuration.GetValue("Logging:Sink", "Console");
+    switch (logSink)
     {
-      var elasticsearchUri = context.Configuration["Elasticsearch:Uri"]
-        ?? throw new InvalidOperationException("Configuration value 'Elasticsearch:Uri' is not configured.");
+      case "Console":
+        break;
 
-      loggerConfig.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticsearchUri))
-      {
-        IndexFormat = "movieapi-logs-{0:yyyy.MM}",
-        AutoRegisterTemplate = true,
-        AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
-        EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog,
-      });
+      case "GoogleCloudLogging":
+        var projectId = context.Configuration["GoogleCloudLogging:ProjectId"]
+          ?? throw new InvalidOperationException("Configuration value 'GoogleCloudLogging:ProjectId' is not configured.");
+
+        // On Cloud Run/GCE/GKE, Application Default Credentials resolve automatically
+        // to the running service's own identity - no key file or extra config needed
+        // beyond granting that identity roles/logging.logWriter.
+        loggerConfig.WriteTo.GoogleCloudLogging(new GoogleCloudLoggingSinkOptions
+        {
+          ProjectId = projectId,
+        });
+        break;
+
+      case "Elasticsearch":
+        var elasticsearchUri = context.Configuration["Elasticsearch:Uri"]
+          ?? throw new InvalidOperationException("Configuration value 'Elasticsearch:Uri' is not configured.");
+
+        loggerConfig.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticsearchUri))
+        {
+          IndexFormat = "movieapi-logs-{0:yyyy.MM}",
+          AutoRegisterTemplate = true,
+          AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
+          EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog,
+        });
+        break;
+
+      default:
+        throw new InvalidOperationException($"Unknown 'Logging:Sink' value '{logSink}'.");
     }
   });
 
@@ -103,8 +128,8 @@ try
   });
 
   builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-      builder.Configuration.GetConnectionString("sqlserver")
+    options.UseNpgsql(
+      builder.Configuration.GetConnectionString("postgres")
       ?? throw new InvalidProgramException()
     ));
 
@@ -163,7 +188,14 @@ try
         var encryptionKey = builder.Configuration["OpenIddict:EncryptionKey"]
           ?? throw new InvalidOperationException("Configuration value 'OpenIddict:EncryptionKey' is not configured.");
 
-        options.AddSigningKey(new SymmetricSecurityKey(Convert.FromBase64String(signingKey)));
+        // OpenIddict unconditionally requires at least one asymmetric signing key (it
+        // also publishes the public key via the JWKS discovery endpoint) - a symmetric
+        // key is only ever valid for the encryption key below, never for signing.
+        // Generate a PKCS#8 DER-encoded RSA private key with:
+        //   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 -w0
+        var rsa = RSA.Create();
+        rsa.ImportPkcs8PrivateKey(Convert.FromBase64String(signingKey), out _);
+        options.AddSigningKey(new RsaSecurityKey(rsa));
         options.AddEncryptionKey(new SymmetricSecurityKey(Convert.FromBase64String(encryptionKey)));
       }
       else
@@ -198,19 +230,29 @@ try
   builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
   builder.Services.AddAuthorization();
 
-  builder.Services.AddAutoMapper(_ => {},
+  builder.Services.AddAutoMapper(_ => { },
     AppDomain.CurrentDomain.GetAssemblies());
   builder.Services.AddControllers();
+  builder.Services.AddHealthChecks();
 
-  // Redis backs the output cache in Production so it's shared across instances; every
-  // other environment (Development, Testing, ...) keeps the default in-memory store.
-  if (builder.Environment.IsProduction())
+  // Output cache backing store is chosen via config instead of gated on environment
+  // name, so it can be swapped independently of ASPNETCORE_ENVIRONMENT.
+  var outputCacheProvider = builder.Configuration.GetValue("OutputCache:Provider", "Memory");
+  switch (outputCacheProvider)
   {
-    builder.Services.AddStackExchangeRedisOutputCache(options =>
-    {
-      options.Configuration = builder.Configuration.GetConnectionString("redis")
-        ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
-    });
+    case "Redis":
+      builder.Services.AddStackExchangeRedisOutputCache(options =>
+      {
+        options.Configuration = builder.Configuration.GetConnectionString("redis")
+          ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
+      });
+      break;
+
+    case "Memory":
+      break;
+
+    default:
+      throw new InvalidOperationException($"Unknown 'OutputCache:Provider' value '{outputCacheProvider}'.");
   }
 
   builder.Services.AddOutputCache(options =>
@@ -330,6 +372,7 @@ try
 
   app.UseOutputCache();
 
+  app.MapHealthChecks("/health");
   app.MapControllers();
 
   app.Run();

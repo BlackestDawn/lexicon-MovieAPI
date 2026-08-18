@@ -1,0 +1,105 @@
+name: Deploy to staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  REGION: ${{ secrets.GCP_REGION }}
+  REPO: apps
+  APP_NAME: movieapi
+  FRONTEND_URL: https://movieapi-staging.${{ secrets.DOMAIN }}
+  BACKEND_URL: https://movieapi-api-staging.${{ secrets.DOMAIN }}
+  BACKEND_IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/apps/movieapi-backend:${{ github.sha }}
+  FRONTEND_IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/apps/movieapi-frontend:${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push backend image
+        run: |
+          docker build -f backend/Dockerfile -t "$BACKEND_IMAGE" .
+          docker push "$BACKEND_IMAGE"
+
+      # BACKEND_URL is no longer a build-arg - src/proxy.ts reads it at
+      # runtime, so this image is reused unchanged for prod too (see
+      # deploy-prod.yml).
+      - name: Build and push frontend image
+        run: |
+          docker build -f frontend/Dockerfile -t "$FRONTEND_IMAGE" .
+          docker push "$FRONTEND_IMAGE"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dotnet tools
+        working-directory: backend
+        run: dotnet tool restore
+
+      # MovieAPI deliberately doesn't apply migrations on container boot in real
+      # deployments (ApplyMigrationsOnStartup defaults off - see Program.cs) to
+      # avoid multiple Cloud Run replicas racing migrations against the same
+      # database. Neon is reachable over the public internet with TLS, so this
+      # runner can apply them directly - no VPC connector needed. The connection
+      # string is fetched straight from Secret Manager into a step-local env var
+      # rather than via `steps.<id>.outputs`, which GitHub Actions doesn't
+      # auto-mask.
+      - name: Apply database migrations
+        working-directory: backend
+        run: |
+          export ConnectionStrings__postgres="$(gcloud secrets versions access latest --secret=${{ env.APP_NAME }}-staging-database-url)"
+          dotnet tool run dotnet-ef database update \
+            --project src/MovieAPI.Infrastructure --startup-project src/MovieAPI.Api
+
+      - name: Deploy backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: movieapi-backend-staging
+          region: ${{ env.REGION }}
+          image: ${{ env.BACKEND_IMAGE }}
+          flags: --service-account=${{ secrets.GCP_RUNTIME_SA }} --allow-unauthenticated --port=8080
+          env_vars: |
+            ASPNETCORE_ENVIRONMENT=Production
+            OutputCache__Provider=Memory
+            Logging__Sink=GoogleCloudLogging
+            GoogleCloudLogging__ProjectId=${{ secrets.GCP_PROJECT_ID }}
+          secrets: |
+            ConnectionStrings__postgres=${{ env.APP_NAME }}-staging-database-url:latest
+            OpenIddict__SigningKey=${{ env.APP_NAME }}-staging-openiddict-signing-key:latest
+            OpenIddict__EncryptionKey=${{ env.APP_NAME }}-staging-openiddict-encryption-key:latest
+
+      - name: Deploy frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: movieapi-frontend-staging
+          region: ${{ env.REGION }}
+          image: ${{ env.FRONTEND_IMAGE }}
+          flags: --service-account=${{ secrets.GCP_RUNTIME_SA }} --allow-unauthenticated --port=3000
+          env_vars: |
+            NODE_ENV=production
+            BACKEND_URL=${{ env.BACKEND_URL }}
