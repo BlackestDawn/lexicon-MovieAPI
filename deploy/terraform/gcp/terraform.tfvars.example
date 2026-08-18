@@ -1,0 +1,4 @@
+project_id  = "demos-502909"
+region      = "europe-west1"
+github_org  = "BlackestDawn"
+github_repo = "lexicon-MovieAPI"

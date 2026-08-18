@@ -1,0 +1,3 @@
+app_name   = "movieapi"
+region_id  = "aws-eu-central-1"
+pg_version = 17
