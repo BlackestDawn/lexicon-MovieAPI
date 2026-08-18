@@ -50,13 +50,11 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-      args:
-        # Baked into the build - next.config.ts's rewrites() resolves this at
-        # `next build` time, not at request time, so it can't be overridden
-        # via a runtime environment variable. Points at the api service.
-        BACKEND_URL: "http://api:8080"
     ports:
       - "3000:3000"
+    environment:
+      # Read at runtime by src/proxy.ts - points at the api service.
+      BACKEND_URL: "http://api:8080"
     depends_on:
       - api
     networks:

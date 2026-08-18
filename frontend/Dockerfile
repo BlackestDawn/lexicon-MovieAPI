@@ -13,12 +13,6 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@11 --activate
 
-# `next build` calls next.config.ts's rewrites() once to bake the resolved
-# destinations into the routes manifest, so BACKEND_URL has to be known at
-# build time - it is not re-read by the standalone server at request time.
-ARG BACKEND_URL
-ENV BACKEND_URL=${BACKEND_URL}
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
 RUN pnpm run build
@@ -30,6 +24,11 @@ WORKDIR /app
 ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
     PORT=3000
+
+# BACKEND_URL is read at runtime by src/proxy.ts, not baked in at build time -
+# set it at `docker run`/compose time, e.g. BACKEND_URL=http://api:8080.
+# Required: if unset, every /api/* request throws ("Invalid URL") since
+# proxy.ts's `new URL(path, undefined)` has no base to resolve against.
 
 # `next build` with output: "standalone" only traces the files actually
 # needed at runtime; public/ and .next/static are excluded and must be
