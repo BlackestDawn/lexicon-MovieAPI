@@ -17,6 +17,7 @@ namespace MovieAPI.Api.Controllers.V3;
 [ApiController]
 [Route("api/v{version:apiVersion}/persons")]
 [ApiVersion("3.0")]
+[ApiVersion("3.1")]
 public class PersonsController(IPersonService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   /// <summary>

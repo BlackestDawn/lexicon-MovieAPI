@@ -17,6 +17,7 @@ namespace MovieAPI.Api.Controllers.V3;
 [ApiController]
 [Route("api/v{version:apiVersion}/movies")]
 [ApiVersion("3.0")]
+[ApiVersion("3.1")]
 public class MoviesController(IMovieService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   /// <summary>
