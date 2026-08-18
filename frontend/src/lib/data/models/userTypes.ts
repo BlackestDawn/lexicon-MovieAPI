@@ -1,4 +1,5 @@
 import z from "zod";
+import { ValidationError } from "../interfaces/errors";
 
 export const userRoles = z.enum([
   "User",
@@ -85,13 +86,25 @@ export type UserForUpdate = z.infer<typeof userForUpdateSchema>;
 
 // Mirrors RegisterValidator. displayName is optional - falls back to the email's
 // local part server-side when omitted.
-export const registerSchema = z.object({
+export const registerDtoSchema = z.object({
   email: z.email("A valid email is required"),
   password: passwordSchema,
   displayName: z.string().max(100).optional(),
 });
 
-export type Register = z.infer<typeof registerSchema>;
+export type RegisterDto = z.infer<typeof registerDtoSchema>;
+
+export function validateRegisterDto(item: unknown): RegisterDto {
+  const result = registerDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid Register item:", result.error);
+    throw new ValidationError(
+      "Invalid registration details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
 
 // Mirrors ChangePasswordValidator: new password must differ from the current one.
 export const changePasswordSchema = z
