@@ -19,6 +19,7 @@ using MovieAPI.Infrastructure.Services;
 using OpenIddict.Validation.AspNetCore;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
+using Serilog.Sinks.GoogleCloudLogging;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 // Bootstrap logger captures startup failures (e.g. missing config) that happen
@@ -35,21 +36,44 @@ try
   {
     loggerConfig.ReadFrom.Configuration(context.Configuration);
 
-    // The Elasticsearch sink is added in code rather than appsettings because it's
-    // required in Production only; this mirrors the fail-fast pattern used for the
-    // Redis output-cache connection string below.
-    if (context.HostingEnvironment.IsProduction())
+    // Extra sinks beyond what appsettings.json's Serilog:WriteTo already declares
+    // (Console always, File in dev) are chosen via config instead of gated on
+    // environment name, so any environment can opt in - mirrors the fail-fast
+    // pattern used for OpenIddict's signing/encryption keys below.
+    var logSink = context.Configuration.GetValue("Logging:Sink", "Console");
+    switch (logSink)
     {
-      var elasticsearchUri = context.Configuration["Elasticsearch:Uri"]
-        ?? throw new InvalidOperationException("Configuration value 'Elasticsearch:Uri' is not configured.");
+      case "Console":
+        break;
 
-      loggerConfig.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticsearchUri))
-      {
-        IndexFormat = "movieapi-logs-{0:yyyy.MM}",
-        AutoRegisterTemplate = true,
-        AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
-        EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog,
-      });
+      case "GoogleCloudLogging":
+        var projectId = context.Configuration["GoogleCloudLogging:ProjectId"]
+          ?? throw new InvalidOperationException("Configuration value 'GoogleCloudLogging:ProjectId' is not configured.");
+
+        // On Cloud Run/GCE/GKE, Application Default Credentials resolve automatically
+        // to the running service's own identity - no key file or extra config needed
+        // beyond granting that identity roles/logging.logWriter.
+        loggerConfig.WriteTo.GoogleCloudLogging(new GoogleCloudLoggingSinkOptions
+        {
+          ProjectId = projectId,
+        });
+        break;
+
+      case "Elasticsearch":
+        var elasticsearchUri = context.Configuration["Elasticsearch:Uri"]
+          ?? throw new InvalidOperationException("Configuration value 'Elasticsearch:Uri' is not configured.");
+
+        loggerConfig.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticsearchUri))
+        {
+          IndexFormat = "movieapi-logs-{0:yyyy.MM}",
+          AutoRegisterTemplate = true,
+          AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
+          EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog,
+        });
+        break;
+
+      default:
+        throw new InvalidOperationException($"Unknown 'Logging:Sink' value '{logSink}'.");
     }
   });
 
@@ -201,16 +225,26 @@ try
   builder.Services.AddAutoMapper(_ => {},
     AppDomain.CurrentDomain.GetAssemblies());
   builder.Services.AddControllers();
+  builder.Services.AddHealthChecks();
 
-  // Redis backs the output cache in Production so it's shared across instances; every
-  // other environment (Development, Testing, ...) keeps the default in-memory store.
-  if (builder.Environment.IsProduction())
+  // Output cache backing store is chosen via config instead of gated on environment
+  // name, so it can be swapped independently of ASPNETCORE_ENVIRONMENT.
+  var outputCacheProvider = builder.Configuration.GetValue("OutputCache:Provider", "Memory");
+  switch (outputCacheProvider)
   {
-    builder.Services.AddStackExchangeRedisOutputCache(options =>
-    {
-      options.Configuration = builder.Configuration.GetConnectionString("redis")
-        ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
-    });
+    case "Redis":
+      builder.Services.AddStackExchangeRedisOutputCache(options =>
+      {
+        options.Configuration = builder.Configuration.GetConnectionString("redis")
+          ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
+      });
+      break;
+
+    case "Memory":
+      break;
+
+    default:
+      throw new InvalidOperationException($"Unknown 'OutputCache:Provider' value '{outputCacheProvider}'.");
   }
 
   builder.Services.AddOutputCache(options =>
@@ -330,6 +364,7 @@ try
 
   app.UseOutputCache();
 
+  app.MapHealthChecks("/health");
   app.MapControllers();
 
   app.Run();
