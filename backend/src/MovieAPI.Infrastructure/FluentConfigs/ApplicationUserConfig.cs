@@ -10,12 +10,12 @@ public class ApplicationUserConfig : IEntityTypeConfiguration<ApplicationUser>
   {
     builder.Property(u => u.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWSEQUENTIALID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(u => u.CreatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
     builder.Property(u => u.UpdatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
   }
 }

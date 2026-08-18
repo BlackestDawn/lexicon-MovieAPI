@@ -10,13 +10,13 @@ public class MovieGenreConfig : IEntityTypeConfiguration<MovieGenre>
   {
     builder.Property(mg => mg.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWSEQUENTIALID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(mg => mg.CreatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
     builder.Property(mg => mg.UpdatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
 
     builder.HasKey(mg => new { mg.MovieId, mg.GenreId });
 

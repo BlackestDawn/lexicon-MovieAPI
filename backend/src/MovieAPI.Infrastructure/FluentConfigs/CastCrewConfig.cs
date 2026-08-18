@@ -10,13 +10,13 @@ public class CastCrewConfig : IEntityTypeConfiguration<CastCrew>
   {
     builder.Property(c => c.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWSEQUENTIALID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(c => c.CreatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
     builder.Property(c => c.UpdatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
 
     builder.HasKey(c => new { c.MovieId, c.PersonId });
 

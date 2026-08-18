@@ -10,6 +10,6 @@ public class ApplicationRoleConfig : IEntityTypeConfiguration<ApplicationRole>
   {
     builder.Property(r => r.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWSEQUENTIALID()");
+      .HasDefaultValueSql("gen_random_uuid()");
   }
 }

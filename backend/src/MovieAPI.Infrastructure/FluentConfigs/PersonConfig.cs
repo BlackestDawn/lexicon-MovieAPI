@@ -10,13 +10,13 @@ public class PersonConfig : IEntityTypeConfiguration<Person>
   {
     builder.Property(p => p.Id)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("NEWSEQUENTIALID()");
+      .HasDefaultValueSql("gen_random_uuid()");
     builder.Property(p => p.CreatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
     builder.Property(p => p.UpdatedAt)
       .ValueGeneratedOnAdd()
-      .HasDefaultValueSql("SYSUTCDATETIME()");
+      .HasDefaultValueSql("clock_timestamp()");
 
     builder.HasIndex(p => p.GivenName);
     builder.HasIndex(p => p.MiddleName);

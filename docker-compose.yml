@@ -1,5 +1,5 @@
 # Demo/local environment only. It wires the API container up to real instances
-# of every external service it talks to (SQL Server, Redis, Elasticsearch) with
+# of every external service it talks to (Postgres, Redis, Elasticsearch) with
 # throwaway demo credentials - a real deployment supplies its own connection
 # strings/secrets via its orchestrator/secret manager instead of this file.
 services:
@@ -11,12 +11,25 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__sqlserver: "Server=tcp:sqlserver,1433;Database=MovieAPI;Uid=sa;Pwd=${MSSQL_SA_PASSWORD:-P@ssw0rd_Demo1};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30"
+      ConnectionStrings__postgres: "Host=postgres;Port=5432;Database=MovieAPI;Username=movieapi;Password=${POSTGRES_PASSWORD:-P@ssw0rd_Demo1}"
+      # OutputCache:Provider and Logging:Sink are fully config-driven (see
+      # Program.cs) - set to "Redis"/"Elasticsearch" here so this demo stack
+      # keeps exercising those containers/code paths. For a lighter local run
+      # with no Redis/Elasticsearch containers at all, switch these to
+      # "Memory"/"Console" and drop their depends_on entries below; "Console"
+      # also underlies previewing "GoogleCloudLogging"'s output shape locally
+      # (it calls the real Cloud Logging API via ADC, so it needs real GCP
+      # credentials and isn't practical to run against from this demo stack).
+      OutputCache__Provider: "Redis"
       ConnectionStrings__redis: "redis:6379"
+      Logging__Sink: "Elasticsearch"
       Elasticsearch__Uri: "http://elasticsearch:9200"
       OpenIddict__AccessTokenLifetimeMinutes: "60"
       OpenIddict__RefreshTokenLifetimeDays: "7"
-      OpenIddict__SigningKey: ${OPENIDDICT_SIGNING_KEY:-HBc3aTOI1XfBinOxiP2IVnJ7W24goXX8T4Lr5bb0o3c=}
+      # A base64 PKCS#8 DER-encoded RSA private key, not a raw symmetric key - see the
+      # comment in Program.cs. Generate your own with:
+      #   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 -w0
+      OpenIddict__SigningKey: ${OPENIDDICT_SIGNING_KEY:-MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCe4c0riZEKCHKur1DdPBG47I3t+vm9zgss0Wu+HiZHqubEWY8KyBl0nMYY0gmo1l40vZozbZi17MthW+sfMEA1CYtJBHwZLOGEmQSw5KX2ThhFdn1XyDQOoELiIA62MTaxJ6FGymEDqLvSlGJxqV/gd4o/VvC0lPXyNc8CSY0Z+YuQUSoyxwQEIg8t/KTpDWIqOVf1PV96L7k4IRj7U4vkYwjnCt54UYAO5z8hP6mzImltDoJkbTXH/Du5+yx3FZ+HiQMV/8MuOSrx87LIqfBdPLUZtX4k75tPJYOED8jGgMBTyF1GyNfyIbwo4/jH8MVCGq++b3qMSQ1dC8t3k/PzAgMBAAECggEAFlt+RGegeMcf4t6kZEANMGFdRtqVJR/m6QDJMWDLEIpchyR2dqpvZpOfDqQTxuXvg2rA1bF7lpzChn8+8qMWuJU7Zo7SgF+/66mgBDJl+5HEDuucZMC1OUT/qb6gGK7hMYRQSLFhfc3TLE/uxcFzTpdpD/5bHdYuVniQROlLs+v1uAjGjXjQ+matID+H0ykAHpwLYlFUqsq6gRZSCv4sz1741YFrkWrkuVUuw846QPArMwVwkq1fne3sLjnOY5okqCBZ9val2yQDIeWMQZ22OhfS19DYbAPghjQMOqi12j7fpu8pqhHwwwTD4ZXie9LfxweaWCEViG+vgMUQHUYobQKBgQDT+Cp7tBw6R/BBZXRLwlSJsFyfVe4NxRA2EEtRavD8k6RRsHp+IHXON+pVnFU0F4c50wbQKkJviWScxwUvLMPkqRuuOVYX9wg7tazA5vIoLgMfLotre8sHFLf+WIPTPQOKQRwP+7HrF5RR5CYHwwgS+OCS70OAwEuqyexW5Fxi/wKBgQC/4p/jx+1km2D+ZXvB5mK88MJygHMT/HQJFvGff6+41ShmBdD+O5iDc9gKZnpk09IbvBUFywVOIGvqZPtw33fzqnwYy9LdJXmllDVqUKm+qyGhlmV5wfS4ly7ltfvJaRCQhbsYR9kbAlgvW784mrhXeqalMDvb2UVocm9AnnYTDQKBgHxK77Zb1ZWDK2ldcUUfLW0TgixYOd/PJwNcqJ2URL0GYfsYrasZo5qJhRowMnH6Pev1RvB3Zz955ApeVTblW/TQCJAvxMEGtMg2bpcqlOJkoKX/J/edvl5nksBM7PfHtjSymx7wKtK8n9cpHfe9MBXX4++k5wMvPu9lufT1sQrHAoGAFjGEBLhvAJ/oDAR41+hpqyi9lLi+lqUwVozMzYHbNSmSTpqFnaIO9cVES4+mwFqvhn2ugMkGiA6/7JBZdKikGw6w471PWjynYTtPIkjKGT952FKo0fhY8bCqv+7YfGcmf1C4XwqQVctjn7ag208p2xRYieqWQctTd80kiPjK91ECgYBKsK/KFK+vQbMKPuz9nxTqCQTNYmk37Bl74x326eC1f2Vc2GRCrMHlnMdO9ucq7lP6ZHkfFR1U3Prm+SXR+KGwjEWlrXQ11rzwBrqnit6lMOlLXJIWu2OQwqUB1uotxmq4VAxkmHv/j2LDJp5gjVFoGH1PgCuhXdbjT7U/qMDR2Q==}
       OpenIddict__EncryptionKey: ${OPENIDDICT_ENCRYPTION_KEY:-vAyd5IU6grxTQ+jkp3yr46/4WvIfesjsIRo2D8m2Gog=}
       Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@movieapi.local}
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin123!}
@@ -24,7 +37,7 @@ services:
       # migrations itself on startup - see Program.cs.
       ApplyMigrationsOnStartup: "true"
     depends_on:
-      sqlserver:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -49,26 +62,22 @@ services:
     networks:
       - movieapi-net
 
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  postgres:
+    image: postgres:17-alpine
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-P@ssw0rd_Demo1}
+      POSTGRES_USER: movieapi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-P@ssw0rd_Demo1}
+      POSTGRES_DB: MovieAPI
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - sqlserver-data:/var/opt/mssql
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      # Newer mssql-server images ship sqlcmd under mssql-tools18 (requires -C to
-      # trust the server cert); fall back to the older mssql-tools path so this
-      # keeps working against older image tags too.
-      test: >
-        bash -c '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b -o /dev/null
-        || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null'
+      test: ["CMD-SHELL", "pg_isready -U movieapi"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 15s
     networks:
       - movieapi-net
 
@@ -111,5 +120,5 @@ networks:
     driver: bridge
 
 volumes:
-  sqlserver-data:
+  postgres-data:
   elasticsearch-data:

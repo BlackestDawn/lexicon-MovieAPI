@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security.Cryptography;
 using Asp.Versioning;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
@@ -127,8 +128,8 @@ try
   });
 
   builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-      builder.Configuration.GetConnectionString("sqlserver")
+    options.UseNpgsql(
+      builder.Configuration.GetConnectionString("postgres")
       ?? throw new InvalidProgramException()
     ));
 
@@ -187,7 +188,14 @@ try
         var encryptionKey = builder.Configuration["OpenIddict:EncryptionKey"]
           ?? throw new InvalidOperationException("Configuration value 'OpenIddict:EncryptionKey' is not configured.");
 
-        options.AddSigningKey(new SymmetricSecurityKey(Convert.FromBase64String(signingKey)));
+        // OpenIddict unconditionally requires at least one asymmetric signing key (it
+        // also publishes the public key via the JWKS discovery endpoint) - a symmetric
+        // key is only ever valid for the encryption key below, never for signing.
+        // Generate a PKCS#8 DER-encoded RSA private key with:
+        //   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 -w0
+        var rsa = RSA.Create();
+        rsa.ImportPkcs8PrivateKey(Convert.FromBase64String(signingKey), out _);
+        options.AddSigningKey(new RsaSecurityKey(rsa));
         options.AddEncryptionKey(new SymmetricSecurityKey(Convert.FromBase64String(encryptionKey)));
       }
       else
