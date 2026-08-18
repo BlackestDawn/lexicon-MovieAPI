@@ -1,0 +1,10 @@
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 2
+
+# EF Core's migration generator always emits 4-space indentation - not worth
+# fighting the code generator on every `dotnet ef migrations add`.
+[**/Migrations/*.cs]
+indent_size = 4

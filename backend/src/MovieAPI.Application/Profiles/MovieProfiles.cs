@@ -54,5 +54,5 @@ public class MovieProfiles : Profile
       // AverageRating is computed in SQL by the repository and assigned onto the DTO
       // separately in GenreService (the genre query doesn't load Reviews).
       .ForMember(dest => dest.AverageRating, opt => opt.Ignore());
-    }
+  }
 }

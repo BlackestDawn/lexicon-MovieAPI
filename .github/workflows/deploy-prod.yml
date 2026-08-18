@@ -1,0 +1,116 @@
+name: Deploy to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Git SHA running on staging to promote. Leave blank to promote whatever is currently running on staging."
+        required: false
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  REGION: ${{ secrets.GCP_REGION }}
+  REPO: apps
+  APP_NAME: movieapi
+  FRONTEND_URL: https://movieapi.${{ secrets.DOMAIN }}
+  BACKEND_URL: https://movieapi-api.${{ secrets.DOMAIN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Requires a GitHub Environment named "production" with a required
+    # reviewer configured (Settings > Environments) so this job pauses for
+    # manual approval regardless of who triggers the workflow.
+    environment: production
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Resolve image tag to promote
+        id: resolve
+        run: |
+          TAG="${{ inputs.image_tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(gcloud run services describe movieapi-backend-staging \
+              --region "$REGION" \
+              --format='value(spec.template.spec.containers[0].image)' \
+              | sed 's/.*://')
+            echo "No image_tag given — promoting whatever staging is currently running: $TAG"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the exact commit being promoted
+        run: git checkout "${{ steps.resolve.outputs.tag }}"
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dotnet tools
+        working-directory: backend
+        run: dotnet tool restore
+
+      # Same fetch-from-Secret-Manager approach as deploy-staging.yml - see the
+      # comment there. Runs against the exact promoted commit's migration files,
+      # independent of whether the backend image itself is rebuilt.
+      - name: Apply database migrations
+        working-directory: backend
+        run: |
+          export ConnectionStrings__postgres="$(gcloud secrets versions access latest --secret=${{ env.APP_NAME }}-prod-database-url)"
+          dotnet tool run dotnet-ef database update \
+            --project src/MovieAPI.Infrastructure --startup-project src/MovieAPI.Api
+
+      # Backend has no build-time environment baked in, so the exact image
+      # tested on staging is promoted unchanged — no rebuild.
+      - name: Deploy backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: movieapi-backend-prod
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.APP_NAME }}-backend:${{ steps.resolve.outputs.tag }}
+          flags: --service-account=${{ secrets.GCP_RUNTIME_SA }} --allow-unauthenticated --port=8080
+          env_vars: |
+            ASPNETCORE_ENVIRONMENT=Production
+            OutputCache__Provider=Memory
+            Logging__Sink=GoogleCloudLogging
+            GoogleCloudLogging__ProjectId=${{ secrets.GCP_PROJECT_ID }}
+          secrets: |
+            ConnectionStrings__postgres=${{ env.APP_NAME }}-prod-database-url:latest
+            OpenIddict__SigningKey=${{ env.APP_NAME }}-prod-openiddict-signing-key:latest
+            OpenIddict__EncryptionKey=${{ env.APP_NAME }}-prod-openiddict-encryption-key:latest
+
+      # BACKEND_URL is read at runtime by src/proxy.ts (not baked in at build
+      # time), so - like the backend above - the exact image already tested
+      # on staging is promoted unchanged, just pointed at the prod backend
+      # via env_vars instead.
+      - name: Deploy frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: movieapi-frontend-prod
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.APP_NAME }}-frontend:${{ steps.resolve.outputs.tag }}
+          flags: --service-account=${{ secrets.GCP_RUNTIME_SA }} --allow-unauthenticated --port=3000
+          env_vars: |
+            NODE_ENV=production
+            BACKEND_URL=${{ env.BACKEND_URL }}

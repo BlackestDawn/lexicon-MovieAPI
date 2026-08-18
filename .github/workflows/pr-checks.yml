@@ -1,0 +1,149 @@
+name: PR pre-checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        working-directory: backend
+        run: dotnet restore MovieAPI.slnx
+
+      - name: Build
+        working-directory: backend
+        run: dotnet build MovieAPI.slnx --no-restore
+
+      # Covers both MovieAPI.UnitTests and MovieAPI.IntegrationTests. The
+      # latter manages its own Postgres Testcontainer end to end (see
+      # IntegrationTestWebAppFactory) - Docker is preinstalled on this
+      # runner, no separate service container needed.
+      - name: Test
+        working-directory: backend
+        run: dotnet test MovieAPI.slnx --no-build
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: frontend
+        run: pnpm run lint
+
+      - name: Build
+        working-directory: frontend
+        # next.config.ts's rewrites() reads BACKEND_URL at build time (see
+        # frontend/Dockerfile) - a dummy value is enough to prove the build
+        # succeeds, this job doesn't need a real backend to talk to.
+        env:
+          BACKEND_URL: http://localhost:8080
+        run: pnpm run build
+
+  docker-smoke-test:
+    runs-on: ubuntu-latest
+    # Minimal check that the actual images deploy-staging.yml/deploy-prod.yml
+    # ship (not just `dotnet build`/`pnpm run build`) build and boot
+    # correctly - backend-build-and-test and frontend-build above already
+    # cover real behavior by running the code directly, so this only needs
+    # to prove the Docker artifacts come up.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: movieapi
+          POSTGRES_PASSWORD: smoke-test-password
+          POSTGRES_DB: MovieAPI
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U movieapi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t movieapi-backend:smoke .
+
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile -t movieapi-frontend:smoke .
+
+      - name: Start backend container
+        run: |
+          docker run -d --name backend-smoke --network host \
+            -e ASPNETCORE_ENVIRONMENT=Production \
+            -e ConnectionStrings__postgres="Host=localhost;Port=5432;Database=MovieAPI;Username=movieapi;Password=smoke-test-password" \
+            -e OutputCache__Provider=Memory \
+            -e Logging__Sink=Console \
+            -e OpenIddict__SigningKey="MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCe4c0riZEKCHKur1DdPBG47I3t+vm9zgss0Wu+HiZHqubEWY8KyBl0nMYY0gmo1l40vZozbZi17MthW+sfMEA1CYtJBHwZLOGEmQSw5KX2ThhFdn1XyDQOoELiIA62MTaxJ6FGymEDqLvSlGJxqV/gd4o/VvC0lPXyNc8CSY0Z+YuQUSoyxwQEIg8t/KTpDWIqOVf1PV96L7k4IRj7U4vkYwjnCt54UYAO5z8hP6mzImltDoJkbTXH/Du5+yx3FZ+HiQMV/8MuOSrx87LIqfBdPLUZtX4k75tPJYOED8jGgMBTyF1GyNfyIbwo4/jH8MVCGq++b3qMSQ1dC8t3k/PzAgMBAAECggEAFlt+RGegeMcf4t6kZEANMGFdRtqVJR/m6QDJMWDLEIpchyR2dqpvZpOfDqQTxuXvg2rA1bF7lpzChn8+8qMWuJU7Zo7SgF+/66mgBDJl+5HEDuucZMC1OUT/qb6gGK7hMYRQSLFhfc3TLE/uxcFzTpdpD/5bHdYuVniQROlLs+v1uAjGjXjQ+matID+H0ykAHpwLYlFUqsq6gRZSCv4sz1741YFrkWrkuVUuw846QPArMwVwkq1fne3sLjnOY5okqCBZ9val2yQDIeWMQZ22OhfS19DYbAPghjQMOqi12j7fpu8pqhHwwwTD4ZXie9LfxweaWCEViG+vgMUQHUYobQKBgQDT+Cp7tBw6R/BBZXRLwlSJsFyfVe4NxRA2EEtRavD8k6RRsHp+IHXON+pVnFU0F4c50wbQKkJviWScxwUvLMPkqRuuOVYX9wg7tazA5vIoLgMfLotre8sHFLf+WIPTPQOKQRwP+7HrF5RR5CYHwwgS+OCS70OAwEuqyexW5Fxi/wKBgQC/4p/jx+1km2D+ZXvB5mK88MJygHMT/HQJFvGff6+41ShmBdD+O5iDc9gKZnpk09IbvBUFywVOIGvqZPtw33fzqnwYy9LdJXmllDVqUKm+qyGhlmV5wfS4ly7ltfvJaRCQhbsYR9kbAlgvW784mrhXeqalMDvb2UVocm9AnnYTDQKBgHxK77Zb1ZWDK2ldcUUfLW0TgixYOd/PJwNcqJ2URL0GYfsYrasZo5qJhRowMnH6Pev1RvB3Zz955ApeVTblW/TQCJAvxMEGtMg2bpcqlOJkoKX/J/edvl5nksBM7PfHtjSymx7wKtK8n9cpHfe9MBXX4++k5wMvPu9lufT1sQrHAoGAFjGEBLhvAJ/oDAR41+hpqyi9lLi+lqUwVozMzYHbNSmSTpqFnaIO9cVES4+mwFqvhn2ugMkGiA6/7JBZdKikGw6w471PWjynYTtPIkjKGT952FKo0fhY8bCqv+7YfGcmf1C4XwqQVctjn7ag208p2xRYieqWQctTd80kiPjK91ECgYBKsK/KFK+vQbMKPuz9nxTqCQTNYmk37Bl74x326eC1f2Vc2GRCrMHlnMdO9ucq7lP6ZHkfFR1U3Prm+SXR+KGwjEWlrXQ11rzwBrqnit6lMOlLXJIWu2OQwqUB1uotxmq4VAxkmHv/j2LDJp5gjVFoGH1PgCuhXdbjT7U/qMDR2Q==" \
+            -e OpenIddict__EncryptionKey="vAyd5IU6grxTQ+jkp3yr46/4WvIfesjsIRo2D8m2Gog=" \
+            -e ApplyMigrationsOnStartup=true \
+            movieapi-backend:smoke
+
+      - name: Wait for backend /health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/health > /dev/null; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Backend never became healthy"
+          docker logs backend-smoke
+          exit 1
+
+      - name: Start frontend container
+        run: |
+          docker run -d --name frontend-smoke --network host \
+            -e BACKEND_URL=http://localhost:8080 \
+            movieapi-frontend:smoke
+
+      - name: Wait for frontend to respond
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000 > /dev/null; then
+              echo "Frontend is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Frontend never became healthy"
+          docker logs frontend-smoke
+          exit 1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          echo "--- backend logs ---"
+          docker logs backend-smoke || true
+          echo "--- frontend logs ---"
+          docker logs frontend-smoke || true
+
+      - name: Clean up containers
+        if: always()
+        run: docker rm -f backend-smoke frontend-smoke || true

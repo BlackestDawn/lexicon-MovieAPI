@@ -82,7 +82,7 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   {
     var result = await service.Create(movieId, newReview, User.GetUserId(), cancellationToken);
     await cacheStore.EvictByTagAsync("catalog", cancellationToken);
-    return CreatedAtRoute("GetReview", new {movieId, result.Id}, result);
+    return CreatedAtRoute("GetReview", new { movieId, result.Id }, result);
   }
 
   /// <summary>

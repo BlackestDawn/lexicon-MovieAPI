@@ -230,7 +230,7 @@ try
   builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
   builder.Services.AddAuthorization();
 
-  builder.Services.AddAutoMapper(_ => {},
+  builder.Services.AddAutoMapper(_ => { },
     AppDomain.CurrentDomain.GetAssemblies());
   builder.Services.AddControllers();
   builder.Services.AddHealthChecks();
