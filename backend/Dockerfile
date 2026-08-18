@@ -30,9 +30,10 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
 #   ConnectionStrings__sqlserver   SQL Server connection string (required)
 #   ConnectionStrings__redis       Redis connection string, backs the output cache (required)
 #   Elasticsearch__Uri             Elasticsearch endpoint for Serilog (required)
-#   Jwt__Issuer / Jwt__Audience    JWT issuer/audience (required)
-#   Jwt__Key                       JWT signing key (required, keep secret)
-#   Jwt__ExpiryMinutes             Access token lifetime (optional, defaults to appsettings.json)
+#   OpenIddict__SigningKey          Base64 symmetric signing key (required, keep secret)
+#   OpenIddict__EncryptionKey       Base64 symmetric encryption key (required, keep secret)
+#   OpenIddict__AccessTokenLifetimeMinutes / OpenIddict__RefreshTokenLifetimeDays
+#                                   Token lifetimes (optional, defaults to appsettings.json)
 #   Seed__AdminEmail / Seed__AdminPassword   Bootstrap admin account (optional, opt-in)
 #   ApplyMigrationsOnStartup       "true" to run EF Core migrations at boot (optional, off by default)
 
