@@ -62,9 +62,10 @@ A single wrapper component (`src/components/auth/restrictedComponent.tsx`) gates
 ```
 frontend/
 ├── Dockerfile                    # Production image build (see Running with Docker)
-├── next.config.ts                # React Compiler, standalone output, /api/* rewrite to BACKEND_URL
+├── next.config.ts                # React Compiler, standalone output
 ├── .env                          # BACKEND_URL for local dev (committed - see Getting Started)
 └── src/
+    ├── proxy.ts                  # Proxies /api/* to BACKEND_URL, read at runtime (not build time)
     ├── app/                      # Routes: /, /movies(+[id]+[reviewId]), /persons(+[id]), /genres(+[id]),
     │                              #   /login, /cookie-policy, /licensing
     ├── components/                # auth/, movies/, persons/, genres/, reviews/, general/ (nav, pagination,
@@ -100,11 +101,11 @@ The app needs the backend running to show any real data (see the [backend README
 
 ## Running with Docker
 
-The `Dockerfile` builds a production image: a pnpm-based multi-stage build (install → `next build` with `output: "standalone"` → a slim `bun` runtime image), running as the base image's non-root `bun` user on port 3000. `BACKEND_URL` must be supplied as a **build** argument, not a runtime environment variable — `next.config.ts`'s `rewrites()` is resolved once when `next build` runs, not re-read by the standalone server at request time:
+The `Dockerfile` builds a production image: a pnpm-based multi-stage build (install → `next build` with `output: "standalone"` → a slim `bun` runtime image), running as the base image's non-root `bun` user on port 3000. `BACKEND_URL` is a **runtime** environment variable, not a build argument — `src/proxy.ts` reads `process.env.BACKEND_URL` fresh on every matched request in the live server process, so the same built image works against any backend without rebuilding:
 
 ```bash
-docker build -t movieapi-frontend -f frontend/Dockerfile --build-arg BACKEND_URL=http://api:8080 .
-docker run -p 3000:3000 movieapi-frontend
+docker build -t movieapi-frontend -f frontend/Dockerfile .
+docker run -p 3000:3000 -e BACKEND_URL=http://api:8080 movieapi-frontend
 ```
 
 The repo-root `docker-compose.yml` builds and wires this up automatically alongside the API and its dependencies — see [Running with Docker](../backend/README.md#running-with-docker) in the backend README for the one-command demo stack.

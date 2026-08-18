@@ -66,13 +66,13 @@ All four catalog resources — Movies, People, Genres, and Reviews — are imple
 - **Centralized error handling** — Services signal failure by throwing (`NotFoundException`, `ForbiddenException`, `AuthenticationException`, FluentValidation's `ValidationException`) instead of returning result-wrapper objects or `(bool, string?)` tuples. A global `IExceptionHandler` middleware (`GlobalExceptionHandler`) catches these and returns RFC 7807 `ProblemDetails` responses with the appropriate status code (401/403/404/400/500); unexpected exceptions are logged server-side and returned without leaking internal details
 - **Structured Logging** — Serilog replaces the default logging provider, with per-request logging (`UseSerilogRequestLogging`) and startup failures captured by a bootstrap logger. Development logs at `Debug` to the console and a rolling daily file under `logs/`; Production logs at `Information` to the console and ships structured events to an external Elasticsearch cluster (configured via the `Elasticsearch:Uri` setting, required and fail-fast in Production, matching the Redis connection-string pattern)
 - **Unit Tests** — xUnit + Moq tests covering every service (Movie, Person, Genre, Review, Auth, AdminUser) and every validator
-- **Integration Tests** — xUnit + `WebApplicationFactory` tests covering full CRUD for every controller against a real SQL Server instance spun up via Testcontainers, with Respawn resetting the database between tests (except seeded reference data like roles), plus dedicated tests for output cache hits/invalidation, role-boundary enforcement, refresh-token rotation/theft-detection, password recovery, access-token revocation via the security-stamp check, version-specific People/Movies/Reviews behavior at each step above, the 3.1 marker version resolving where expected (and not where it shouldn't), and unversioned requests defaulting to v1
+- **Integration Tests** — xUnit + `WebApplicationFactory` tests covering full CRUD for every controller against a real Postgres instance spun up via Testcontainers, with Respawn resetting the database between tests (except seeded reference data like roles), plus dedicated tests for output cache hits/invalidation, role-boundary enforcement, refresh-token rotation/theft-detection, password recovery, access-token revocation via the security-stamp check, version-specific People/Movies/Reviews behavior at each step above, the 3.1 marker version resolving where expected (and not where it shouldn't), and unversioned requests defaulting to v1
 
 ## Tech Stack
 
 - **ASP.NET Core Web API** (.NET 10)
 - **API Versioning** (`Asp.Versioning.Mvc`, `Asp.Versioning.Mvc.ApiExplorer`) for URL-segment versioning, integrated with Swagger's per-version documents
-- **Entity Framework Core** with SQL Server
+- **Entity Framework Core** with PostgreSQL
 - **ASP.NET Core Identity** (`Microsoft.AspNetCore.Identity.EntityFrameworkCore`) for user/role storage
 - **OpenIddict** (`OpenIddict.AspNetCore`, `OpenIddict.EntityFrameworkCore`) for the OAuth2 token/revocation endpoints (password + refresh_token grants) backing authentication
 - **AutoMapper** for DTO mapping
@@ -82,7 +82,7 @@ All four catalog resources — Movies, People, Genres, and Reviews — are imple
 - **Serilog** (`Serilog.AspNetCore`) for structured logging, with `Serilog.Sinks.Elasticsearch` as the external log store in Production
 - **xUnit + Moq** for unit testing
 - **xUnit + Testcontainers + Respawn** for integration testing
-- **Docker / Docker Compose** — a production `Dockerfile` plus a repo-root `docker-compose.yml` demo stack (API + frontend + SQL Server + Redis + Elasticsearch), see [Running with Docker](#running-with-docker)
+- **Docker / Docker Compose** — a production `Dockerfile` plus a repo-root `docker-compose.yml` demo stack (API + frontend + Postgres + Redis + Elasticsearch), see [Running with Docker](#running-with-docker)
 
 ## Project Structure
 
@@ -111,11 +111,11 @@ backend/
 ## Getting Started
 
 1. Clone the repository
-2. Set the SQL Server connection string in `backend/src/MovieAPI.Api/appsettings.Development.json`:
+2. Set the Postgres connection string in `backend/src/MovieAPI.Api/appsettings.Development.json`:
    ```json
    {
      "ConnectionStrings": {
-       "sqlserver": "Server=...;Database=MovieAPI;..."
+       "postgres": "Host=localhost;Port=5432;Database=MovieAPI;Username=...;Password=..."
      }
    }
    ```
@@ -132,9 +132,12 @@ backend/
 
 The database is automatically seeded with sample catalog data when running in the Development environment. Roles (`User`, `PowerUser`, `Moderator`, `Administrator`), the default admin account, and the `movieapi-client` OAuth client are seeded in every environment except `Testing`, where the integration test factory seeds them itself after migrations run.
 
-Output caching uses an in-memory store in Development, so no extra setup is needed locally. Running with `ASPNETCORE_ENVIRONMENT=Production` requires a `redis` connection string (e.g. `ConnectionStrings__redis=localhost:6379`) — the app fails fast at startup if it's missing. Production also needs its own `OpenIddict:SigningKey`/`OpenIddict:EncryptionKey` (base64-encoded symmetric keys; the ephemeral keys used outside Production don't survive a restart, which is fine there but not in Production) and, if a seeded admin account is wanted there too, its own `Seed:AdminEmail`/`Seed:AdminPassword` — both unset by default outside Development.
+Output caching and logging are config-driven, not tied to `ASPNETCORE_ENVIRONMENT`, so both default to needing nothing extra locally:
 
-Logging similarly needs no extra setup in Development (console + a rolling file under `logs/`). Production additionally requires an `Elasticsearch:Uri` setting (e.g. `Elasticsearch__Uri=http://localhost:9200`) pointing at an Elasticsearch cluster — the app fails fast at startup if it's missing. Logs are shipped to a `movieapi-logs-{yyyy.MM}` index, viewable in Kibana.
+- `OutputCache:Provider` — `Memory` (default) or `Redis`. Setting it to `Redis` requires a `redis` connection string (e.g. `ConnectionStrings__redis=localhost:6379`) — the app fails fast at startup if it's missing.
+- `Logging:Sink` — `Console` (default, on top of whatever `Serilog:WriteTo` already declares), `GoogleCloudLogging`, or `Elasticsearch`. `GoogleCloudLogging` calls the Cloud Logging API directly via Application Default Credentials and requires `GoogleCloudLogging:ProjectId`; `Elasticsearch` requires an `Elasticsearch:Uri` (e.g. `Elasticsearch__Uri=http://localhost:9200`) pointing at a cluster, and ships logs to a `movieapi-logs-{yyyy.MM}` index. Either fails fast at startup if its required setting is missing.
+
+Running with `ASPNETCORE_ENVIRONMENT=Production` needs its own `OpenIddict:SigningKey`/`OpenIddict:EncryptionKey` — the ephemeral keys used outside Production don't survive a restart, which is fine there but not in Production. `SigningKey` must be a base64 **PKCS#8 DER-encoded RSA private key** (OpenIddict requires an asymmetric signing key; generate one with `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 -w0`), while `EncryptionKey` stays a base64-encoded symmetric key (e.g. `openssl rand -base64 32`). If a seeded admin account is wanted in Production too, set `Seed:AdminEmail`/`Seed:AdminPassword` — both unset by default outside Development.
 
 ### Running Tests
 
@@ -142,18 +145,17 @@ Logging similarly needs no extra setup in Development (console + a rolling file 
 dotnet test backend/MovieAPI.slnx
 ```
 
-Unit tests run with no external dependencies. Integration tests require a running Docker daemon — they spin up a disposable SQL Server container via Testcontainers for each test run.
+Unit tests run with no external dependencies. Integration tests require a running Docker daemon — they spin up a disposable Postgres container via Testcontainers for each test run.
 
 ## Running with Docker
 
-The `Dockerfile` builds a production image: a multi-stage build (SDK → `aspnet` runtime) that publishes only `MovieAPI.Api`, runs as the image's non-root `app` user, and listens on port 8080. It bakes in no secrets or service endpoints — everything the app already reads from configuration (`ConnectionStrings:sqlserver`, `ConnectionStrings:redis`, `Elasticsearch:Uri`, `OpenIddict:*`, `Seed:*`) is supplied at container-start time via ASP.NET Core's double-underscore environment variable convention, e.g.:
+The `Dockerfile` builds a production image: a multi-stage build (SDK → `aspnet` runtime) that publishes only `MovieAPI.Api`, runs as the image's non-root `app` user, and listens on port 8080. It bakes in no secrets or service endpoints — everything the app already reads from configuration (`ConnectionStrings:postgres`, `OutputCache:Provider`, `Logging:Sink`, `OpenIddict:*`) is supplied at container-start time via ASP.NET Core's double-underscore environment variable convention, e.g.:
 
 ```
 docker build -t movieapi -f backend/Dockerfile .
 docker run -p 8080:8080 \
-  -e ConnectionStrings__sqlserver="Server=tcp:...;Database=MovieAPI;..." \
-  -e ConnectionStrings__redis="redis-host:6379" \
-  -e Elasticsearch__Uri="http://elasticsearch-host:9200" \
+  -e ConnectionStrings__postgres="Host=postgres-host;Port=5432;Database=MovieAPI;Username=...;Password=..." \
+  -e Logging__Sink="GoogleCloudLogging" -e GoogleCloudLogging__ProjectId="..." \
   -e OpenIddict__SigningKey="..." -e OpenIddict__EncryptionKey="..." \
   movieapi
 ```
@@ -162,15 +164,15 @@ Since the image carries no migration step of its own, set `ApplyMigrationsOnStar
 
 ### Demo environment (`docker-compose.yml`)
 
-The repo-root `docker-compose.yml` runs the API and frontend images alongside real instances of every external service the API needs — SQL Server, Redis, and Elasticsearch — for a self-contained local demo:
+The repo-root `docker-compose.yml` runs the API and frontend images alongside real instances of Postgres, Redis, and Elasticsearch for a self-contained local demo (Redis/Elasticsearch are opt-in via `OutputCache:Provider`/`Logging:Sink`, but the demo stack turns them on by default to exercise those code paths):
 
 ```
 docker compose up -d --build
 ```
 
-The API becomes available at `http://localhost:8080` and the frontend at `http://localhost:3000` once dependencies report healthy; the API applies migrations and seeds roles/the default admin account (`admin@movieapi.local` / `Admin123!` by default) on startup. Elasticsearch runs with security disabled and everything uses throwaway demo credentials (overridable via a `.env` file — see `MSSQL_SA_PASSWORD`, `OPENIDDICT_SIGNING_KEY`, `OPENIDDICT_ENCRYPTION_KEY`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` in `docker-compose.yml`) — **this stack is for local demo/testing only**, not a template for a real deployment's secrets handling.
+The API becomes available at `http://localhost:8080` and the frontend at `http://localhost:3000` once dependencies report healthy; the API applies migrations and seeds roles/the default admin account (`admin@movieapi.local` / `Admin123!` by default) on startup. Elasticsearch runs with security disabled and everything uses throwaway demo credentials (overridable via a `.env` file — see `POSTGRES_PASSWORD`, `OPENIDDICT_SIGNING_KEY`, `OPENIDDICT_ENCRYPTION_KEY`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` in `docker-compose.yml`) — **this stack is for local demo/testing only**, not a template for a real deployment's secrets handling. For an actual deployment, see [deploy/README.md](../deploy/README.md).
 
-If port `1433`, `6379`, `9200`, `8080`, or `3000` is already in use on your machine, either stop that service first or remap the conflicting port(s) in `docker-compose.yml` — the containers talk to each other over the internal compose network regardless of what's published to the host.
+If port `5432`, `6379`, `9200`, `8080`, or `3000` is already in use on your machine, either stop that service first or remap the conflicting port(s) in `docker-compose.yml` — the containers talk to each other over the internal compose network regardless of what's published to the host.
 
 ## API Overview
 
