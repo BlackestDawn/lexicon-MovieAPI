@@ -45,9 +45,6 @@ jobs:
           docker build -f backend/Dockerfile -t "$BACKEND_IMAGE" .
           docker push "$BACKEND_IMAGE"
 
-      # BACKEND_URL is no longer a build-arg - src/proxy.ts reads it at
-      # runtime, so this image is reused unchanged for prod too (see
-      # deploy-prod.yml).
       - name: Build and push frontend image
         run: |
           docker build -f frontend/Dockerfile -t "$FRONTEND_IMAGE" .
@@ -57,9 +54,11 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore dotnet tools
+      - name: Restore dotnet tools and dependencies
         working-directory: backend
-        run: dotnet tool restore
+        run: |
+          dotnet tool restore
+          dotnet restore MovieAPI.slnx
 
       # MovieAPI deliberately doesn't apply migrations on container boot in real
       # deployments (ApplyMigrationsOnStartup defaults off - see Program.cs) to
