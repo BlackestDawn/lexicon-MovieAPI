@@ -36,6 +36,23 @@ public class MoviesV3ControllerTests(IntegrationTestWebAppFactory factory) : Int
     Assert.Empty(movie!.CastCrews!);
   }
 
+  [Fact]
+  public async Task GetMovies_FiltersByMaxRating()
+  {
+    var (genreId, personId) = await CreateGenreAndPersonAsync();
+    var highRated = await CreateMovieAsync(genreId, personId, "High Rated");
+    var lowRated = await CreateMovieAsync(genreId, personId, "Low Rated");
+
+    await Client.PostAsJsonAsync($"/api/v3/movies/{highRated.Id}/reviews", TestData.ValidReview(9));
+    await Client.PostAsJsonAsync($"/api/v3/movies/{lowRated.Id}/reviews", TestData.ValidReview(3));
+
+    var response = await Client.GetAsync("/api/v3/movies?maxRating=5");
+
+    var movies = await response.Content.ReadFromJsonAsync<List<MovieDto>>();
+    Assert.Contains(movies!, m => m.Id == lowRated.Id);
+    Assert.DoesNotContain(movies!, m => m.Id == highRated.Id);
+  }
+
   private async Task<(Guid GenreId, Guid PersonId)> CreateGenreAndPersonAsync()
   {
     var genreResponse = await Client.PostAsJsonAsync("/api/v3/genres", TestData.ValidGenre());

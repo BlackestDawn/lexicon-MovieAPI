@@ -55,6 +55,11 @@ public class MovieRepository(AppDbContext context) : RepositoryBase<Movie>(conte
       query = query.Where(m => m.Reviews.Average(r => (double?)r.Score) >= (double)searchParams.MinRating.Value);
     }
 
+    if (searchParams.MaxRating.HasValue)
+    {
+      query = query.Where(m => m.Reviews.Average(r => (double?)r.Score) <= (double)searchParams.MaxRating.Value);
+    }
+
     var totalCount = await query.CountAsync(cancellationToken);
     var pagination = new PaginationMetadata(totalCount, pageSize, page);
 

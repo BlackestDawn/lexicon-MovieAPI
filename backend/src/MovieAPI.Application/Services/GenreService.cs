@@ -56,7 +56,7 @@ public class GenreService
     PaginationMetadata? pagination = null;
     if (includeMovies)
     {
-      var searchParams = new MovieSearchParams(null, null, result.Slug, null, null);
+      var searchParams = new MovieSearchParams(null, null, result.Slug, null, null, null);
       var (movies, paginationData) = await movieRepository.GetMoviesReadOnlyAsync(searchParams, (int)page, (int)pageSize, token);
 
       dto.Movies = [.. movies.Select(item =>

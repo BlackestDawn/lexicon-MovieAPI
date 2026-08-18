@@ -11,9 +11,10 @@ export default async function Page({
     genre?: string;
     year?: string;
     minRating?: string;
+    maxRating?: string;
   }>;
 }) {
-  const { page, search, genre, year, minRating } = await searchParams;
+  const { page, search, genre, year, minRating, maxRating } = await searchParams;
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
@@ -23,6 +24,7 @@ export default async function Page({
         genre={genre}
         year={year ? Number(year) : undefined}
         minRating={minRating ? Number(minRating) : undefined}
+        maxRating={maxRating ? Number(maxRating) : undefined}
       />
     </Suspense>
   );
