@@ -125,7 +125,7 @@ public class MovieServiceTests
       .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
       .ReturnsAsync((movies, null));
 
-    await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), null, null);
+    await _sut.GetMany(new MovieSearchParams(null, null, null, null, null, null), null, null);
 
     _repo.Verify(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
   }
@@ -138,7 +138,7 @@ public class MovieServiceTests
       .Setup(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()))
       .ReturnsAsync((movies, null));
 
-    await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), 0, -5);
+    await _sut.GetMany(new MovieSearchParams(null, null, null, null, null, null), 0, -5);
 
     _repo.Verify(r => r.GetMoviesReadOnlyAsync(It.IsAny<MovieSearchParams>(), 1, 10, It.IsAny<CancellationToken>()), Times.Once);
   }
@@ -156,7 +156,7 @@ public class MovieServiceTests
       .ReturnsAsync((movies.AsEnumerable(), pagination));
     _mapper.Setup(m => m.Map<MovieDto>(entity)).Returns(movieDto);
 
-    var (result, meta) = await _sut.GetMany(new MovieSearchParams(null, null, null, null, null), null, null);
+    var (result, meta) = await _sut.GetMany(new MovieSearchParams(null, null, null, null, null, null), null, null);
 
     var dto = Assert.Single(result);
     Assert.Equal(8.5m, dto.AverageRating);

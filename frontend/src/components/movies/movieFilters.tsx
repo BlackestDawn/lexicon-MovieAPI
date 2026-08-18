@@ -8,14 +8,17 @@ export default async function MovieFilters({
   genre,
   year,
   minRating,
+  maxRating,
 }: {
   search?: string;
   genre?: string;
   year?: number;
   minRating?: number;
+  maxRating?: number;
 }) {
   const genres = await fetchGenres();
-  const hasFilters = !!search || !!genre || !!year || !!minRating;
+  const hasFilters =
+    !!search || !!genre || !!year || !!minRating || !!maxRating;
 
   return (
     <Form
@@ -79,6 +82,22 @@ export default async function MovieFilters({
           step={0.1}
           placeholder="e.g. 7"
           defaultValue={minRating ?? ""}
+          className={inputClass}
+        />
+      </div>
+      <div className="flex-1">
+        <label htmlFor="maxRating" className={labelClass}>
+          Max rating
+        </label>
+        <input
+          type="number"
+          id="maxRating"
+          name="maxRating"
+          min={0}
+          max={10}
+          step={0.1}
+          placeholder="e.g. 9"
+          defaultValue={maxRating ?? ""}
           className={inputClass}
         />
       </div>

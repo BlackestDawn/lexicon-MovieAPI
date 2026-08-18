@@ -87,7 +87,6 @@ export async function removeReview(movieId: string, id: string) {
 
 function formToReviewChangeData(data: FormData) {
   const parsed: ReviewForChangeDto = {
-    authorName: data.get("authorName") as string,
     body: data.get("body") as string,
     score: Number(data.get("score")),
   };

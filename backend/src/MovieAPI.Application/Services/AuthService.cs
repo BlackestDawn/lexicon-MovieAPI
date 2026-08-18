@@ -35,6 +35,7 @@ public class AuthService(
       Id = user.Id,
       Email = user.Email ?? string.Empty,
       Role = roles.FirstOrDefault() ?? string.Empty,
+      DisplayName = user.DisplayName,
     };
   }
 
@@ -46,7 +47,11 @@ public class AuthService(
       throw new ValidationException(validationResult.Errors);
     }
 
-    var user = new ApplicationUser { UserName = newUser.Email, Email = newUser.Email };
+    var displayName = string.IsNullOrWhiteSpace(newUser.DisplayName)
+      ? newUser.Email.Split('@')[0]
+      : newUser.DisplayName.Trim();
+
+    var user = new ApplicationUser { UserName = newUser.Email, Email = newUser.Email, DisplayName = displayName };
 
     var result = await userManager.CreateAsync(user, newUser.Password);
     if (!result.Succeeded)
@@ -85,6 +90,12 @@ public class AuthService(
       {
         throw new ValidationException(ToValidationFailures(userNameResult.Errors));
       }
+    }
+
+    if (!string.IsNullOrWhiteSpace(updatedUser.DisplayName))
+    {
+      user.DisplayName = updatedUser.DisplayName.Trim();
+      await userManager.UpdateAsync(user);
     }
 
     return mapper.Map<UserDto>(user);

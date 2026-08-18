@@ -14,12 +14,14 @@ export default async function MovieList({
   genre,
   year,
   minRating,
+  maxRating,
 }: {
   page?: number;
   search?: string;
   genre?: string;
   year?: number;
   minRating?: number;
+  maxRating?: number;
 }) {
   const { movies, pagination } = await fetchMovies({
     page,
@@ -27,6 +29,7 @@ export default async function MovieList({
     genre,
     year,
     minRating,
+    maxRating,
   });
 
   return (
@@ -41,12 +44,13 @@ export default async function MovieList({
         genre={genre}
         year={year}
         minRating={minRating}
+        maxRating={maxRating}
       />
       {pagination && (
         <PaginationControls
           pagination={pagination}
           basePath="/movies"
-          queryParams={{ search, genre, year, minRating }}
+          queryParams={{ search, genre, year, minRating, maxRating }}
         />
       )}
       {movies.length === 0 && (

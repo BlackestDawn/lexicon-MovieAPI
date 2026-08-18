@@ -9,5 +9,6 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
   {
     RuleFor(r => r.Email).NotEmpty().EmailAddress();
     RuleFor(r => r.Password).NotEmpty();
+    RuleFor(r => r.DisplayName).MaximumLength(100);
   }
 }

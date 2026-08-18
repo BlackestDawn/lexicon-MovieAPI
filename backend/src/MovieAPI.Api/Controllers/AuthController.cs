@@ -15,6 +15,7 @@ namespace MovieAPI.Api.Controllers;
 [ApiVersion("1.0")]
 [ApiVersion("2.0")]
 [ApiVersion("3.0")]
+[ApiVersion("3.1")]
 public class AuthController(IAuthService service) : ControllerBase
 {
   /// <summary>

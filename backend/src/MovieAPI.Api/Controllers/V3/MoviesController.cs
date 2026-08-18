@@ -17,6 +17,7 @@ namespace MovieAPI.Api.Controllers.V3;
 [ApiController]
 [Route("api/v{version:apiVersion}/movies")]
 [ApiVersion("3.0")]
+[ApiVersion("3.1")]
 public class MoviesController(IMovieService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   /// <summary>
@@ -27,6 +28,7 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
   /// <param name="genre">Filter on genre</param>
   /// <param name="year">Filter on release year</param>
   /// <param name="minRating">Filter on minimum rating</param>
+  /// <param name="maxRating">Filter on maximum rating</param>
   /// <param name="page">Page to display, defaults to 1</param>
   /// <param name="pageSize">Amount per page, defaults to 10</param>
   /// <param name="cancellationToken">Notification token for canceling operations</param>
@@ -34,12 +36,12 @@ public class MoviesController(IMovieService service, IOutputCacheStore cacheStor
   [HttpGet]
   [OutputCache(PolicyName = "CatalogCache")]
   public async Task<IActionResult> GetMovies(string? name, string? search, string? genre,
-    int? year, decimal? minRating,
+    int? year, decimal? minRating, decimal? maxRating,
     int? page, int? pageSize,
     CancellationToken cancellationToken = default)
   {
     var (result, pagination) = await service.GetMany(
-      new MovieSearchParams(name, search, genre, year, minRating),
+      new MovieSearchParams(name, search, genre, year, minRating, maxRating),
       page, pageSize, cancellationToken);
 
     if (pagination != null)

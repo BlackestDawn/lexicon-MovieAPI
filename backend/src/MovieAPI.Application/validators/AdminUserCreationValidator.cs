@@ -14,5 +14,6 @@ public class AdminUserCreationValidator : AbstractValidator<AdminUserForCreation
       .NotEmpty()
       .Must(Roles.All.Contains)
       .WithMessage($"Role must be one of: {string.Join(", ", Roles.All)}");
+    RuleFor(u => u.DisplayName).MaximumLength(100);
   }
 }
