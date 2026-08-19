@@ -73,14 +73,10 @@ export default function GenreForm({
         </div>
 
         {(error || issues.length > 0) && (
-          <div className="rounded-md bg-red-50 dark:bg-red-900 p-4 space-y-1">
-            {error && (
-              <p className="text-sm text-red-800 dark:text-red-200">
-                {error}
-              </p>
-            )}
+          <div className="rounded-md bg-danger/10 border border-danger/30 p-4 space-y-1">
+            {error && <p className="text-sm text-danger">{error}</p>}
             {issues.map((issue, i) => (
-              <p key={i} className="text-sm text-red-800 dark:text-red-200">
+              <p key={i} className="text-sm text-danger">
                 {issue}
               </p>
             ))}
@@ -92,14 +88,14 @@ export default function GenreForm({
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="px-4 py-2 rounded-md border border-slate-400 dark:border-slate-600 disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-border hover:bg-background transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isPending}
-            className="px-4 py-2 bg-blue-400 dark:bg-blue-700 text-slate-700 dark:text-slate-200 rounded-md disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
             {isPending
               ? "Saving..."

@@ -45,7 +45,7 @@ export default async function GenreDetails({
           {genre.movies.map((m) => (
             <div
               key={m.id}
-              className="border border-slate-600 dark:border-slate-400 rounded-lg"
+              className="border border-border rounded-lg hover:border-primary transition-colors"
             >
               <Link href={`/movies/${m.id}`}>
                 <div className="p-4 flex flex-col sm:flex-row justify-evenly sm:justify-center items-center">
