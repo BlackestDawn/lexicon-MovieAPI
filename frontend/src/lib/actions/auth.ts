@@ -2,11 +2,17 @@
 
 import type {
   CurrentUserDto,
+  ForgotPasswordDto,
   RegisterDto,
+  ResetPasswordDto,
   User,
   UserRoles,
 } from "../data/models/userTypes";
-import { validateRegisterDto } from "../data/models/userTypes";
+import {
+  validateForgotPasswordDto,
+  validateRegisterDto,
+  validateResetPasswordDto,
+} from "../data/models/userTypes";
 import { ValidationError } from "../data/interfaces/errors";
 import { apiGet, apiPost, isAuthenticated, login } from "./apiInteract";
 
@@ -50,6 +56,46 @@ export async function registerRequest(data: RegisterDto): Promise<RegisterResult
     return {
       success: false,
       error: e instanceof Error ? e.message : "Registration failed",
+      issues: e instanceof ValidationError ? e.issues : null,
+    };
+  }
+}
+
+type ActionResult =
+  | { success: true }
+  | { success: false; error: string; issues: string[] | null };
+
+// Always reports success regardless of whether the email is registered - the
+// backend deliberately doesn't reveal that, see AuthService.ForgotPassword.
+export async function forgotPasswordRequest(
+  data: ForgotPasswordDto,
+): Promise<ActionResult> {
+  try {
+    const validated = validateForgotPasswordDto(data);
+    await apiPost("/auth/forgot-password", validated);
+    return { success: true };
+  } catch (e) {
+    console.error("Error requesting password reset:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Password reset request failed",
+      issues: e instanceof ValidationError ? e.issues : null,
+    };
+  }
+}
+
+export async function resetPasswordRequest(
+  data: ResetPasswordDto,
+): Promise<ActionResult> {
+  try {
+    const validated = validateResetPasswordDto(data);
+    await apiPost("/auth/reset-password", validated);
+    return { success: true };
+  } catch (e) {
+    console.error("Error resetting password:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Password reset failed",
       issues: e instanceof ValidationError ? e.issues : null,
     };
   }
