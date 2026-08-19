@@ -14,8 +14,12 @@ public static class AdminUserSeeder
     using var scope = services.CreateScope();
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-    var email = configuration["Seed:AdminEmail"];
-    var password = configuration["Seed:AdminPassword"];
+    // Trimmed defensively - values sourced from a secret manager (e.g. piping
+    // `openssl rand` straight into `gcloud secrets versions add`) routinely carry
+    // an accidental trailing newline that becomes part of the raw env var value,
+    // silently baking an unusable password into the seeded account.
+    var email = configuration["Seed:AdminEmail"]?.Trim();
+    var password = configuration["Seed:AdminPassword"]?.Trim();
 
     // Not configured means opted out, not misconfigured - Production shouldn't get a
     // default admin account with a known password unless it explicitly asks for one.

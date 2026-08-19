@@ -54,16 +54,34 @@ merge to main ──▶ build & push images ──▶ deploy Cloud Run staging (
    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 -w0 \
      | gcloud secrets versions add movieapi-prod-openiddict-signing-key --data-file=-
 
-   # The encryption key can stay symmetric.
-   openssl rand -base64 32 | gcloud secrets versions add movieapi-staging-openiddict-encryption-key --data-file=-
-   openssl rand -base64 32 | gcloud secrets versions add movieapi-prod-openiddict-encryption-key    --data-file=-
+   # The encryption key can stay symmetric. `openssl rand -base64` appends a
+   # trailing newline; Convert.FromBase64String tolerates that so it's harmless
+   # here, but `tr -d '\n'` keeps the stored secret exactly what it looks like.
+   openssl rand -base64 32 | tr -d '\n' | gcloud secrets versions add movieapi-staging-openiddict-encryption-key --data-file=-
+   openssl rand -base64 32 | tr -d '\n' | gcloud secrets versions add movieapi-prod-openiddict-encryption-key    --data-file=-
 
    # Admin account password (see AdminUserSeeder) - without this, staging/prod
    # never seed an admin account at all, since that seeder is a deliberate
    # no-op when unconfigured. Use a different random password per environment.
-   openssl rand -base64 24 | gcloud secrets versions add movieapi-staging-admin-password --data-file=-
-   openssl rand -base64 24 | gcloud secrets versions add movieapi-prod-admin-password    --data-file=-
+   # Generated into a variable and printed so you actually have it to log in
+   # with, rather than piping straight into --data-file=- and having no record
+   # of what you just set. `printf '%s'` (not echo) avoids re-adding a trailing
+   # newline - command substitution already strips the one `openssl rand`
+   # itself appends, but relying on that implicitly is exactly what bit us
+   # before (see the comment in AdminUserSeeder.cs): this value is used as a
+   # literal password string, not base64-decoded, so a stray trailing newline
+   # bakes into the seeded password itself and every login attempt fails with
+   # no visible sign why.
+   STAGING_ADMIN_PASSWORD=$(openssl rand -base64 24)
+   echo "Staging admin password: $STAGING_ADMIN_PASSWORD"
+   printf '%s' "$STAGING_ADMIN_PASSWORD" | gcloud secrets versions add movieapi-staging-admin-password --data-file=-
+
+   PROD_ADMIN_PASSWORD=$(openssl rand -base64 24)
+   echo "Prod admin password: $PROD_ADMIN_PASSWORD"
+   printf '%s' "$PROD_ADMIN_PASSWORD" | gcloud secrets versions add movieapi-prod-admin-password --data-file=-
    ```
+
+   Forgot it later? Fetch it back anytime with `gcloud secrets versions access latest --secret=movieapi-staging-admin-password` (swap in `-prod-` for prod).
 
 4. **GitHub repo secrets** (Settings → Secrets and variables → Actions):
 
