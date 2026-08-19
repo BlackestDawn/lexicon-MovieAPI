@@ -338,7 +338,6 @@ try
         options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json", desc.GroupName.ToUpperInvariant());
       }
     });
-    await DbSeeder.SeedAsync(app.Services);
   }
 
   // Skipped in the "Testing" environment: integration tests apply migrations lazily
@@ -363,6 +362,19 @@ try
     // AdminUserSeeder for why that's the deliberate default outside Development.
     await AdminUserSeeder.SeedAsync(app.Services);
     await OpenIddictClientSeeder.SeedAsync(app.Services);
+
+    // Always on in Development so local dev has something to look at. Elsewhere
+    // it's opt-in via Seed:ExampleData - e.g. for demoing staging - since a real
+    // production database shouldn't get sample movies by default. DbSeeder no-ops
+    // once Movies has any rows, but that check-then-insert isn't safe against
+    // multiple replicas racing an empty database at boot; only flip this on for a
+    // single-instance deploy (which is what triggering it via deploy-staging.yml's
+    // workflow_dispatch input gives you), not somewhere with standing concurrent
+    // replicas.
+    if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Seed:ExampleData"))
+    {
+      await DbSeeder.SeedAsync(app.Services);
+    }
   }
 
   app.UseHttpsRedirection();
