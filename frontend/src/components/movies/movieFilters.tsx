@@ -1,7 +1,7 @@
 import Form from "next/form";
 import Link from "next/link";
 import { fetchGenres } from "@/lib/actions/genre";
-import { inputClass, labelClass } from "@/lib/data/consts/styles";
+import { inputClass, labelClass, panelClass } from "@/lib/data/consts/styles";
 
 export default async function MovieFilters({
   search,
@@ -23,7 +23,7 @@ export default async function MovieFilters({
   return (
     <Form
       action="/movies"
-      className="flex flex-col sm:flex-row sm:items-end gap-4 px-4"
+      className={`flex flex-col sm:flex-row sm:items-end gap-4 ${panelClass}`}
     >
       <div className="flex-1">
         <label htmlFor="search" className={labelClass}>

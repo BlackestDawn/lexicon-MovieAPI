@@ -1,7 +1,7 @@
 import Form from "next/form";
 import Link from "next/link";
 import { fetchGenres } from "@/lib/actions/genre";
-import { inputClass, labelClass } from "@/lib/data/consts/styles";
+import { inputClass, labelClass, panelClass } from "@/lib/data/consts/styles";
 
 export default async function PersonFilters({
   name,
@@ -18,7 +18,7 @@ export default async function PersonFilters({
   return (
     <Form
       action="/persons"
-      className="flex flex-col sm:flex-row sm:items-end gap-4 mb-6 px-4"
+      className={`flex flex-col sm:flex-row sm:items-end gap-4 ${panelClass}`}
     >
       <div className="flex-1">
         <label htmlFor="name" className={labelClass}>

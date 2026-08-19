@@ -1,6 +1,6 @@
 import Form from "next/form";
 import Link from "next/link";
-import { inputClass, labelClass } from "@/lib/data/consts/styles";
+import { inputClass, labelClass, panelClass } from "@/lib/data/consts/styles";
 
 export default function ReviewFilters({
   movieId,
@@ -18,7 +18,7 @@ export default function ReviewFilters({
   return (
     <Form
       action={`/movies/${movieId}`}
-      className="flex flex-col sm:flex-row sm:items-end gap-4"
+      className={`flex flex-col sm:flex-row sm:items-end gap-4 ${panelClass}`}
     >
       <div className="flex-1">
         <label htmlFor="reviewSearch" className={labelClass}>

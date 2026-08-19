@@ -1,4 +1,5 @@
 import { MovieExtendedDto } from "@/lib/data/models/movieTypes";
+import { Calendar, Clock, Star, MessageSquareText, Users } from "lucide-react";
 import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
@@ -12,6 +13,7 @@ import { personRoleLabels } from "@/lib/data/models/personRoleTypes";
 import ReviewCreateButton from "../reviews/reviewCreateButton";
 import ReviewFilters from "../reviews/reviewFilters";
 import PaginationControls from "../general/paginationControls";
+import { cardClass, metaClass } from "@/lib/data/consts/styles";
 
 export default async function MovieDetails({
   id,
@@ -35,12 +37,33 @@ export default async function MovieDetails({
   );
 
   return (
-    <div className="w-full m-4 space-y-6">
-      <div className="flex justify-between">
-        <h3 className="text-center text-4xl text-foreground">
-          {movie.title}
-        </h3>
-        <div className="space-x-4">
+    <div className="w-full my-8 space-y-10">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="space-y-3">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">
+            {movie.title}
+          </h1>
+          <div className="flex flex-wrap gap-4">
+            <span className={metaClass}>
+              <Calendar className="w-4 h-4" />
+              {movie.releaseDate.toDateString()}
+            </span>
+            <span className={metaClass}>
+              <Clock className="w-4 h-4" />
+              {minsToDisplayRuntime(movie.runtimeMinutes)}
+            </span>
+            <span className={metaClass}>
+              <Star className="w-4 h-4 text-primary" />
+              {movie.averageRating}/10
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {movie.genres.map((g) => (
+              <GenreBadge key={g.id} name={g.name} />
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-3 shrink-0">
           <RestrictedComponent accessLevel="PowerUserAndAbove">
             <MovieEditButton movie={movie} />
           </RestrictedComponent>
@@ -53,44 +76,48 @@ export default async function MovieDetails({
           </RestrictedComponent>
         </div>
       </div>
-      <div className="w-full flex flex-col md:flex-row justify-evenly">
-        <p>Release date: {movie.releaseDate.toDateString()}</p>
-        <p>Runtime: {minsToDisplayRuntime(movie.runtimeMinutes)}</p>
-      </div>
-      <div className="flex gap-2">
-        {movie.genres.map((g) => (
-          <GenreBadge key={g.id} name={g.name} />
-        ))}
-      </div>
-      <div>
-        <p className="mb-4">Summery:</p>
-        <p>{movie.details?.synopsis ?? movie.plotSummery}</p>
-      </div>
-      <div className="p-4">
-        <p className="mb-4">Cast & Crew</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {movie.castCrews ? (
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold text-foreground">Synopsis</h2>
+        <p className="text-muted-foreground leading-7">
+          {movie.details?.synopsis ?? movie.plotSummery}
+        </p>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+          <Users className="w-5 h-5 text-primary" />
+          Cast &amp; Crew
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {movie.castCrews && movie.castCrews.length > 0 ? (
             movie.castCrews
               .sort((a, b) => a.role - b.role)
               .map((p) => (
                 <Link key={p.personId} href={`/persons/${p.personId}`}>
-                  <div className="p-4 border border-border rounded-md text-center hover:border-primary transition-colors">
-                    <p>
-                      {personRoleLabels[p.role]}: {p.givenName}{" "}
-                      {p.middleName && p.middleName[0] + ". "}
+                  <div className={`${cardClass} p-4 text-center space-y-1`}>
+                    <p className="text-xs text-primary font-medium uppercase tracking-wide">
+                      {personRoleLabels[p.role]}
+                    </p>
+                    <p className="font-medium">
+                      {p.givenName} {p.middleName && p.middleName[0] + ". "}
                       {p.lastName}
                     </p>
                   </div>
                 </Link>
               ))
           ) : (
-            <p>No cast or crew registered</p>
+            <p className="text-muted-foreground">No cast or crew registered</p>
           )}
         </div>
-      </div>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <p>Average rating: {movie.averageRating}/10</p>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex justify-between items-center gap-4">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground">
+            <MessageSquareText className="w-5 h-5 text-primary" />
+            Reviews
+          </h2>
           <RestrictedComponent accessLevel="LoggedIn">
             <ReviewCreateButton movieId={movie.id} />
           </RestrictedComponent>
@@ -108,24 +135,26 @@ export default async function MovieDetails({
             queryParams={{ search, minScore, maxScore }}
           />
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 p-4 gap-4">
-          {reviews.length > 0 ? (
-            reviews.map((r) => (
+        {reviews.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {reviews.map((r) => (
               <Link key={r.id} href={`/movies/${movie.id}/${r.id}`}>
-                <div className="border border-border rounded-md text-center p-4 hover:border-primary transition-colors">
-                  <p>
-                    {r.authorName} {r.score} / 10
-                  </p>
+                <div className={`${cardClass} p-4 text-center space-y-1`}>
+                  <p className="font-medium">{r.authorName}</p>
+                  <span className={`${metaClass} justify-center`}>
+                    <Star className="w-4 h-4 text-primary" />
+                    {r.score}/10
+                  </span>
                 </div>
               </Link>
-            ))
-          ) : (
-            <p className="text-muted-foreground">
-              No reviews found matching your filters.
-            </p>
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">
+            No reviews found matching your filters.
+          </p>
+        )}
+      </section>
     </div>
   );
 }

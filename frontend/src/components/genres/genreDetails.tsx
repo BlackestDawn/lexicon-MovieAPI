@@ -1,10 +1,12 @@
 import { getGenre, removeGenre } from "@/lib/actions/genre";
 import Link from "next/link";
+import { Clock, Star, Film } from "lucide-react";
 import PaginationControls from "../general/paginationControls";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import GenreEditButton from "./genreEditButton";
+import { cardClass, metaClass, sectionHeadingClass } from "@/lib/data/consts/styles";
 
 export default async function GenreDetails({
   id,
@@ -16,10 +18,10 @@ export default async function GenreDetails({
   const { genre, pagination } = await getGenre(id, { page });
 
   return (
-    <div>
-      <div className="flex justify-between items-center my-8 px-4">
-        <h3 className="text-3xl">All movies within genre {genre.name}</h3>
-        <div className="space-x-4">
+    <div className="my-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <h3 className={sectionHeadingClass}>Movies in {genre.name}</h3>
+        <div className="flex gap-3">
           <RestrictedComponent accessLevel="ModeratorAndAbove">
             <GenreEditButton genre={genre} />
           </RestrictedComponent>
@@ -41,26 +43,35 @@ export default async function GenreDetails({
         )}
       </div>
       {genre.movies.length > 0 ? (
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3">
           {genre.movies.map((m) => (
-            <div
-              key={m.id}
-              className="border border-border rounded-lg hover:border-primary transition-colors"
-            >
-              <Link href={`/movies/${m.id}`}>
-                <div className="p-4 flex flex-col sm:flex-row justify-evenly sm:justify-center items-center">
-                  <span>
-                    {m.title} ({m.releaseDate.getFullYear()})
+            <Link key={m.id} href={`/movies/${m.id}`}>
+              <div
+                className={`${cardClass} flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4`}
+              >
+                <span className="font-medium">
+                  {m.title}{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({m.releaseDate.getFullYear()})
                   </span>
-                  <span>Runtime: {minsToDisplayRuntime(m.runtimeMinutes)}</span>
-                  <span>Rating: {m.averageRating}/10</span>
+                </span>
+                <div className="flex gap-4">
+                  <span className={metaClass}>
+                    <Clock className="w-4 h-4" />
+                    {minsToDisplayRuntime(m.runtimeMinutes)}
+                  </span>
+                  <span className={metaClass}>
+                    <Star className="w-4 h-4" />
+                    {m.averageRating}/10
+                  </span>
                 </div>
-              </Link>
-            </div>
+              </div>
+            </Link>
           ))}
         </div>
       ) : (
-        <div className="mb-8">
+        <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+          <Film className="w-8 h-8" />
           <p>No movies found</p>
         </div>
       )}

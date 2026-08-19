@@ -4,10 +4,7 @@ import { useAuth } from "@/context/commonContext";
 
 export default function Welcome() {
   const { user } = useAuth();
+  if (!user) return null;
 
-  return (
-    <div>
-      <p>Welcome {user && user.name}</p>
-    </div>
-  );
+  return <p className="font-medium text-primary">Welcome, {user.name}</p>;
 }
