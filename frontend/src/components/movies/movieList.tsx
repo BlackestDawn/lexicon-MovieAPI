@@ -1,14 +1,11 @@
-import Link from "next/link";
-import { Clock, Star, Film } from "lucide-react";
-import GenreBadge from "../genres/genreBadge";
-import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
+import { Film } from "lucide-react";
 import RestrictedComponent from "../auth/restrictedComponent";
-import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
-import { fetchMovies, removeMovie } from "@/lib/actions/movie";
+import { fetchMovies } from "@/lib/actions/movie";
 import MovieCreateButton from "./movieCreateButton";
+import MovieCard from "./movieCard";
 import PaginationControls from "../general/paginationControls";
 import MovieFilters from "./movieFilters";
-import { cardClass, metaClass, sectionHeadingClass } from "@/lib/data/consts/styles";
+import { sectionHeadingClass } from "@/lib/data/consts/styles";
 
 export default async function MovieList({
   page,
@@ -64,39 +61,7 @@ export default async function MovieList({
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {movies.map((movie) => (
-          <Link key={movie.id} href={`/movies/${movie.id}`}>
-            <div className={`${cardClass} flex flex-col gap-3 p-5`}>
-              <div className="flex justify-between items-start gap-2">
-                <h3 className="text-xl font-medium">
-                  {movie.title}{" "}
-                  <span className="text-muted-foreground font-normal">
-                    ({movie.releaseDate.getFullYear()})
-                  </span>
-                </h3>
-                <RestrictedComponent accessLevel="ModeratorAndAbove">
-                  <SimpleDeleteButton id={movie.id} onDelete={removeMovie} />
-                </RestrictedComponent>
-              </div>
-              <div className="flex gap-4">
-                <span className={metaClass}>
-                  <Clock className="w-4 h-4" />
-                  {minsToDisplayRuntime(movie.runtimeMinutes)}
-                </span>
-                <span className={metaClass}>
-                  <Star className="w-4 h-4" />
-                  {movie.averageRating}/10
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {movie.plotSummery}
-              </p>
-              <div className="flex flex-wrap gap-2 mt-auto pt-1">
-                {movie.genres.map((g) => (
-                  <GenreBadge key={g.id} name={g.name} />
-                ))}
-              </div>
-            </div>
-          </Link>
+          <MovieCard key={movie.id} movie={movie} manageable />
         ))}
       </div>
     </div>
