@@ -33,20 +33,20 @@ export default function PaginationControls({
         href={hrefForPage(CurrentPage - 1)}
         aria-disabled={!hasPrev}
         tabIndex={hasPrev ? undefined : -1}
-        className={`p-2 rounded-md border border-slate-600 dark:border-slate-300 ${
+        className={`p-2 rounded-md border border-border hover:border-primary hover:text-primary transition-colors ${
           hasPrev ? "" : "pointer-events-none opacity-40"
         }`}
       >
         <ChevronLeft className="h-5 w-5" />
       </Link>
-      <span className="text-sm text-slate-500 dark:text-slate-300">
+      <span className="text-sm text-muted-foreground">
         Page {CurrentPage} of {TotalPageCount}
       </span>
       <Link
         href={hrefForPage(CurrentPage + 1)}
         aria-disabled={!hasNext}
         tabIndex={hasNext ? undefined : -1}
-        className={`p-2 rounded-md border border-slate-600 dark:border-slate-300 ${
+        className={`p-2 rounded-md border border-border hover:border-primary hover:text-primary transition-colors ${
           hasNext ? "" : "pointer-events-none opacity-40"
         }`}
       >

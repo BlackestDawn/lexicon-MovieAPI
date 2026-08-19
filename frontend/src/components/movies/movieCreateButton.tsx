@@ -10,7 +10,7 @@ export default function MovieCreateButton() {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 bg-green-400 dark:bg-green-700 text-slate-700 dark:text-slate-200 rounded-md"
+        className="p-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors"
       >
         Create new movie
       </button>

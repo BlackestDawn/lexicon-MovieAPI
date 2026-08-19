@@ -9,7 +9,7 @@ export function DesktopNav() {
           <li key={link.href}>
             <Link
               href={link.href}
-              className="block whitespace-nowrap rounded-md px-3 py-2 font-medium text-gray-200 hover:bg-gray-600 hover:text-white transition-colors duration-200"
+              className="block whitespace-nowrap rounded-md px-3 py-2 font-medium text-sidebar-foreground/80 hover:bg-sidebar-hover hover:text-sidebar-foreground transition-colors duration-200"
             >
               {link.label}
             </Link>

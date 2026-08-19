@@ -1,21 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4faf9;
+  --surface: #ffffff;
+  --foreground: #0f201d;
+  --muted-foreground: #4b6864;
+  --border: #cfe3df;
+
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-foreground: #ffffff;
+
+  --accent: #fb7185;
+  --accent-hover: #f43f5e;
+  --accent-foreground: #ffffff;
+
+  --danger: #dc2626;
+  --danger-foreground: #ffffff;
+  --success: #16a34a;
+
+  --sidebar: #0f3d37;
+  --sidebar-foreground: #e6f4f1;
+  --sidebar-hover: #145048;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-hover: var(--sidebar-hover);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b1615;
+    --surface: #12211f;
+    --foreground: #e6f4f1;
+    --muted-foreground: #93b3ae;
+    --border: #1f3835;
+
+    --primary: #14b8a6;
+    --primary-hover: #2dd4bf;
+    --primary-foreground: #04211d;
+
+    --accent: #fb7185;
+    --accent-hover: #fda4af;
+    --accent-foreground: #2b0a10;
+
+    --danger: #f87171;
+    --danger-foreground: #2b0a0a;
+    --success: #4ade80;
+
+    --sidebar: #081714;
+    --sidebar-foreground: #e6f4f1;
+    --sidebar-hover: #0f2b26;
   }
 }
 

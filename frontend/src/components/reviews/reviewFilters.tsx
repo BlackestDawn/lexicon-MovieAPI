@@ -1,6 +1,6 @@
 import Form from "next/form";
 import Link from "next/link";
-import { inputClass, labelClass } from "@/lib/data/consts/styles";
+import { inputClass, labelClass, panelClass } from "@/lib/data/consts/styles";
 
 export default function ReviewFilters({
   movieId,
@@ -18,7 +18,7 @@ export default function ReviewFilters({
   return (
     <Form
       action={`/movies/${movieId}`}
-      className="flex flex-col sm:flex-row sm:items-end gap-4"
+      className={`flex flex-col sm:flex-row sm:items-end gap-4 ${panelClass}`}
     >
       <div className="flex-1">
         <label htmlFor="reviewSearch" className={labelClass}>
@@ -66,14 +66,14 @@ export default function ReviewFilters({
       <div className="flex gap-2">
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-400 dark:bg-blue-700 text-slate-700 dark:text-slate-200 rounded-md"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors"
         >
           Search
         </button>
         {hasFilters && (
           <Link
             href={`/movies/${movieId}`}
-            className="px-4 py-2 rounded-md border border-slate-400 dark:border-slate-600 flex items-center"
+            className="px-4 py-2 rounded-md border border-border hover:bg-background transition-colors flex items-center"
           >
             Clear
           </Link>

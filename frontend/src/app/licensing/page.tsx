@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 export default function Licensing() {
   return (
     <BaseContainer className="py-12">
-      <h1 className="text-4xl font-bold text-black dark:text-zinc-50 mb-8">Licensing</h1>
+      <h1 className="text-4xl font-bold text-foreground mb-8">Licensing</h1>
 
-      <div className="prose prose-gray dark:prose-invert max-w-none space-y-6 text-zinc-700 dark:text-zinc-300">
+      <div className="prose prose-gray dark:prose-invert max-w-none space-y-6 text-foreground">
         <section>
-          <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">
             Creative Commons Attribution 4.0 International License
           </h2>
           <p>
@@ -31,7 +31,7 @@ export default function Licensing() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">
             Terms
           </h2>
           <p>
@@ -52,7 +52,7 @@ export default function Licensing() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">
             Notices
           </h2>
           <p>
@@ -67,7 +67,7 @@ export default function Licensing() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">
             Full License Text
           </h2>
           <p>
@@ -76,7 +76,7 @@ export default function Licensing() {
               href="https://creativecommons.org/licenses/by/4.0/legalcode"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-primary hover:underline"
             >
               Creative Commons Attribution 4.0 International License
             </Link>
@@ -84,7 +84,7 @@ export default function Licensing() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">
             Third-Party Libraries
           </h2>
           <p>
@@ -102,13 +102,13 @@ export default function Licensing() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-black dark:text-zinc-50 mt-8 mb-4">
+          <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">
             Attribution
           </h2>
           <p>
             If you use or adapt this project, please provide attribution in the following format:
           </p>
-          <div className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg mt-4 font-mono text-sm">
+          <div className="bg-surface border border-border p-4 rounded-lg mt-4 font-mono text-sm">
             MovieAPI by Alexander Stauch is licensed under CC BY 4.0
           </div>
         </section>

@@ -10,7 +10,7 @@ export function SiteFooter() {
         the API — see the project{" "}
         <Link
           href={"https://github.com/BlackestDawn/lexicon-MovieAPI"}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors"
         >
           repository
         </Link>
@@ -23,7 +23,7 @@ export function SiteFooter() {
             Licensed under{" "}
             <Link
               href="/licensing"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-primary hover:underline"
             >
               Creative commons Attribution 4.0 International
             </Link>
@@ -33,7 +33,7 @@ export function SiteFooter() {
         <div className="flex gap-6 text-sm">
           <Link
             href="/cookie-policy"
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             Cookie Policy
           </Link>

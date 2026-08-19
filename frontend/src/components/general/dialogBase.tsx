@@ -35,13 +35,13 @@ export default function DialogBase({
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
-        className={`relative w-full ${sizeClass[size]} max-h-[90vh] overflow-y-auto p-6 border border-slate-600 dark:border-slate-400 rounded-2xl bg-white dark:bg-gray-800 shadow-xl`}
+        className={`relative w-full ${sizeClass[size]} max-h-[90vh] overflow-y-auto p-6 border border-border rounded-2xl bg-surface shadow-xl`}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
         >
           <X className="w-5 h-5" />
         </button>

@@ -239,7 +239,7 @@ export default function MovieFormFull({
             {genres.map((g) => (
               <label
                 key={g.id}
-                className="flex items-center gap-1 px-2 py-1 border border-slate-600 dark:border-slate-400 rounded-md text-sm"
+                className="flex items-center gap-1 px-2 py-1 border border-border rounded-md text-sm"
               >
                 <input
                   type="checkbox"
@@ -254,7 +254,7 @@ export default function MovieFormFull({
               </label>
             ))}
             {genres.length === 0 && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Loading genres...
               </p>
             )}
@@ -293,7 +293,7 @@ export default function MovieFormFull({
               type="button"
               onClick={addCastCrew}
               disabled={isPending || !newPersonId}
-              className="flex items-center justify-center gap-1 px-3 py-2 bg-blue-400 dark:bg-blue-700 text-slate-700 dark:text-slate-200 rounded-md disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center justify-center gap-1 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50 whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -304,11 +304,11 @@ export default function MovieFormFull({
             {castCrew.map((c) => (
               <li
                 key={c.personId}
-                className="flex items-center justify-between px-3 py-2 border border-slate-600 dark:border-slate-400 rounded-md"
+                className="flex items-center justify-between px-3 py-2 border border-border rounded-md"
               >
                 <span>
                   {c.label}{" "}
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-muted-foreground">
                     — {personRoleLabels[c.role]}
                   </span>
                 </span>
@@ -317,14 +317,14 @@ export default function MovieFormFull({
                   onClick={() => removeCastCrew(c.personId)}
                   disabled={isPending}
                   aria-label={`Remove ${c.label}`}
-                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                  className="text-danger hover:opacity-80 transition-opacity"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </li>
             ))}
             {castCrew.length === 0 && (
-              <li className="text-sm text-slate-500 dark:text-slate-400">
+              <li className="text-sm text-muted-foreground">
                 No cast or crew added yet.
               </li>
             )}
@@ -339,14 +339,10 @@ export default function MovieFormFull({
         </div>
 
         {(error || issues.length > 0) && (
-          <div className="rounded-md bg-red-50 dark:bg-red-900 p-4 space-y-1">
-            {error && (
-              <p className="text-sm text-red-800 dark:text-red-200">
-                {error}
-              </p>
-            )}
+          <div className="rounded-md bg-danger/10 border border-danger/30 p-4 space-y-1">
+            {error && <p className="text-sm text-danger">{error}</p>}
             {issues.map((issue, i) => (
-              <p key={i} className="text-sm text-red-800 dark:text-red-200">
+              <p key={i} className="text-sm text-danger">
                 {issue}
               </p>
             ))}
@@ -358,14 +354,14 @@ export default function MovieFormFull({
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="px-4 py-2 rounded-md border border-slate-400 dark:border-slate-600 disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-border hover:bg-background transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isPending}
-            className="px-4 py-2 bg-blue-400 dark:bg-blue-700 text-slate-700 dark:text-slate-200 rounded-md disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
             {isPending
               ? "Saving..."
