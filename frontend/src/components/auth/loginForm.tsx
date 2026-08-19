@@ -12,9 +12,8 @@ import {
 } from "@/lib/actions/auth";
 
 const fieldInputClass =
-  "appearence-once relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
-const fieldLabelClass =
-  "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+  "appearence-once relative block w-full px-3 py-2 border border-border rounded-md bg-surface text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary";
+const fieldLabelClass = "block text-sm font-medium text-muted-foreground mb-1";
 
 type Mode = "login" | "register" | "forgot";
 type ForgotStep = "request" | "reset";
@@ -161,12 +160,12 @@ export default function LoginForm({
           )}
 
           {mode === "forgot" && forgotStep === "reset" ? (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Resetting password for <strong>{resetEmail}</strong>.{" "}
               <button
                 type="button"
                 onClick={() => switchMode("forgot")}
-                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                className="font-medium text-primary hover:text-primary-hover"
               >
                 Use a different email
               </button>
@@ -239,18 +238,16 @@ export default function LoginForm({
           )}
 
           {info && (
-            <div className="rounded-md bg-green-50 dark:bg-green-900 p-4">
-              <p className="text-sm text-green-800 dark:text-green-200">{info}</p>
+            <div className="rounded-md bg-success/10 border border-success/30 p-4">
+              <p className="text-sm text-success">{info}</p>
             </div>
           )}
 
           {(error || issues.length > 0) && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900 p-4 space-y-1">
-              {error && (
-                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-              )}
+            <div className="rounded-md bg-danger/10 border border-danger/30 p-4 space-y-1">
+              {error && <p className="text-sm text-danger">{error}</p>}
               {issues.map((issue, i) => (
-                <p key={i} className="text-sm text-red-800 dark:text-red-200">
+                <p key={i} className="text-sm text-danger">
                   {issue}
                 </p>
               ))}
@@ -260,7 +257,7 @@ export default function LoginForm({
           <button
             type="submit"
             disabled={isPending}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span className="absolute left-0 inset-y-0 flex items-center pl-3">
               <LogIn className="h-5 w-5" />
@@ -270,7 +267,7 @@ export default function LoginForm({
         </div>
       </Form>
 
-      <div className="mt-4 space-y-1 text-center text-sm text-gray-600 dark:text-gray-400">
+      <div className="mt-4 space-y-1 text-center text-sm text-muted-foreground">
         {mode === "login" && (
           <>
             <p>
@@ -278,7 +275,7 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={() => switchMode("register")}
-                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                className="font-medium text-primary hover:text-primary-hover"
               >
                 Register
               </button>
@@ -288,7 +285,7 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={() => switchMode("forgot")}
-                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                className="font-medium text-primary hover:text-primary-hover"
               >
                 Reset it
               </button>
@@ -301,7 +298,7 @@ export default function LoginForm({
             <button
               type="button"
               onClick={() => switchMode("login")}
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+              className="font-medium text-primary hover:text-primary-hover"
             >
               Sign in
             </button>
@@ -313,7 +310,7 @@ export default function LoginForm({
             <button
               type="button"
               onClick={() => switchMode("login")}
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+              className="font-medium text-primary hover:text-primary-hover"
             >
               Sign in
             </button>
