@@ -32,3 +32,8 @@ output "openiddict_encryption_key_secret_ids" {
   value       = { for k, s in google_secret_manager_secret.openiddict_encryption_key : k => s.secret_id }
   description = "Secret Manager secret IDs - populate versions with e.g. `openssl rand -base64 32 | gcloud secrets versions add <id> --data-file=-`."
 }
+
+output "admin_password_secret_ids" {
+  value       = { for k, s in google_secret_manager_secret.admin_password : k => s.secret_id }
+  description = "Secret Manager secret IDs - populate versions with a strong random password per environment, e.g. `openssl rand -base64 24 | gcloud secrets versions add <id> --data-file=-`. Pair with the ADMIN_EMAIL GitHub Actions secret."
+}

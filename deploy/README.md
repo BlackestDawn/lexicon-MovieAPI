@@ -57,6 +57,12 @@ merge to main ──▶ build & push images ──▶ deploy Cloud Run staging (
    # The encryption key can stay symmetric.
    openssl rand -base64 32 | gcloud secrets versions add movieapi-staging-openiddict-encryption-key --data-file=-
    openssl rand -base64 32 | gcloud secrets versions add movieapi-prod-openiddict-encryption-key    --data-file=-
+
+   # Admin account password (see AdminUserSeeder) - without this, staging/prod
+   # never seed an admin account at all, since that seeder is a deliberate
+   # no-op when unconfigured. Use a different random password per environment.
+   openssl rand -base64 24 | gcloud secrets versions add movieapi-staging-admin-password --data-file=-
+   openssl rand -base64 24 | gcloud secrets versions add movieapi-prod-admin-password    --data-file=-
    ```
 
 4. **GitHub repo secrets** (Settings → Secrets and variables → Actions):
@@ -70,6 +76,7 @@ merge to main ──▶ build & push images ──▶ deploy Cloud Run staging (
    Set by hand, matching whatever you used for `region` in `terraform.tfvars` and the domain from step 7 below:
    - `GCP_REGION` (e.g. `europe-west1`)
    - `DOMAIN` (e.g. `alexstauch.app` — the workflows build `movieapi.$DOMAIN` / `movieapi-api.$DOMAIN` from it)
+   - `ADMIN_EMAIL` — email for the seeded admin account (`Seed:AdminEmail`), shared by both staging and prod; the password comes from the per-environment Secret Manager secret populated in step 3
 
 5. **GitHub environment** — create an environment named `production` (Settings → Environments) with a required reviewer, so `deploy-prod.yml` always pauses for manual approval.
 

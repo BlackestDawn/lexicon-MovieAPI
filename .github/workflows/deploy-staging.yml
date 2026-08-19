@@ -87,10 +87,12 @@ jobs:
             OutputCache__Provider=Memory
             Logging__Sink=GoogleCloudLogging
             GoogleCloudLogging__ProjectId=${{ secrets.GCP_PROJECT_ID }}
+            Seed__AdminEmail=${{ secrets.ADMIN_EMAIL }}
           secrets: |
             ConnectionStrings__postgres=${{ env.APP_NAME }}-staging-database-url:latest
             OpenIddict__SigningKey=${{ env.APP_NAME }}-staging-openiddict-signing-key:latest
             OpenIddict__EncryptionKey=${{ env.APP_NAME }}-staging-openiddict-encryption-key:latest
+            Seed__AdminPassword=${{ env.APP_NAME }}-staging-admin-password:latest
 
       - name: Deploy frontend to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v3
