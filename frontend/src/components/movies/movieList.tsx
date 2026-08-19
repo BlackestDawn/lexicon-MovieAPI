@@ -54,14 +54,14 @@ export default async function MovieList({
         />
       )}
       {movies.length === 0 && (
-        <p className="text-center text-slate-500 dark:text-slate-400">
+        <p className="text-center text-muted-foreground">
           No movies found matching your filters.
         </p>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {movies.map((movie) => (
           <Link key={movie.id} href={`/movies/${movie.id}`}>
-            <div className="h-full p-4 border border-slate-600 dark:border-slate-300 rounded-lg space-y-2">
+            <div className="h-full p-4 border border-border rounded-lg space-y-2 hover:border-primary transition-colors">
               <div className="flex justify-between">
                 <h3 className="text-xl">
                   {movie.title} ({movie.releaseDate.getFullYear()})
@@ -72,7 +72,7 @@ export default async function MovieList({
                   </RestrictedComponent>
                 </div>
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-300">
+              <p className="text-sm text-muted-foreground">
                 Runtime: {minsToDisplayRuntime(movie.runtimeMinutes)}
               </p>
               <p>{movie.plotSummery}</p>

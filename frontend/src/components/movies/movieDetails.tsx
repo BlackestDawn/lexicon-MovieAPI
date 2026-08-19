@@ -37,7 +37,7 @@ export default async function MovieDetails({
   return (
     <div className="w-full m-4 space-y-6">
       <div className="flex justify-between">
-        <h3 className="text-center text-4xl text-slate-800 dark:text-slate-200">
+        <h3 className="text-center text-4xl text-foreground">
           {movie.title}
         </h3>
         <div className="space-x-4">
@@ -74,7 +74,7 @@ export default async function MovieDetails({
               .sort((a, b) => a.role - b.role)
               .map((p) => (
                 <Link key={p.personId} href={`/persons/${p.personId}`}>
-                  <div className="p-4 border border-slate-600 dark:border-slate-400 rounded-md text-center">
+                  <div className="p-4 border border-border rounded-md text-center hover:border-primary transition-colors">
                     <p>
                       {personRoleLabels[p.role]}: {p.givenName}{" "}
                       {p.middleName && p.middleName[0] + ". "}
@@ -112,7 +112,7 @@ export default async function MovieDetails({
           {reviews.length > 0 ? (
             reviews.map((r) => (
               <Link key={r.id} href={`/movies/${movie.id}/${r.id}`}>
-                <div className="border border-slate-600 dark:border-slate-400 rounded-md text-center p-4">
+                <div className="border border-border rounded-md text-center p-4 hover:border-primary transition-colors">
                   <p>
                     {r.authorName} {r.score} / 10
                   </p>
@@ -120,7 +120,7 @@ export default async function MovieDetails({
               </Link>
             ))
           ) : (
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-muted-foreground">
               No reviews found matching your filters.
             </p>
           )}
