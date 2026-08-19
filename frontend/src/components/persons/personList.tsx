@@ -41,14 +41,14 @@ export default async function PersonsList({
         )}
       </div>
       {persons.length === 0 && (
-        <p className="text-center text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-center text-muted-foreground mb-6">
           No persons found matching your filters.
         </p>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {persons.map((p) => (
           <Link key={p.id} href={`/persons/${p.id}`}>
-            <div className="p-4 border border-slate-600 dark:border-slate-400 rounded-md text-center">
+            <div className="p-4 border border-border rounded-md text-center hover:border-primary transition-colors">
               <p>
                 {p.givenName} {p.middleName && p.middleName[0] + ". "}
                 {p.lastName}

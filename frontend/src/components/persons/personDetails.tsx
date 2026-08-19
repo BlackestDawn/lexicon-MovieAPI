@@ -36,7 +36,7 @@ export default async function PersonDetails({ id }: { id: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {person.movieRoles.map((mr) => (
           <Link key={mr.movieId} href={`/movies/${mr.movieId}`}>
-            <div className="p-4 border border-slate-600 dark:border-slate-400 rounded-md text-center">
+            <div className="p-4 border border-border rounded-md text-center hover:border-primary transition-colors">
               <p>
                 {mr.title}: {personRoleLabels[mr.role]}
               </p>
