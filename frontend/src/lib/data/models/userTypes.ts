@@ -1,4 +1,5 @@
 import z from "zod";
+import { ValidationError } from "../interfaces/errors";
 
 export const userRoles = z.enum([
   "User",
@@ -85,13 +86,25 @@ export type UserForUpdate = z.infer<typeof userForUpdateSchema>;
 
 // Mirrors RegisterValidator. displayName is optional - falls back to the email's
 // local part server-side when omitted.
-export const registerSchema = z.object({
+export const registerDtoSchema = z.object({
   email: z.email("A valid email is required"),
   password: passwordSchema,
   displayName: z.string().max(100).optional(),
 });
 
-export type Register = z.infer<typeof registerSchema>;
+export type RegisterDto = z.infer<typeof registerDtoSchema>;
+
+export function validateRegisterDto(item: unknown): RegisterDto {
+  const result = registerDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid Register item:", result.error);
+    throw new ValidationError(
+      "Invalid registration details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
 
 // Mirrors ChangePasswordValidator: new password must differ from the current one.
 export const changePasswordSchema = z
@@ -107,17 +120,41 @@ export const changePasswordSchema = z
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
 
 // Mirrors ForgotPasswordValidator.
-export const forgotPasswordSchema = z.object({
+export const forgotPasswordDtoSchema = z.object({
   email: z.email("A valid email is required"),
 });
 
-export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordDtoSchema>;
+
+export function validateForgotPasswordDto(item: unknown): ForgotPasswordDto {
+  const result = forgotPasswordDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid ForgotPassword item:", result.error);
+    throw new ValidationError(
+      "Invalid password reset request",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
 
 // Mirrors ResetPasswordValidator.
-export const resetPasswordSchema = z.object({
+export const resetPasswordDtoSchema = z.object({
   email: z.email("A valid email is required"),
   token: z.string().min(1, "Token is required"),
   newPassword: passwordSchema,
 });
 
-export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+export type ResetPasswordDto = z.infer<typeof resetPasswordDtoSchema>;
+
+export function validateResetPasswordDto(item: unknown): ResetPasswordDto {
+  const result = resetPasswordDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid ResetPassword item:", result.error);
+    throw new ValidationError(
+      "Invalid password reset details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}

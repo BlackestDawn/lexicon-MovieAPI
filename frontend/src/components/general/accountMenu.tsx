@@ -1,31 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useAuth } from "@/context/commonContext";
 import { useDismissableMenu } from "@/hooks/useDismissableMenu";
 import menuData from "@/lib/data/consts/menuOptions.json";
+import LoginForm from "../auth/loginForm";
+import DialogBase from "./dialogBase";
 
 export function AccountMenu() {
-  const { isOpen, toggle, close, menuRef } = useDismissableMenu<HTMLDivElement>();
+  const { isOpen, toggle, close, menuRef } =
+    useDismissableMenu<HTMLDivElement>();
   const { user, logout } = useAuth();
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const handleLogout = () => {
     startTransition(async () => {
       await logout();
       close();
-      router.push("/");
     });
   };
 
   if (!user) {
     return (
-      <Link href="/login" className="font-medium hover:underline">
-        Login
-      </Link>
+      <div ref={menuRef}>
+        <button onClick={toggle} className="font-medium hover:underline">
+          Login
+        </button>
+
+        {isOpen && (
+          <DialogBase onClose={close}>
+            <LoginForm onClose={close} />
+          </DialogBase>
+        )}
+      </div>
     );
   }
 
