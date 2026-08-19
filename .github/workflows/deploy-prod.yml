@@ -6,6 +6,10 @@ on:
       image_tag:
         description: "Git SHA running on staging to promote. Leave blank to promote whatever is currently running on staging."
         required: false
+      seed_example_data:
+        description: "Seed the sample movie catalog (Seed:ExampleData) - only meaningful on a fresh, empty database; leave off for a real prod launch"
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-prod
@@ -96,6 +100,7 @@ jobs:
             Logging__Sink=GoogleCloudLogging
             GoogleCloudLogging__ProjectId=${{ secrets.GCP_PROJECT_ID }}
             Seed__AdminEmail=${{ secrets.ADMIN_EMAIL }}
+            Seed__ExampleData=${{ inputs.seed_example_data || false }}
           secrets: |
             ConnectionStrings__postgres=${{ env.APP_NAME }}-prod-database-url:latest
             OpenIddict__SigningKey=${{ env.APP_NAME }}-prod-openiddict-signing-key:latest

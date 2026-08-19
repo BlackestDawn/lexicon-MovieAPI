@@ -33,6 +33,9 @@ services:
       OpenIddict__EncryptionKey: ${OPENIDDICT_ENCRYPTION_KEY:-vAyd5IU6grxTQ+jkp3yr46/4WvIfesjsIRo2D8m2Gog=}
       Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@movieapi.local}
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin123!}
+      # Sample movie catalog - fine to leave on here since this is a single-instance
+      # demo stack; see the comment in Program.cs for why it's opt-in elsewhere.
+      Seed__ExampleData: "true"
       # No separate migration step in this demo stack, so let the API apply
       # migrations itself on startup - see Program.cs.
       ApplyMigrationsOnStartup: "true"

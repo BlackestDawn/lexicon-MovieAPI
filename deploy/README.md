@@ -82,6 +82,8 @@ merge to main ──▶ build & push images ──▶ deploy Cloud Run staging (
 
 6. **First deploy** — push to `main` (or run "Deploy to staging" manually) to create the staging Cloud Run services, then run "Deploy to production" manually once staging looks good.
 
+   To seed the sample movie catalog on that first deploy (`DbSeeder` — genres, people, movies, reviews), trigger the workflow manually (Actions → Deploy to staging/production → Run workflow) with `seed_example_data` checked. It's a no-op once the `Movies` table has any rows, so it's safe to leave unchecked on every deploy after the first — there's no need to turn it back off.
+
    The runtime service account also needs `roles/logging.logWriter` for `Logging:Sink=GoogleCloudLogging` to work — already granted by the GCP stack's Terraform (`deploy/terraform/gcp/main.tf`), no separate step needed.
 
 7. **Domain mappings** — Cloud Run custom domains aren't in Terraform; one-time CLI step per service:
