@@ -18,7 +18,7 @@ export default async function ReviewDetails({
     <div className="w-full m-4 space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-3xl text-slate-800 dark:text-slate-200">
+          <h3 className="text-3xl text-foreground">
             {review.authorName}
           </h3>
           <p>Score: {review.score}/10</p>
@@ -38,7 +38,7 @@ export default async function ReviewDetails({
         </RestrictedComponent>
       </div>
       <p>{review.body}</p>
-      <div className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="text-sm text-muted-foreground">
         <p>Posted: {review.createdAt.toDateString()}</p>
         {review.updatedAt.getTime() !== review.createdAt.getTime() && (
           <p>Last updated: {review.updatedAt.toDateString()}</p>
