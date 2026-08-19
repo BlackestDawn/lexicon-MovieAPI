@@ -40,7 +40,7 @@ export default async function RootLayout({
           <Sidebar />
 
           <div className="flex flex-1 flex-col min-w-0">
-            <header className="bg-gray-200 dark:bg-gray-700 text-white">
+            <header className="bg-surface border-b border-border text-foreground">
               <BaseContainer className="py-4">
                 <SiteHeader />
               </BaseContainer>
@@ -50,8 +50,8 @@ export default async function RootLayout({
               <BaseContainer>{children}</BaseContainer>
             </main>
 
-            <footer className="bg-gray-200 dark:bg-gray-700">
-              <BaseContainer className="py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+            <footer className="bg-surface border-t border-border">
+              <BaseContainer className="py-8 text-center text-sm text-muted-foreground">
                 <SiteFooter />
               </BaseContainer>
             </footer>

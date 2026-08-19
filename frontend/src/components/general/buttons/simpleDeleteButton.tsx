@@ -28,7 +28,7 @@ export default function SimpleDeleteButton({
     <button
       onClick={handleClick}
       disabled={isPending}
-      className="p-2 bg-red-500 dark:bg-red-600 text-slate-900 dark:text-slate-100 rounded-md"
+      className="p-2 bg-danger text-danger-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
     >
       <Trash2 className="h-5 w-5" />
     </button>
