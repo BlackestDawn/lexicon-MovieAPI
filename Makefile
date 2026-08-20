@@ -7,7 +7,7 @@ help:
 	@echo "Available targets:"
 	@echo "  install         Install backend + frontend dependencies"
 	@echo "  build           Build backend and frontend"
-	@echo "  test            Run backend unit + integration tests"
+	@echo "  test            Run backend unit + integration tests, and frontend unit tests"
 	@echo "  lint            Check formatting/lint for both stacks (no changes)"
 	@echo "  format          Apply backend formatting fixes"
 	@echo "  dev             Run backend and frontend dev servers together"
@@ -27,10 +27,12 @@ build:
 	cd backend && dotnet build MovieAPI.slnx
 	cd frontend && pnpm run build
 
-# Covers both MovieAPI.UnitTests and MovieAPI.IntegrationTests - the latter
-# manages its own Postgres Testcontainer, no separate DB setup needed.
+# Backend covers both MovieAPI.UnitTests and MovieAPI.IntegrationTests - the
+# latter manages its own Postgres Testcontainer, no separate DB setup needed.
+# Frontend runs Vitest in single-pass mode (no watch).
 test:
 	cd backend && dotnet test MovieAPI.slnx
+	cd frontend && pnpm run test
 
 lint:
 	cd backend && dotnet format MovieAPI.slnx --verify-no-changes
