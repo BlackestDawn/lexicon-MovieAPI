@@ -9,12 +9,13 @@ import type {
   UserRoles,
 } from "../data/models/userTypes";
 import {
+  validateChangePassword,
   validateForgotPasswordDto,
   validateRegisterDto,
   validateResetPasswordDto,
 } from "../data/models/userTypes";
 import { ValidationError } from "../data/interfaces/errors";
-import { apiGet, apiPost, isAuthenticated, login } from "./apiInteract";
+import { apiGet, apiPost, apiPut, isAuthenticated, login } from "./apiInteract";
 
 function toUser(dto: CurrentUserDto): User {
   return {
@@ -96,6 +97,26 @@ export async function resetPasswordRequest(
     return {
       success: false,
       error: e instanceof Error ? e.message : "Password reset failed",
+      issues: e instanceof ValidationError ? e.issues : null,
+    };
+  }
+}
+
+export async function changePasswordRequest(
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const validated = validateChangePassword({
+      currentPassword: formData.get("currentPassword"),
+      newPassword: formData.get("newPassword"),
+    });
+    await apiPut("/auth/me/password", validated);
+    return { success: true };
+  } catch (e) {
+    console.error("Error changing password:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Password change failed",
       issues: e instanceof ValidationError ? e.issues : null,
     };
   }

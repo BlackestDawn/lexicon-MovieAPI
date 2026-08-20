@@ -119,6 +119,18 @@ export const changePasswordSchema = z
 
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
 
+export function validateChangePassword(item: unknown): ChangePassword {
+  const result = changePasswordSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid ChangePassword item:", result.error);
+    throw new ValidationError(
+      "Invalid password change details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
+
 // Mirrors ForgotPasswordValidator.
 export const forgotPasswordDtoSchema = z.object({
   email: z.email("A valid email is required"),
