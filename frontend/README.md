@@ -112,6 +112,7 @@ The app needs the backend running to show any real data (see the [backend README
 - `pnpm lint` — run ESLint
 - `pnpm test` — run the test suite once (used in CI and `make test`)
 - `pnpm test:watch` — re-run tests on change
+- `pnpm test:coverage` — run once with a coverage report (used by [`coverage.yml`](../.github/workflows/coverage.yml) to generate the root README's frontend coverage badge)
 
 ## Testing
 
