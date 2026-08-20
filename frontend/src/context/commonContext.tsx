@@ -1,7 +1,11 @@
 "use client";
 
 import { logout as logoutRequest } from "@/lib/actions/apiInteract";
-import { loginRequest, registerRequest } from "@/lib/actions/auth";
+import {
+  loginRequest,
+  registerRequest,
+  updateProfileRequest,
+} from "@/lib/actions/auth";
 import type { AccessLevel, AuthContextValue } from "@/lib/data/interfaces/auth";
 import { ValidationError } from "@/lib/data/interfaces/errors";
 import {
@@ -41,6 +45,21 @@ export default function CommonContext({ children, initialUser }: Props) {
     setUser(result.user);
   };
 
+  const updateProfile = async (email: string, displayName?: string) => {
+    const formData = new FormData();
+    formData.set("email", email);
+    if (displayName) formData.set("displayName", displayName);
+
+    const result = await updateProfileRequest(formData);
+    if (!result.success) {
+      if (result.issues && result.issues.length > 0) {
+        throw new ValidationError(result.error, result.issues);
+      }
+      throw new Error(result.error);
+    }
+    setUser(result.user);
+  };
+
   const logout = async () => {
     await logoutRequest();
     setUser(null);
@@ -64,7 +83,9 @@ export default function CommonContext({ children, initialUser }: Props) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, hasAccess, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, hasAccess, login, register, updateProfile, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

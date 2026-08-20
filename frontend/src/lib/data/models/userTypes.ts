@@ -77,12 +77,24 @@ export function validateUser(item: unknown): User {
 }
 
 // Mirrors UserUpdateValidator. displayName is optional - left unchanged when omitted.
-export const userForUpdateSchema = z.object({
+export const userForUpdateDtoSchema = z.object({
   email: z.email("A valid email is required"),
   displayName: z.string().max(100).optional(),
 });
 
-export type UserForUpdate = z.infer<typeof userForUpdateSchema>;
+export type UserForUpdateDto = z.infer<typeof userForUpdateDtoSchema>;
+
+export function validateUserForUpdateDto(item: unknown): UserForUpdateDto {
+  const result = userForUpdateDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid UserForUpdate item:", result.error);
+    throw new ValidationError(
+      "Invalid profile details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
 
 // Mirrors RegisterValidator. displayName is optional - falls back to the email's
 // local part server-side when omitted.

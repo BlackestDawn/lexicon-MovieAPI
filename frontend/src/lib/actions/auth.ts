@@ -13,6 +13,7 @@ import {
   validateForgotPasswordDto,
   validateRegisterDto,
   validateResetPasswordDto,
+  validateUserForUpdateDto,
 } from "../data/models/userTypes";
 import { ValidationError } from "../data/interfaces/errors";
 import { apiGet, apiPost, apiPut, isAuthenticated, login } from "./apiInteract";
@@ -117,6 +118,35 @@ export async function changePasswordRequest(
     return {
       success: false,
       error: e instanceof Error ? e.message : "Password change failed",
+      issues: e instanceof ValidationError ? e.issues : null,
+    };
+  }
+}
+
+type UpdateProfileResult =
+  | { success: true; user: User }
+  | { success: false; error: string; issues: string[] | null };
+
+export async function updateProfileRequest(
+  formData: FormData,
+): Promise<UpdateProfileResult> {
+  try {
+    const validated = validateUserForUpdateDto({
+      email: formData.get("email"),
+      displayName: formData.get("displayName") || undefined,
+    });
+    await apiPut("/auth/me", validated);
+
+    const user = await fetchCurrentUser();
+    if (!user) {
+      throw new Error("Profile updated but the user profile could not be reloaded");
+    }
+    return { success: true, user };
+  } catch (e) {
+    console.error("Error updating profile:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Profile update failed",
       issues: e instanceof ValidationError ? e.issues : null,
     };
   }
