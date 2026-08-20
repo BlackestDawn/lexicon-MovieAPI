@@ -49,7 +49,7 @@ export default function ProfileForm() {
           <input
             id="email"
             name="email"
-            type="email"
+            type="text"
             required
             defaultValue={user.email}
             className={inputClass}
