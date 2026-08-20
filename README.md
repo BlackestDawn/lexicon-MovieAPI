@@ -1,6 +1,15 @@
 # MovieAPI
 
+[![PR Checks](https://github.com/BlackestDawn/lexicon-MovieAPI/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/BlackestDawn/lexicon-MovieAPI/actions/workflows/pr-checks.yml)
+[![Backend Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BlackestDawn/lexicon-MovieAPI/badges/.badges/backend-coverage.json)](https://github.com/BlackestDawn/lexicon-MovieAPI/actions/workflows/coverage.yml)
+[![Frontend Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/BlackestDawn/lexicon-MovieAPI/badges/.badges/frontend-coverage.json)](https://github.com/BlackestDawn/lexicon-MovieAPI/actions/workflows/coverage.yml)
+![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)
+[![License: CC0](https://img.shields.io/badge/License-CC0%201.0-lightgrey.svg)](LICENSE)
+
 A small-scale IMDB clone: an ASP.NET Core Web API for browsing and managing movies, people, genres, and reviews, paired with a Next.js frontend. The API is secured behind OAuth2-based authentication and four-tier role authorization (User / PowerUser / Moderator / Administrator).
+
+**Live:** [movieapi.alexstauch.app](https://movieapi.alexstauch.app) — browse the catalog anonymously; signing in (existing accounts only, no self-registration in the UI yet) unlocks writing/editing reviews and, by role, managing the catalog itself.
 
 ## Status
 
@@ -13,7 +22,7 @@ Both halves are functional end to end. The backend has full CRUD for all four ca
 
 - **Backend**: ASP.NET Core (.NET 10), Entity Framework Core + PostgreSQL, ASP.NET Core Identity + OpenIddict (OAuth2), AutoMapper, FluentValidation, Swagger/OpenAPI, Serilog, output caching (config-driven: in-memory or Redis)
 - **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Zod
-- **Testing**: xUnit + Moq (unit), xUnit + Testcontainers + Respawn (integration)
+- **Testing**: xUnit + Moq (unit) and xUnit + Testcontainers + Respawn (integration) on the backend; Vitest + React Testing Library on the frontend, including async Server Components
 - **Infra**: Docker / Docker Compose for local dev; GCP Cloud Run + Neon Postgres for deployment (see [Deployment](#deployment))
 
 ## Project Structure

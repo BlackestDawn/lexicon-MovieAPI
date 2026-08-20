@@ -92,6 +92,11 @@ lib-cov
 coverage
 *.lcov
 
+# dotnet test --collect:"XPlat Code Coverage" --results-directory (used by
+# .github/workflows/coverage.yml; the default TestResults/ is already covered
+# by the MSTest pattern below)
+coverage-raw/
+
 # nyc test coverage
 .nyc_output
 

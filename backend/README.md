@@ -2,6 +2,17 @@
 
 ASP.NET Core Web API (.NET 10) for the [MovieAPI](../README.md) catalog: movies, people, genres, and reviews, behind OAuth2-based authentication and four-tier role authorization. See the [root README](../README.md) for the project as a whole and the [frontend README](../frontend/README.md) for the Next.js client.
 
+## Table of Contents
+
+- [Status](#status)
+- [Implemented Features](#implemented-features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Running with Docker](#running-with-docker)
+- [API Overview](#api-overview)
+- [License](#license)
+
 ## Status
 
 All four catalog resources — Movies, People, Genres, and Reviews — are implemented end-to-end with full CRUD (controller, service, validation, DTO mapping, unit tests, integration tests). The API is versioned via URL segment (`/api/v1/...` through `/api/v3.1/...`); requests with no version specified default to v1 — see [API Versioning](#api-versioning) for what changed at each step. Authentication is OAuth2 (OpenIddict) backed by ASP.NET Core Identity: a password grant issues short-lived access tokens plus rotating refresh tokens, a four-tier role hierarchy (User/PowerUser/Moderator/Administrator) gates every write endpoint, and Administrators get a full CRUD set for managing other accounts. Password recovery, self-service profile updates, and per-request access-token revocation (via a security-stamp check, not just expiry) round out the auth story. Error handling is centralized: every service throws (`NotFoundException`, `ForbiddenException`, `AuthenticationException`, FluentValidation's `ValidationException`) instead of returning result wrapper objects or tuples, and a global `IExceptionHandler` middleware maps those to `ProblemDetails` HTTP responses. GET endpoints across the catalog resources are response-cached via ASP.NET Core's output caching middleware, backed by Redis in Production and an in-memory store elsewhere.

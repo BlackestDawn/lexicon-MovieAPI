@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Users, Star } from "lucide-react";
 import { BaseContainer } from "@/components/general/baseContainer";
-import Welcome from "@/components/general/welcome";
 import MovieCard from "@/components/movies/movieCard";
 import GenreBadge from "@/components/genres/genreBadge";
 import { fetchMovies } from "@/lib/actions/movie";
@@ -40,7 +39,6 @@ export default async function Home() {
             Browse movies, explore cast &amp; crew, and read what other
             viewers think — all in one catalog.
           </p>
-          <Welcome />
           <div className="flex flex-wrap gap-3 justify-center sm:justify-start pt-2">
             <Link
               href="/movies"

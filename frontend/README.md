@@ -2,6 +2,18 @@
 
 Next.js client for [MovieAPI](../README.md): browse movies, people, and genres, read and write reviews, and sign in against the backend's OAuth2 endpoint. See the [root README](../README.md) for the project as a whole and the [backend README](../backend/README.md) for the API it talks to.
 
+## Table of Contents
+
+- [Status](#status)
+- [Implemented Features](#implemented-features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Scripts](#scripts)
+- [Testing](#testing)
+- [Running with Docker](#running-with-docker)
+- [License](#license)
+
 ## Status
 
 A full-featured catalog browser and review app, server-rendered against the backend's `v3` API. Movies, People, and Genres all have paginated/filterable list views, detail views, and create/edit/delete forms gated by role; Reviews can be created by any logged-in user and edited/deleted by their owner or a Moderator/Administrator. Authentication is a real OAuth2 password-grant flow against the backend, with tokens held in httpOnly cookies and transparent refresh. **Not yet built**: self-registration, password reset, and self-service account/profile pages, and any admin UI — the backend already supports all of these (see the [backend README](../backend/README.md)), but the frontend doesn't have screens for them yet; only login exists today.
@@ -98,6 +110,20 @@ The app needs the backend running to show any real data (see the [backend README
 - `pnpm build` — production build
 - `pnpm start` — serve the production build
 - `pnpm lint` — run ESLint
+- `pnpm test` — run the test suite once (used in CI and `make test`)
+- `pnpm test:watch` — re-run tests on change
+- `pnpm test:coverage` — run once with a coverage report (used by [`coverage.yml`](../.github/workflows/coverage.yml) to generate the root README's frontend coverage badge)
+
+## Testing
+
+**Vitest + React Testing Library**, run against `jsdom`. Tests are colocated next to the source they cover as `*.test.ts(x)`, not in a parallel `__tests__` tree. `pnpm test` runs everything once; `pnpm test:watch` re-runs on change during local dev.
+
+What's covered, and how:
+
+- **Server Actions** (`src/lib/actions/`) — tested as plain async functions, with `apiInteract`/`next/cache`/`next/headers` mocked at the module boundary. No special Next runtime is needed for this since Vitest doesn't apply Next's Server Actions transform — the `"use server"` directive is inert under test, so these are exercised exactly like any other async function
+- **Zod DTO validators** (`src/lib/data/models/`) — every schema, including edge cases like required fields, numeric/date ranges, and the string ↔ Date coercion on read-model fields
+- **Client components** — via React Testing Library's `render`/`screen`/`userEvent`, including full form flows (mocked Server Actions, submission success/validation-error paths) and access-gated UI (real `CommonContext` wrapping `RestrictedComponent`, exercising both the role hierarchy and the ownership bypass)
+- **Async Server Components** (`*List`/`*Details`/`*Filters`, and the `page.tsx` files that wrap them in `Suspense`) — Vitest can't render an unresolved async component as JSX (see [Next's testing guide](https://nextjs.org/docs/app/guides/testing/vitest)), so these are tested by calling the exported function directly and `await`-ing the resolved element tree before handing it to `render()`. A page or component that nests another async component as a JSX child (e.g. `app/genres/page.tsx` rendering `<GenreList />`, or `MovieList` rendering `<MovieFilters />`) mocks that child's module to a sync stub instead of trying to resolve through it — the nested component gets its own dedicated direct-call test
 
 ## Running with Docker
 

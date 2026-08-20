@@ -1,0 +1,127 @@
+name: Coverage
+
+# Regenerates the two coverage badges shown in the root README. Runs on push
+# to main only (mirrors urlshortener's coverage-baseline.yml) - badges track
+# main's state, not every PR branch. No external service (e.g. Codecov) is
+# used: both stacks' overall line-coverage percentages are extracted directly
+# from their own test-run output, packaged as shields.io "endpoint" JSON
+# (https://shields.io/badges/endpoint-badge), and committed to an orphan
+# `badges` branch that peaceiris/actions-gh-pages creates on first run.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Covers both MovieAPI.UnitTests and MovieAPI.IntegrationTests, same as
+      # pr-checks.yml's Test step, just with coverage collection turned on.
+      - name: Backend - test with coverage
+        working-directory: backend
+        run: dotnet test MovieAPI.slnx --collect:"XPlat Code Coverage" --results-directory ./coverage-raw
+
+      # Coverlet writes one Cobertura file per test project into its own
+      # GUID-named subfolder; sum lines-covered/lines-valid across all of them
+      # for one overall percentage rather than averaging per-file rates
+      # (which would over-weight a small project against a large one).
+      - name: Backend - compute coverage percentage
+        id: backend-coverage
+        run: |
+          python3 - <<'PYEOF' >> "$GITHUB_OUTPUT"
+          import glob
+          import xml.etree.ElementTree as ET
+
+          covered = valid = 0
+          for path in glob.glob("backend/coverage-raw/**/coverage.cobertura.xml", recursive=True):
+              root = ET.parse(path).getroot()
+              covered += int(root.get("lines-covered"))
+              valid += int(root.get("lines-valid"))
+
+          pct = round(100 * covered / valid, 2) if valid else 0
+          print(f"pct={pct}")
+          PYEOF
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Frontend - install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Frontend - test with coverage
+        working-directory: frontend
+        run: pnpm run test:coverage
+
+      - name: Frontend - compute coverage percentage
+        id: frontend-coverage
+        run: |
+          python3 - <<'PYEOF' >> "$GITHUB_OUTPUT"
+          import json
+
+          with open("frontend/coverage/coverage-summary.json") as f:
+              pct = json.load(f)["total"]["lines"]["pct"]
+
+          print(f"pct={pct}")
+          PYEOF
+
+      - name: Build badge data
+        env:
+          BACKEND_PCT: ${{ steps.backend-coverage.outputs.pct }}
+          FRONTEND_PCT: ${{ steps.frontend-coverage.outputs.pct }}
+        run: |
+          mkdir -p badges-output
+          python3 - <<'PYEOF'
+          import json
+          import os
+
+          def badge_color(pct: float) -> str:
+              if pct >= 90:
+                  return "brightgreen"
+              if pct >= 75:
+                  return "green"
+              if pct >= 60:
+                  return "yellow"
+              if pct >= 40:
+                  return "orange"
+              return "red"
+
+          for name, env_var in [("backend", "BACKEND_PCT"), ("frontend", "FRONTEND_PCT")]:
+              pct = float(os.environ[env_var])
+              data = {
+                  "schemaVersion": 1,
+                  "label": f"{name} coverage",
+                  "message": f"{pct:.2f}%",
+                  "color": badge_color(pct),
+              }
+              with open(f"badges-output/{name}-coverage.json", "w") as f:
+                  json.dump(data, f)
+          PYEOF
+
+      - name: Publish badge data
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./badges-output
+          publish_branch: badges
+          destination_dir: .badges
+          keep_files: true
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
