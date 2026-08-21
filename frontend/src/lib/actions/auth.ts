@@ -10,6 +10,7 @@ import type {
 } from "../data/models/userTypes";
 import {
   validateChangePassword,
+  validateCurrentUserDto,
   validateForgotPasswordDto,
   validateRegisterDto,
   validateResetPasswordDto,
@@ -24,6 +25,7 @@ function toUser(dto: CurrentUserDto): User {
     email: dto.email,
     name: dto.displayName,
     role: dto.role as UserRoles,
+    createdAt: dto.createdAt,
   };
 }
 
@@ -155,6 +157,6 @@ export async function updateProfileRequest(
 export async function fetchCurrentUser(): Promise<User | null> {
   if (!(await isAuthenticated())) return null;
 
-  const dto = await apiGet<CurrentUserDto>("/auth/me");
+  const dto = validateCurrentUserDto(await apiGet("/auth/me"));
   return toUser(dto);
 }

@@ -12,6 +12,7 @@ const currentUser: User = {
   name: "Alice",
   email: "alice@example.com",
   role: "Moderator",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 function mockAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
@@ -40,5 +41,14 @@ describe("ProfileSummaryCard", () => {
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.getByText("alice@example.com")).toBeInTheDocument();
     expect(screen.getByText("Moderator")).toBeInTheDocument();
+  });
+
+  it("shows the member-since date", () => {
+    mockAuth();
+    render(<ProfileSummaryCard />);
+
+    expect(
+      screen.getByText(`Member since ${currentUser.createdAt.toLocaleDateString()}`),
+    ).toBeInTheDocument();
   });
 });

@@ -23,6 +23,7 @@ const currentUserDto = {
   email: "a@example.com",
   role: "Moderator",
   displayName: "Alice",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 describe("fetchCurrentUser", () => {
@@ -44,6 +45,7 @@ describe("fetchCurrentUser", () => {
       email: currentUserDto.email,
       name: currentUserDto.displayName,
       role: currentUserDto.role,
+      createdAt: currentUserDto.createdAt,
     });
   });
 });

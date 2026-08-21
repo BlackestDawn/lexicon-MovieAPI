@@ -14,6 +14,7 @@ const currentUser: User = {
   name: "Alice",
   email: "alice@example.com",
   role: "User",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 function mockAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {

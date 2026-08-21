@@ -36,6 +36,7 @@ const powerUser: User = {
   name: "Power",
   email: "power@example.com",
   role: "PowerUser",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 async function renderMovieList(

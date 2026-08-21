@@ -183,6 +183,19 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
     Assert.Equal(HttpStatusCode.BadRequest, refreshAfterRevoke.StatusCode);
   }
 
+  [Fact]
+  public async Task GetMe_ReturnsCreatedAt()
+  {
+    var before = DateTime.UtcNow;
+    var auth = await RegisterAsync(Factory.CreateClient());
+
+    var response = await auth.Client.GetAsync("/api/v1/auth/me");
+    response.EnsureSuccessStatusCode();
+    var me = (await response.Content.ReadFromJsonAsync<CurrentUserDto>())!;
+
+    Assert.True(me.CreatedAt >= before && me.CreatedAt <= DateTime.UtcNow);
+  }
+
   // Security-stamp validation (every authenticated request re-checks the token's
   // embedded stamp against the user's current one)
 

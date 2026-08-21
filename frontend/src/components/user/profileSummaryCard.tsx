@@ -17,6 +17,9 @@ export default function ProfileSummaryCard() {
         </span>
       </div>
       <p className="text-sm text-muted-foreground">{user.email}</p>
+      <p className="text-sm text-muted-foreground">
+        Member since {user.createdAt.toLocaleDateString()}
+      </p>
     </div>
   );
 }

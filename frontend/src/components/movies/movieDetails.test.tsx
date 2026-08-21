@@ -61,6 +61,7 @@ const powerUser: User = {
   name: "Power",
   email: "power@example.com",
   role: "PowerUser",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 const moderator: User = {
@@ -68,6 +69,7 @@ const moderator: User = {
   name: "Mod",
   email: "mod@example.com",
   role: "Moderator",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 const loggedIn: User = {
@@ -75,6 +77,7 @@ const loggedIn: User = {
   name: "Regular",
   email: "regular@example.com",
   role: "User",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 async function renderMovieDetails(user: User | null) {

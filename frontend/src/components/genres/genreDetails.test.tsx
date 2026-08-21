@@ -34,6 +34,7 @@ const admin: User = {
   name: "Admin",
   email: "admin@example.com",
   role: "Administrator",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 async function renderGenreDetails(

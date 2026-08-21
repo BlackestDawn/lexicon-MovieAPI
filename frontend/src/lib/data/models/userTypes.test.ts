@@ -27,26 +27,50 @@ describe("validateUserDto", () => {
 
 describe("validateCurrentUserDto", () => {
   it("accepts a valid item including role", () => {
-    const item = { id: guid, email: "a@example.com", role: "Moderator", displayName: "Alice" };
+    const item = {
+      id: guid,
+      email: "a@example.com",
+      role: "Moderator",
+      displayName: "Alice",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+    };
     expect(validateCurrentUserDto(item)).toEqual(item);
   });
 
   it("throws when role is not a known value", () => {
     expect(() =>
-      validateCurrentUserDto({ id: guid, email: "a@example.com", role: "Owner", displayName: "Alice" }),
+      validateCurrentUserDto({
+        id: guid,
+        email: "a@example.com",
+        role: "Owner",
+        displayName: "Alice",
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+      }),
     ).toThrow("Invalid CurrentUserDto item");
   });
 });
 
 describe("validateUser", () => {
   it("accepts a valid user", () => {
-    const item = { id: guid, name: "Alice", email: "a@example.com", role: "User" };
+    const item = {
+      id: guid,
+      name: "Alice",
+      email: "a@example.com",
+      role: "User",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+    };
     expect(validateUser(item)).toEqual(item);
   });
 
   it("throws when the email is malformed", () => {
     expect(() =>
-      validateUser({ id: guid, name: "Alice", email: "not-an-email", role: "User" }),
+      validateUser({
+        id: guid,
+        name: "Alice",
+        email: "not-an-email",
+        role: "User",
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+      }),
     ).toThrow("Invalid User item");
   });
 });

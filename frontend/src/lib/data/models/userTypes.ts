@@ -43,6 +43,7 @@ const currentUserDtoSchema = z.object({
   email: z.string(),
   role: userRoles,
   displayName: z.string(),
+  createdAt: z.coerce.date(),
 });
 
 export type CurrentUserDto = z.infer<typeof currentUserDtoSchema>;
@@ -62,6 +63,7 @@ const userSchema = z.object({
   name: z.string(),
   email: z.email(),
   role: userRoles,
+  createdAt: z.coerce.date(),
 });
 
 export type User = z.infer<typeof userSchema>;

@@ -19,6 +19,7 @@ const moderator: User = {
   name: "Mod",
   email: "mod@example.com",
   role: "Moderator",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 const regularUser: User = {
@@ -26,6 +27,7 @@ const regularUser: User = {
   name: "Regular",
   email: "user@example.com",
   role: "User",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 describe("RestrictedComponent", () => {

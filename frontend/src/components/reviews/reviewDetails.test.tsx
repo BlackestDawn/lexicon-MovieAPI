@@ -37,6 +37,7 @@ const moderator: User = {
   name: "Mod",
   email: "mod@example.com",
   role: "Moderator",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 const otherUser: User = {
@@ -44,6 +45,7 @@ const otherUser: User = {
   name: "Other",
   email: "other@example.com",
   role: "User",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 const author: User = {
@@ -51,6 +53,7 @@ const author: User = {
   name: "Alice",
   email: "alice@example.com",
   role: "User",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 async function renderReviewDetails(user: User | null) {
