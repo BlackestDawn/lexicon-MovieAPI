@@ -9,6 +9,10 @@ export const reviewDtoSchema = z.object({
   body: z.string(),
   score: z.number(),
   userId: z.guid().nullable().optional(),
+  // Only populated by the cross-movie "my reviews" listing - the per-movie
+  // endpoints already have the movie id in their URL and don't send these.
+  movieId: z.guid().optional(),
+  movieTitle: z.string().optional(),
 });
 
 export type ReviewDto = z.infer<typeof reviewDtoSchema>;

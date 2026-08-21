@@ -9,4 +9,6 @@ public class ReviewDto
   public string Body { get; set; } = string.Empty;
   public int Score { get; set; }
   public Guid? UserId { get; set; }
+  public Guid MovieId { get; set; }
+  public string MovieTitle { get; set; } = string.Empty;
 }

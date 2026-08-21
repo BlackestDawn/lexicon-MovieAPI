@@ -242,6 +242,58 @@ public class ReviewServiceTests
     _mapper.Verify(m => m.Map<ReviewDto>(It.IsAny<Review>()), Times.Never);
   }
 
+  // GetForUser
+
+  [Fact]
+  public async Task GetForUser_WhenPageAndSizeAreNull_UsesDefaults()
+  {
+    var userId = Guid.NewGuid();
+    var reviews = Enumerable.Empty<Review>();
+    _repo
+      .Setup(r => r.GetReviewsForUserReadOnlyAsync(userId, 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((reviews, null));
+    _mapper.Setup(m => m.Map<IEnumerable<ReviewDto>>(reviews)).Returns([]);
+
+    await _sut.GetForUser(userId, null, null);
+
+    _repo.Verify(r => r.GetReviewsForUserReadOnlyAsync(userId, 1, 10, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task GetForUser_WhenPageIsZeroAndSizeIsNegative_UsesDefaults()
+  {
+    var userId = Guid.NewGuid();
+    var reviews = Enumerable.Empty<Review>();
+    _repo
+      .Setup(r => r.GetReviewsForUserReadOnlyAsync(userId, 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((reviews, null));
+    _mapper.Setup(m => m.Map<IEnumerable<ReviewDto>>(reviews)).Returns([]);
+
+    await _sut.GetForUser(userId, 0, -5);
+
+    _repo.Verify(r => r.GetReviewsForUserReadOnlyAsync(userId, 1, 10, It.IsAny<CancellationToken>()), Times.Once);
+  }
+
+  [Fact]
+  public async Task GetForUser_ReturnsMappedDtosAndPagination()
+  {
+    var userId = Guid.NewGuid();
+    var entity = MakeReviewEntity(userId: userId);
+    var reviewDto = new ReviewDto { Id = entity.Id };
+    var reviews = new[] { entity };
+    var pagination = new PaginationMetadata(1, 10, 1);
+
+    _repo
+      .Setup(r => r.GetReviewsForUserReadOnlyAsync(userId, 1, 10, It.IsAny<CancellationToken>()))
+      .ReturnsAsync((reviews.AsEnumerable(), pagination));
+    _mapper.Setup(m => m.Map<IEnumerable<ReviewDto>>(reviews.AsEnumerable())).Returns([reviewDto]);
+
+    var (result, meta) = await _sut.GetForUser(userId, null, null);
+
+    Assert.Single(result);
+    Assert.NotNull(meta);
+  }
+
   // Remove
 
   [Fact]

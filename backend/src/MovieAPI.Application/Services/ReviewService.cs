@@ -69,6 +69,23 @@ public class ReviewService(
     return mapper.Map<ReviewDto>(result);
   }
 
+  public async Task<(IEnumerable<ReviewDto>, PaginationMetadata?)> GetForUser(Guid userId, int? page, int? pageSize, CancellationToken token = default)
+  {
+    if (page == null || page < DefaultValues.Page)
+    {
+      page = DefaultValues.Page;
+    }
+
+    if (pageSize == null || pageSize <= 0)
+    {
+      pageSize = DefaultValues.PageSize;
+    }
+
+    var (result, pagination) = await repository.GetReviewsForUserReadOnlyAsync(userId, (int)page, (int)pageSize, token);
+
+    return (mapper.Map<IEnumerable<ReviewDto>>(result), pagination);
+  }
+
   public async Task Remove(Guid movieId, Guid id, Guid currentUserId, bool canModerate, CancellationToken token = default)
   {
     var entity = await repository.GetReviewAsync(movieId, id, token);
