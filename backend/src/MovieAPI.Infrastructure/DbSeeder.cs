@@ -492,7 +492,7 @@ public static class DbSeeder
     var spiritedAway = M("Spirited Away", 2001, 7, 20, "A young girl wanders into a magical world of spirits and must work in a bathhouse to free herself and her parents.", 125);
     movies.Add(spiritedAway);
     details.Add(D(spiritedAway.Id, "During her family's move to a new neighborhood, ten-year-old Chihiro wanders into a mysterious world governed by spirits and witches, where her parents are transformed into pigs. To free her family and return home, she must work in a bathhouse for spirits, guided by the enigmatic Haku, in Hayao Miyazaki's beloved animated masterpiece.", "Japanese", 19_000_000));
-    castCrews.AddRange([CC(spiritedAway.Id, miyazaki.Id, PersonRole.Director)]);
+    castCrews.AddRange([CC(spiritedAway.Id, miyazaki.Id, PersonRole.Director), CC(spiritedAway.Id, miyazaki.Id, PersonRole.Writer)]);
     movieGenres.AddRange([MG(spiritedAway.Id, animation), MG(spiritedAway.Id, adventure), MG(spiritedAway.Id, drama)]);
     reviews.AddRange([Rev(spiritedAway.Id, "AnimeAppreciator", "Miyazaki's most fully realized fantasy world. Endlessly inventive from start to finish.", 10), Rev(spiritedAway.Id, "GhibliFan", "A beautiful, strange, and moving coming-of-age story unlike anything else in animation.", 10), Rev(spiritedAway.Id, "MagicalRealism", "The bathhouse setting alone is worth the price of admission. Gorgeous hand-drawn animation.", 9)]);
 
