@@ -69,4 +69,22 @@ describe("MyReviewsList", () => {
 
     expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
   });
+
+  // Reviews and favorites can both be paginated on /user at once - a shared
+  // "page" param would make paging one list silently reset the other.
+  it("paginates under a reviewsPage param and preserves other lists' page state", async () => {
+    fetchMyReviews.mockResolvedValue({
+      reviews,
+      pagination: { TotalItemCount: 30, PageSize: 10, CurrentPage: 1, TotalPageCount: 3 },
+    });
+
+    const jsx = await MyReviewsList({ page: 1, otherParams: { favoritesPage: 2 } });
+    render(jsx);
+
+    const links = screen
+      .getAllByRole("link")
+      .map((l) => l.getAttribute("href"))
+      .filter((href): href is string => !!href?.startsWith("/user?"));
+    expect(links).toContain("/user?favoritesPage=2&reviewsPage=2");
+  });
 });

@@ -269,10 +269,12 @@ try
   builder.Services.AddScoped<IGenreRepository, GenreRepository>();
   builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
   builder.Services.AddScoped<IPersonRepository, PersonRepository>();
+  builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
   builder.Services.AddScoped<IMovieService, MovieService>();
   builder.Services.AddScoped<IGenreService, GenreService>();
   builder.Services.AddScoped<IPersonService, PersonService>();
   builder.Services.AddScoped<IReviewService, ReviewService>();
+  builder.Services.AddScoped<IFavoriteService, FavoriteService>();
   builder.Services.AddScoped<IAuthService, AuthService>();
   builder.Services.AddScoped<IAdminUserService, AdminUserService>();
   // Logs reset tokens instead of emailing them - see LoggingEmailSender for why

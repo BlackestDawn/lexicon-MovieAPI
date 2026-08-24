@@ -69,4 +69,14 @@ describe("MovieCard", () => {
     );
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("renders arbitrary actions passed in, alongside the delete button when manageable", () => {
+    render(
+      <CommonContext initialUser={moderator}>
+        <MovieCard movie={movie} manageable actions={<button>favorite</button>} />
+      </CommonContext>,
+    );
+    expect(screen.getByRole("button", { name: "favorite" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+  });
 });

@@ -6,10 +6,14 @@ export default function PaginationControls({
   pagination,
   basePath,
   queryParams,
+  pageParam = "page",
 }: {
   pagination: PaginationMetadata;
   basePath: string;
   queryParams?: Record<string, string | number | undefined>;
+  // Lets two independently-paginated lists share a page (e.g. "My reviews"
+  // and "My favorites" both on /user) without their page numbers colliding.
+  pageParam?: string;
 }) {
   const { CurrentPage, TotalPageCount } = pagination;
 
@@ -23,7 +27,7 @@ export default function PaginationControls({
     for (const [key, value] of Object.entries(queryParams ?? {})) {
       if (value !== undefined && value !== "") params.set(key, String(value));
     }
-    params.set("page", String(page));
+    params.set(pageParam, String(page));
     return `${basePath}?${params.toString()}`;
   };
 

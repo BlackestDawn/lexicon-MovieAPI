@@ -9,7 +9,10 @@ import { NEXT_NOT_FOUND_MESSAGE } from "@/test-utils/nextNavigation";
 // Async Server Component — direct-call pattern (see genreDetails.test.tsx).
 // Its nested children (ReviewFilters, ReviewCreateButton, MovieEditButton,
 // SimpleDeleteButton) are all sync or "use client", so no nested-async-module
-// stubbing is needed here, unlike movieList.test.tsx.
+// stubbing is needed for them, unlike movieList.test.tsx. FavoriteToggle is
+// itself async (it fetches favorite status), so it's stubbed as a non-button
+// element - that keeps it out of the button-count assertions below (it has
+// its own dedicated test) while still letting its presence/absence be checked.
 
 const { getMovie, removeMovie, fetchReviews } = vi.hoisted(() => ({
   getMovie: vi.fn(),
@@ -18,6 +21,9 @@ const { getMovie, removeMovie, fetchReviews } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/actions/movie", () => ({ getMovie, removeMovie }));
 vi.mock("@/lib/actions/review", () => ({ fetchReviews, createReview: vi.fn(), updateReview: vi.fn() }));
+vi.mock("./favoriteToggle", () => ({
+  default: () => <div>favorite-toggle-stub</div>,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   notFound: vi.fn(() => {
@@ -146,7 +152,7 @@ describe("MovieDetails", () => {
   // "ModeratorAndAbove" both admit a Moderator, so a Moderator sees every
   // control at once.
 
-  it("hides edit/delete/review controls for a logged-out visitor, leaving only the review search", async () => {
+  it("hides edit/delete/review/favorite controls for a logged-out visitor, leaving only the review search", async () => {
     getMovie.mockResolvedValue(movie);
     fetchReviews.mockResolvedValue({ reviews: [], pagination: null });
     await renderMovieDetails(null);
@@ -154,13 +160,15 @@ describe("MovieDetails", () => {
     expect(
       screen.queryByRole("button", { name: "Write a review" }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText("favorite-toggle-stub")).not.toBeInTheDocument();
   });
 
-  it("shows the review button for a plain logged-in user, but not edit/delete", async () => {
+  it("shows the review button and favorite toggle for a plain logged-in user, but not edit/delete", async () => {
     getMovie.mockResolvedValue(movie);
     fetchReviews.mockResolvedValue({ reviews: [], pagination: null });
     await renderMovieDetails(loggedIn);
     expect(screen.getByRole("button", { name: "Write a review" })).toBeInTheDocument();
+    expect(screen.getByText("favorite-toggle-stub")).toBeInTheDocument();
     expect(screen.getAllByRole("button")).toHaveLength(2);
   });
 

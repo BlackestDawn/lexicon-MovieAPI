@@ -13,6 +13,7 @@ import { personRoleLabels } from "@/lib/data/models/personRoleTypes";
 import ReviewCreateButton from "../reviews/reviewCreateButton";
 import ReviewFilters from "../reviews/reviewFilters";
 import PaginationControls from "../general/paginationControls";
+import FavoriteToggle from "./favoriteToggle";
 import { cardClass, metaClass } from "@/lib/data/consts/styles";
 
 export default async function MovieDetails({
@@ -64,6 +65,9 @@ export default async function MovieDetails({
           </div>
         </div>
         <div className="flex gap-3 shrink-0">
+          <RestrictedComponent accessLevel="LoggedIn">
+            <FavoriteToggle movieId={movie.id} />
+          </RestrictedComponent>
           <RestrictedComponent accessLevel="PowerUserAndAbove">
             <MovieEditButton movie={movie} />
           </RestrictedComponent>

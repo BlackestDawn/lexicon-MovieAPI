@@ -4,7 +4,15 @@ import { fetchMyReviews } from "@/lib/actions/review";
 import PaginationControls from "../general/paginationControls";
 import { metaClass, panelClass, sectionHeadingClass } from "@/lib/data/consts/styles";
 
-export default async function MyReviewsList({ page }: { page?: number }) {
+export default async function MyReviewsList({
+  page,
+  otherParams,
+}: {
+  page?: number;
+  // Other lists' page numbers on the same /user page (e.g. favoritesPage) -
+  // passed through so paging this list doesn't reset them.
+  otherParams?: Record<string, string | number | undefined>;
+}) {
   const { reviews, pagination } = await fetchMyReviews(page);
 
   return (
@@ -35,7 +43,12 @@ export default async function MyReviewsList({ page }: { page?: number }) {
         </div>
       )}
       {pagination && (
-        <PaginationControls pagination={pagination} basePath="/user" queryParams={{ page }} />
+        <PaginationControls
+          pagination={pagination}
+          basePath="/user"
+          pageParam="reviewsPage"
+          queryParams={otherParams}
+        />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Clock, Star } from "lucide-react";
+import { ReactNode } from "react";
 import GenreBadge from "../genres/genreBadge";
 import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
@@ -11,9 +12,11 @@ import { cardClass, metaClass } from "@/lib/data/consts/styles";
 export default function MovieCard({
   movie,
   manageable = false,
+  actions,
 }: {
   movie: MovieDto;
   manageable?: boolean;
+  actions?: ReactNode;
 }) {
   return (
     <Link href={`/movies/${movie.id}`}>
@@ -25,11 +28,14 @@ export default function MovieCard({
               ({movie.releaseDate.getFullYear()})
             </span>
           </h3>
-          {manageable && (
-            <RestrictedComponent accessLevel="ModeratorAndAbove">
-              <SimpleDeleteButton id={movie.id} onDelete={removeMovie} />
-            </RestrictedComponent>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {actions}
+            {manageable && (
+              <RestrictedComponent accessLevel="ModeratorAndAbove">
+                <SimpleDeleteButton id={movie.id} onDelete={removeMovie} />
+              </RestrictedComponent>
+            )}
+          </div>
         </div>
         <div className="flex gap-4">
           <span className={metaClass}>
