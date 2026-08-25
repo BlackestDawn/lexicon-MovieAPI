@@ -10,13 +10,12 @@ namespace MovieAPI.Api.Controllers;
 /// <summary>
 /// Controller for handling a logged-in user's favorited movies
 /// </summary>
+// New at 3.2 - unlike the version-neutral controllers below, this has no 1.0-3.1
+// history to stack onto, since Favorites didn't exist before this version.
 [ApiController]
 [Route("api/v{version:apiVersion}/favorites")]
 [Authorize]
-[ApiVersion("1.0")]
-[ApiVersion("2.0")]
-[ApiVersion("3.0")]
-[ApiVersion("3.1")]
+[ApiVersion("3.2")]
 public class FavoritesController(IFavoriteService service) : ControllerBase
 {
   /// <summary>

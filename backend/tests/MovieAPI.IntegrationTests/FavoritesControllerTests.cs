@@ -15,7 +15,7 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   {
     var anonymous = Factory.CreateClient();
 
-    var response = await anonymous.GetAsync("/api/v1/favorites");
+    var response = await anonymous.GetAsync("/api/v3.2/favorites");
 
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
@@ -26,13 +26,13 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
     var movieId = await CreateMovieAsync();
     var (client, _) = await RegisterAndLoginAsync();
 
-    var addResponse = await client.PostAsync($"/api/v1/favorites/{movieId}", null);
+    var addResponse = await client.PostAsync($"/api/v3.2/favorites/{movieId}", null);
     Assert.Equal(HttpStatusCode.NoContent, addResponse.StatusCode);
 
     // The shared Administrator client favorites it too - shouldn't leak into the other user's list.
-    await Client.PostAsync($"/api/v1/favorites/{movieId}", null);
+    await Client.PostAsync($"/api/v3.2/favorites/{movieId}", null);
 
-    var response = await client.GetAsync("/api/v1/favorites");
+    var response = await client.GetAsync("/api/v3.2/favorites");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     Assert.True(response.Headers.Contains("X-Pagination"));
@@ -45,7 +45,7 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   [Fact]
   public async Task Add_WithUnknownMovieId_Returns404()
   {
-    var response = await Client.PostAsync($"/api/v1/favorites/{Guid.NewGuid()}", null);
+    var response = await Client.PostAsync($"/api/v3.2/favorites/{Guid.NewGuid()}", null);
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
@@ -55,13 +55,13 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   {
     var movieId = await CreateMovieAsync();
 
-    var first = await Client.PostAsync($"/api/v1/favorites/{movieId}", null);
-    var second = await Client.PostAsync($"/api/v1/favorites/{movieId}", null);
+    var first = await Client.PostAsync($"/api/v3.2/favorites/{movieId}", null);
+    var second = await Client.PostAsync($"/api/v3.2/favorites/{movieId}", null);
 
     Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
     Assert.Equal(HttpStatusCode.NoContent, second.StatusCode);
 
-    var favorites = await Client.GetFromJsonAsync<List<MovieDto>>("/api/v1/favorites");
+    var favorites = await Client.GetFromJsonAsync<List<MovieDto>>("/api/v3.2/favorites");
     Assert.Single(favorites!);
   }
 
@@ -69,9 +69,9 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   public async Task GetOne_WhenFavorited_Returns200()
   {
     var movieId = await CreateMovieAsync();
-    await Client.PostAsync($"/api/v1/favorites/{movieId}", null);
+    await Client.PostAsync($"/api/v3.2/favorites/{movieId}", null);
 
-    var response = await Client.GetAsync($"/api/v1/favorites/{movieId}");
+    var response = await Client.GetAsync($"/api/v3.2/favorites/{movieId}");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
   }
@@ -81,7 +81,7 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.GetAsync($"/api/v1/favorites/{movieId}");
+    var response = await Client.GetAsync($"/api/v3.2/favorites/{movieId}");
 
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
@@ -90,12 +90,12 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   public async Task Remove_WithExistingFavorite_Returns204AndSubsequentGetReturns404()
   {
     var movieId = await CreateMovieAsync();
-    await Client.PostAsync($"/api/v1/favorites/{movieId}", null);
+    await Client.PostAsync($"/api/v3.2/favorites/{movieId}", null);
 
-    var deleteResponse = await Client.DeleteAsync($"/api/v1/favorites/{movieId}");
+    var deleteResponse = await Client.DeleteAsync($"/api/v3.2/favorites/{movieId}");
     Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-    var getResponse = await Client.GetAsync($"/api/v1/favorites/{movieId}");
+    var getResponse = await Client.GetAsync($"/api/v3.2/favorites/{movieId}");
     Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
   }
 
@@ -104,7 +104,7 @@ public class FavoritesControllerTests(IntegrationTestWebAppFactory factory) : In
   {
     var movieId = await CreateMovieAsync();
 
-    var response = await Client.DeleteAsync($"/api/v1/favorites/{movieId}");
+    var response = await Client.DeleteAsync($"/api/v3.2/favorites/{movieId}");
 
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
