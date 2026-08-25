@@ -27,3 +27,7 @@ export function toQueryParams(params?: QueryParams): string {
 export function minsToDisplayRuntime(mins: number): string {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
+
+export function formatAverageRating(rating: number): string {
+  return rating.toFixed(1);
+}
