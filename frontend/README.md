@@ -16,7 +16,7 @@ Next.js client for [MovieAPI](../README.md): browse movies, people, and genres, 
 
 ## Status
 
-A full-featured catalog browser and review app, server-rendered against the backend's `v3` API. Movies, People, and Genres all have paginated/filterable list views, detail views, and create/edit/delete forms gated by role; Reviews can be created by any logged-in user and edited/deleted by their owner or a Moderator/Administrator. Authentication is a real OAuth2 password-grant flow against the backend, with tokens held in httpOnly cookies and transparent refresh. **Not yet built**: self-registration, password reset, and self-service account/profile pages, and any admin UI — the backend already supports all of these (see the [backend README](../backend/README.md)), but the frontend doesn't have screens for them yet; only login exists today.
+A full-featured catalog browser and review app, server-rendered against the backend's `v3`/`3.2` API. Movies, People, and Genres all have paginated/filterable list views, detail views, and create/edit/delete forms gated by role; Reviews can be created by any logged-in user and edited/deleted by their owner or a Moderator/Administrator. Movies can also be favorited by any logged-in user. Authentication is a real OAuth2 password-grant flow against the backend, with tokens held in httpOnly cookies and transparent refresh — registration, login, and password reset (request + reset-with-token) are all wired up. A signed-in user has a self-service account area under `/user`: a profile summary, editing email/display name, changing password, a personal reviews list, and a favorites list. **Not yet built**: any admin UI — the backend already supports full admin user management (see the [backend README](../backend/README.md)), but the frontend doesn't have screens for it yet.
 
 ## Implemented Features
 
@@ -33,19 +33,34 @@ A full-featured catalog browser and review app, server-rendered against the back
 - Shown on a movie's detail page, with their own filters (search text, min/max score) and a dedicated `/movies/{movieId}/{reviewId}` detail page
 - Any logged-in user can create a review; **editing/deleting is restricted to the review's own author or a Moderator/Administrator** — the one place in the app that gates on *ownership* rather than pure role (see `RestrictedComponent` below)
 - The author name shown on a review isn't a form field — it's whatever the backend derives from the poster's account, matching the backend's [3.1 versioning changes](../backend/README.md#api-versioning)
+- **My reviews** — a signed-in user's own reviews, across every movie, are listed on their account page (`/user`), paginated independently of anything else on that page (see Account & self-service below), backed by the backend's `GET /reviews/mine` (added at 3.2)
+
+### Favorites
+
+- A heart toggle (`FavoriteButton`) appears on a movie's detail page for any logged-in user, and on every card in the account page's favorites list — click to favorite/unfavorite, no confirmation needed since it's reversible
+- The toggle's initial state on a movie page is fetched server-side (`FavoriteToggle`, an async wrapper around the client `FavoriteButton`) — and only as a child of a `RestrictedComponent`/`RestrictedPage` auth guard, so the authenticated lookup never fires for a logged-out visitor (see Access control below for why that's safe rather than just "usually fine")
+- **My favorites** — a signed-in user's full favorited-movies list, reusing the same `MovieCard` grid as `/movies`, shown on their account page (`/user`), paginated independently of the reviews list on the same page
 
 ### Authentication
 
-- **Login only** (`/login`) — no registration, password reset, or account-management screens exist in the UI yet, even though the backend has endpoints for all of them
+- **Registration, login, and password reset** (`/login`, plus request/reset steps in the same form) — all wired up against the backend's endpoints for them
 - **OAuth2 password grant** — login exchanges email/password for an access + refresh token pair via the backend's `POST /connect/token` (the same OpenIddict endpoint Swagger UI uses), not a bespoke login route
 - **httpOnly cookies, not localStorage** — `access_token`, `access_token_expires_at`, and `refresh_token` are set as httpOnly, `sameSite=lax` cookies (secure in production) by a server action, never exposed to client-side JS
 - **Transparent refresh** — a request checks the token's expiry before firing and refreshes proactively if it's about to lapse; a `401` response triggers a reactive refresh-and-retry as a second line of defense, redirecting to `/login` only if that also fails
 - **Logout** revokes the refresh token server-side (`POST /connect/token/revoke`) before clearing cookies
 - The current user is fetched once server-side in the root layout (`GET /auth/me`) and seeded into a React Context, so the signed-in state is known on first paint with no client-side round trip
 
-### Access control — `RestrictedComponent`
+### Account & self-service (`/user`)
 
-A single wrapper component (`src/components/auth/restrictedComponent.tsx`) gates UI on either role or ownership:
+Gated behind `RestrictedPage` (below) — a logged-out visitor gets a "sign in required" prompt (with a `redirectTo` back here) instead of the page content.
+
+- **`/user`** — profile summary card (display name, email, role, member-since date) plus the "My reviews" and "My favorites" lists above
+- **`/user/settings`** — edit own email and/or display name
+- **`/user/security`** — change own password (requires current password)
+
+### Access control — `RestrictedComponent` / `RestrictedPage`
+
+`src/components/auth/restrictedComponent.tsx` gates a piece of UI on either role or ownership:
 
 ```tsx
 <RestrictedComponent accessLevel="PowerUserAndAbove">...</RestrictedComponent>
@@ -53,6 +68,10 @@ A single wrapper component (`src/components/auth/restrictedComponent.tsx`) gates
 ```
 
 `accessLevel` checks the signed-in user's role against an ordered hierarchy (`User < PowerUser < Moderator < Administrator`, plus the `LoggedIn`/`*AndAbove` shorthands); an optional `id` prop additionally passes if it matches the current user's own id, regardless of role — that's what lets a review's author edit/delete it without needing Moderator+.
+
+`src/components/auth/restrictedPage.tsx` is the same idea at the page level, used to gate the whole `/user/*` tree: a logged-out visitor gets a "sign in required" card (linking to `/login?redirectTo=<current path>`) instead of the page, and a logged-in visitor lacking the required `accessLevel` gets an "access denied" card.
+
+**Why an authenticated data fetch is safe as a child of either guard**: both components return early (a prompt/`null`) without ever referencing their `children` prop when access fails — since React never mounts a value that isn't inserted into the returned tree, an async Server Component passed as `children` (e.g. `MyReviewsList`/`MyFavoritesList`/`FavoriteToggle`, each of which calls an authenticated backend endpoint) simply never runs its fetch for a visitor the guard rejects. This is what lets those components skip an explicit "am I logged in?" check of their own.
 
 ### Data layer
 
@@ -79,14 +98,16 @@ frontend/
 └── src/
     ├── proxy.ts                  # Proxies /api/* to BACKEND_URL, read at runtime (not build time)
     ├── app/                      # Routes: /, /movies(+[id]+[reviewId]), /persons(+[id]), /genres(+[id]),
-    │                              #   /login, /cookie-policy, /licensing
-    ├── components/                # auth/, movies/, persons/, genres/, reviews/, general/ (nav, pagination,
+    │                              #   /login, /user(+settings+security), /cookie-policy, /licensing
+    ├── components/                # auth/, movies/ (incl. favoriteButton/favoriteToggle), persons/, genres/,
+    │                              #   reviews/, user/ (profileSummaryCard), general/ (nav, pagination,
     │                              #   delete button, RestrictedComponent)
-    ├── context/                   # commonContext.tsx - AuthContext/useAuth (user, hasAccess, login, logout)
+    ├── context/                   # commonContext.tsx - AuthContext/useAuth (user, hasAccess, login, register,
+    │                              #   updateProfile, logout)
     ├── hooks/                     # useDismissableMenu - shared outside-click/Escape-to-close hook
     └── lib/
-        ├── actions/                # "use server" - apiInteract.ts (fetch/auth wrapper), auth.ts, and one
-        │                          #   file per resource (movie/person/genre/review) with its CRUD actions
+        ├── actions/                # "use server" - apiInteract.ts (fetch/auth wrapper), auth.ts, favorite.ts,
+        │                          #   and one file per resource (movie/person/genre/review) with its CRUD actions
         └── data/
             ├── consts/             # BACKEND_URL/API_BASE_URL, shared Tailwind class strings, nav menu data
             ├── interfaces/         # AccessLevel, search-option shapes, shared error/API types

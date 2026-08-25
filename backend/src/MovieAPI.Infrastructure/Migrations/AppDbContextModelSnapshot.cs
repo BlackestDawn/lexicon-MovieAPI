@@ -236,10 +236,46 @@ namespace MovieAPI.Infrastructure.Migrations
 
             modelBuilder.Entity("MovieAPI.Domain.Entities.CastCrew", b =>
                 {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("clock_timestamp()");
+
                     b.Property<Guid>("MovieId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("PersonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("clock_timestamp()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId");
+
+                    b.HasIndex("MovieId", "PersonId", "Role")
+                        .IsUnique();
+
+                    b.ToTable("CastCrews");
+                });
+
+            modelBuilder.Entity("MovieAPI.Domain.Entities.Favorite", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MovieId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -252,19 +288,16 @@ namespace MovieAPI.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("clock_timestamp()");
 
-                    b.HasKey("MovieId", "PersonId");
+                    b.HasKey("UserId", "MovieId");
 
-                    b.HasIndex("PersonId");
+                    b.HasIndex("MovieId");
 
-                    b.ToTable("CastCrews");
+                    b.ToTable("Favorites");
                 });
 
             modelBuilder.Entity("MovieAPI.Domain.Entities.Genre", b =>
@@ -782,6 +815,25 @@ namespace MovieAPI.Infrastructure.Migrations
                     b.Navigation("Movie");
 
                     b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("MovieAPI.Domain.Entities.Favorite", b =>
+                {
+                    b.HasOne("MovieAPI.Domain.Entities.Movie", "Movie")
+                        .WithMany()
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MovieAPI.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MovieAPI.Domain.Entities.MovieDetail", b =>

@@ -13,7 +13,7 @@ A small-scale IMDB clone: an ASP.NET Core Web API for browsing and managing movi
 
 ## Status
 
-Both halves are functional end to end. The backend has full CRUD for all four catalog resources, OAuth2 authentication (OpenIddict) with refresh-token rotation and per-request revocation, admin user management, and a versioned API currently at `v3.1`. The frontend covers browsing/filtering/pagination for all four resources plus review create/edit/delete (gated by ownership and role) and login — it doesn't yet have registration, password reset, self-service account, or admin screens, though the backend already supports all of those.
+Both halves are functional end to end. The backend has full CRUD for all four catalog resources plus a fifth, user-scoped Favorites resource, OAuth2 authentication (OpenIddict) with refresh-token rotation and per-request revocation, admin user management, and a versioned API currently at `v3.2`. The frontend covers browsing/filtering/pagination for all four catalog resources plus review create/edit/delete (gated by ownership and role), registration, login, and password reset; a signed-in user also gets a self-service account area (`/user`) — profile summary, editing email/display name, changing password, a personal reviews list, and a favorites/watchlist with a toggle on every movie. It doesn't yet have admin screens, though the backend already supports full admin user management.
 
 - **[Backend README](backend/README.md)** — features, auth model, API versioning history, full endpoint reference, running the API and its test suite, Docker
 - **[Frontend README](frontend/README.md)** — features, architecture (Server Actions, Zod-validated DTOs, role/ownership-gated UI), running the dev server, Docker

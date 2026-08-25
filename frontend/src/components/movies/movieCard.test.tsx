@@ -25,6 +25,7 @@ const moderator: User = {
   name: "Mod",
   email: "mod@example.com",
   role: "Moderator",
+  createdAt: new Date("2024-01-01T00:00:00Z"),
 };
 
 describe("MovieCard", () => {
@@ -67,5 +68,15 @@ describe("MovieCard", () => {
       </CommonContext>,
     );
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("renders arbitrary actions passed in, alongside the delete button when manageable", () => {
+    render(
+      <CommonContext initialUser={moderator}>
+        <MovieCard movie={movie} manageable actions={<button>favorite</button>} />
+      </CommonContext>,
+    );
+    expect(screen.getByRole("button", { name: "favorite" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
   });
 });

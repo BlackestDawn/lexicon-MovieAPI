@@ -43,6 +43,7 @@ const currentUserDtoSchema = z.object({
   email: z.string(),
   role: userRoles,
   displayName: z.string(),
+  createdAt: z.coerce.date(),
 });
 
 export type CurrentUserDto = z.infer<typeof currentUserDtoSchema>;
@@ -62,6 +63,7 @@ const userSchema = z.object({
   name: z.string(),
   email: z.email(),
   role: userRoles,
+  createdAt: z.coerce.date(),
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -77,12 +79,24 @@ export function validateUser(item: unknown): User {
 }
 
 // Mirrors UserUpdateValidator. displayName is optional - left unchanged when omitted.
-export const userForUpdateSchema = z.object({
+export const userForUpdateDtoSchema = z.object({
   email: z.email("A valid email is required"),
   displayName: z.string().max(100).optional(),
 });
 
-export type UserForUpdate = z.infer<typeof userForUpdateSchema>;
+export type UserForUpdateDto = z.infer<typeof userForUpdateDtoSchema>;
+
+export function validateUserForUpdateDto(item: unknown): UserForUpdateDto {
+  const result = userForUpdateDtoSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid UserForUpdate item:", result.error);
+    throw new ValidationError(
+      "Invalid profile details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
 
 // Mirrors RegisterValidator. displayName is optional - falls back to the email's
 // local part server-side when omitted.
@@ -118,6 +132,18 @@ export const changePasswordSchema = z
   });
 
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
+
+export function validateChangePassword(item: unknown): ChangePassword {
+  const result = changePasswordSchema.safeParse(item);
+  if (!result.success) {
+    console.error("Invalid ChangePassword item:", result.error);
+    throw new ValidationError(
+      "Invalid password change details",
+      result.error.issues.map((e) => e.message),
+    );
+  }
+  return result.data;
+}
 
 // Mirrors ForgotPasswordValidator.
 export const forgotPasswordDtoSchema = z.object({

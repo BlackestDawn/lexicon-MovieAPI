@@ -18,7 +18,11 @@ public class CastCrewConfig : IEntityTypeConfiguration<CastCrew>
       .ValueGeneratedOnAdd()
       .HasDefaultValueSql("clock_timestamp()");
 
-    builder.HasKey(c => new { c.MovieId, c.PersonId });
+    builder.HasKey(c => c.Id);
+
+    // A person can hold more than one credit on the same movie (e.g. writer and
+    // director), just not the exact same one twice.
+    builder.HasIndex(c => new { c.MovieId, c.PersonId, c.Role }).IsUnique();
 
     builder.HasOne(c => c.Movie)
       .WithMany(m => m.CastCrews)

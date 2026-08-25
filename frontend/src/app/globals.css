@@ -11,8 +11,8 @@
   --primary-hover: #0f766e;
   --primary-foreground: #ffffff;
 
-  --accent: #fb7185;
-  --accent-hover: #f43f5e;
+  --accent: #d97706;
+  --accent-hover: #b45309;
   --accent-foreground: #ffffff;
 
   --danger: #dc2626;
@@ -63,9 +63,9 @@
     --primary-hover: #2dd4bf;
     --primary-foreground: #04211d;
 
-    --accent: #fb7185;
-    --accent-hover: #fda4af;
-    --accent-foreground: #2b0a10;
+    --accent: #fbbf24;
+    --accent-hover: #fcd34d;
+    --accent-foreground: #451a03;
 
     --danger: #f87171;
     --danger-foreground: #2b0a0a;

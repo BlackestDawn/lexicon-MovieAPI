@@ -21,6 +21,7 @@ namespace MovieAPI.Api.Controllers;
 [ApiVersion("2.0")]
 [ApiVersion("3.0")]
 [ApiVersion("3.1")]
+[ApiVersion("3.2")]
 public class ReviewsController(IReviewService service, IOutputCacheStore cacheStore) : ControllerBase
 {
   /// <summary>
@@ -65,6 +66,27 @@ public class ReviewsController(IReviewService service, IOutputCacheStore cacheSt
   public async Task<IActionResult> GetReview(Guid movieId, Guid id, CancellationToken cancellationToken = default)
   {
     var result = await service.GetOne(movieId, id, cancellationToken);
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Fetch a paginated list of the current user's own reviews, across all movies
+  /// </summary>
+  /// <param name="page">Page to view, defaults to 1</param>
+  /// <param name="pageSize">Amount per page, defaults to 10</param>
+  /// <param name="cancellationToken">Notification token for canceling operations</param>
+  /// <returns>List of ReviewDto objects</returns>
+  [Authorize]
+  [HttpGet("/api/v{version:apiVersion}/reviews/mine")]
+  public async Task<IActionResult> GetMine(int? page, int? pageSize, CancellationToken cancellationToken = default)
+  {
+    var (result, pagination) = await service.GetForUser(User.GetUserId(), page, pageSize, cancellationToken);
+
+    if (pagination != null)
+    {
+      Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(pagination));
+    }
+
     return Ok(result);
   }
 

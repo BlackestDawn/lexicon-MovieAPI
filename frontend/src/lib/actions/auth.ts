@@ -9,12 +9,15 @@ import type {
   UserRoles,
 } from "../data/models/userTypes";
 import {
+  validateChangePassword,
+  validateCurrentUserDto,
   validateForgotPasswordDto,
   validateRegisterDto,
   validateResetPasswordDto,
+  validateUserForUpdateDto,
 } from "../data/models/userTypes";
 import { ValidationError } from "../data/interfaces/errors";
-import { apiGet, apiPost, isAuthenticated, login } from "./apiInteract";
+import { apiGet, apiPost, apiPut, isAuthenticated, login } from "./apiInteract";
 
 function toUser(dto: CurrentUserDto): User {
   return {
@@ -22,6 +25,7 @@ function toUser(dto: CurrentUserDto): User {
     email: dto.email,
     name: dto.displayName,
     role: dto.role as UserRoles,
+    createdAt: dto.createdAt,
   };
 }
 
@@ -101,9 +105,58 @@ export async function resetPasswordRequest(
   }
 }
 
+export async function changePasswordRequest(
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const validated = validateChangePassword({
+      currentPassword: formData.get("currentPassword"),
+      newPassword: formData.get("newPassword"),
+    });
+    await apiPut("/auth/me/password", validated);
+    return { success: true };
+  } catch (e) {
+    console.error("Error changing password:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Password change failed",
+      issues: e instanceof ValidationError ? e.issues : null,
+    };
+  }
+}
+
+type UpdateProfileResult =
+  | { success: true; user: User }
+  | { success: false; error: string; issues: string[] | null };
+
+export async function updateProfileRequest(
+  formData: FormData,
+): Promise<UpdateProfileResult> {
+  try {
+    const validated = validateUserForUpdateDto({
+      email: formData.get("email"),
+      displayName: formData.get("displayName") || undefined,
+    });
+    await apiPut("/auth/me", validated);
+
+    const user = await fetchCurrentUser();
+    if (!user) {
+      throw new Error("Profile updated but the user profile could not be reloaded");
+    }
+    return { success: true, user };
+  } catch (e) {
+    console.error("Error updating profile:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Profile update failed",
+      issues: e instanceof ValidationError ? e.issues : null,
+    };
+  }
+}
+
 export async function fetchCurrentUser(): Promise<User | null> {
   if (!(await isAuthenticated())) return null;
 
-  const dto = await apiGet<CurrentUserDto>("/auth/me");
+  const dto = validateCurrentUserDto(await apiGet("/auth/me"));
   return toUser(dto);
 }

@@ -46,4 +46,16 @@ describe("PaginationControls", () => {
     const links = screen.getAllByRole("link");
     expect(links[1]).toHaveAttribute("href", "/genres/1?sort=name&page=3");
   });
+
+  it("uses a custom pageParam instead of 'page' when given one", () => {
+    render(
+      <PaginationControls
+        pagination={{ TotalItemCount: 30, TotalPageCount: 3, PageSize: 10, CurrentPage: 2 }}
+        basePath="/user"
+        pageParam="favoritesPage"
+      />,
+    );
+    const links = screen.getAllByRole("link");
+    expect(links[1]).toHaveAttribute("href", "/user?favoritesPage=3");
+  });
 });

@@ -36,6 +36,7 @@ public class AuthService(
       Email = user.Email ?? string.Empty,
       Role = roles.FirstOrDefault() ?? string.Empty,
       DisplayName = user.DisplayName,
+      CreatedAt = user.CreatedAt,
     };
   }
 

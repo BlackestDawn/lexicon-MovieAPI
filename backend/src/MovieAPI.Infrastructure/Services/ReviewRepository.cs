@@ -68,4 +68,23 @@ public class ReviewRepository(AppDbContext context) : RepositoryBase<Review>(con
       .AsNoTracking()
       .FirstOrDefaultAsync(r => r.MovieId == movieId && r.Id == reviewId, cancellationToken);
   }
+
+  public async Task<(IEnumerable<Review>, PaginationMetadata?)> GetReviewsForUserReadOnlyAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken)
+  {
+    var query = Context.Reviews
+      .AsNoTracking()
+      .Include(r => r.Movie)
+      .Where(r => r.UserId == userId);
+
+    var totalCount = await query.CountAsync(cancellationToken);
+    var pagination = new PaginationMetadata(totalCount, pageSize, page);
+
+    var reviews = await query
+      .OrderByDescending(r => r.CreatedAt)
+      .Skip((page - 1) * pageSize)
+      .Take(pageSize)
+      .ToListAsync(cancellationToken);
+
+    return (reviews, pagination);
+  }
 }

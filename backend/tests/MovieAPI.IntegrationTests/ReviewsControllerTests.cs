@@ -186,6 +186,37 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
   }
 
+  [Fact]
+  public async Task GetMine_WithoutToken_Returns401()
+  {
+    var anonymous = Factory.CreateClient();
+
+    var response = await anonymous.GetAsync("/api/v1/reviews/mine");
+
+    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task GetMine_ReturnsOnlyCurrentUsersReviewsWithMovieInfo()
+  {
+    var movieId = await CreateMovieAsync();
+    var (client, _) = await RegisterAndLoginAsync();
+
+    var myReview = await CreateReviewAsync(movieId, client);
+    await CreateReviewAsync(movieId); // another user's review - shouldn't show up
+
+    var response = await client.GetAsync("/api/v1/reviews/mine");
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    Assert.True(response.Headers.Contains("X-Pagination"));
+
+    var reviews = await response.Content.ReadFromJsonAsync<List<ReviewDto>>();
+    var review = Assert.Single(reviews!);
+    Assert.Equal(myReview.Id, review.Id);
+    Assert.Equal(movieId, review.MovieId);
+    Assert.False(string.IsNullOrEmpty(review.MovieTitle));
+  }
+
   private async Task<Guid> CreateMovieAsync()
   {
     var genreResponse = await Client.PostAsJsonAsync("/api/v1/genres", TestData.ValidGenre());
@@ -200,9 +231,9 @@ public class ReviewsControllerTests(IntegrationTestWebAppFactory factory) : Inte
     return movie.Id;
   }
 
-  private async Task<ReviewDto> CreateReviewAsync(Guid movieId)
+  private async Task<ReviewDto> CreateReviewAsync(Guid movieId, HttpClient? client = null)
   {
-    var response = await Client.PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview());
+    var response = await (client ?? Client).PostAsJsonAsync($"/api/v1/movies/{movieId}/reviews", TestData.ValidReview());
     return (await response.Content.ReadFromJsonAsync<ReviewDto>())!;
   }
 

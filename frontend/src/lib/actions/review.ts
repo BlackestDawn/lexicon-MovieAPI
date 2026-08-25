@@ -32,6 +32,15 @@ export async function fetchReviews(
   return { reviews: validated, pagination };
 }
 
+export async function fetchMyReviews(
+  page?: number,
+): Promise<{ reviews: ReviewDto[]; pagination: PaginationMetadata | null }> {
+  const qs = toQueryParams({ page } as QueryParams);
+  const { data, pagination } = await apiGetPaginated(`/reviews/mine${qs}`);
+  const validated = validateReviewDto(data) as ReviewDto[];
+  return { reviews: validated, pagination };
+}
+
 export async function getReview(
   movieId: string,
   id: string,
