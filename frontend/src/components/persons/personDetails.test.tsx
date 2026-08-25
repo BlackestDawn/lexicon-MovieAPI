@@ -5,6 +5,7 @@ import CommonContext from "@/context/commonContext";
 import { User } from "@/lib/data/models/userTypes";
 import { PersonRole } from "@/lib/data/models/personRoleTypes";
 import { NEXT_NOT_FOUND_MESSAGE } from "@/test-utils/nextNavigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 
 // Async Server Component — direct-call pattern (see genreDetails.test.tsx).
 
@@ -92,9 +93,16 @@ describe("PersonDetails", () => {
   });
 
   it("calls notFound() when the person can't be found", async () => {
-    getPerson.mockResolvedValue(null);
+    getPerson.mockRejectedValue(new ApiError("Not Found", 404));
     await expect(PersonDetails({ id: "missing" })).rejects.toThrow(
       NEXT_NOT_FOUND_MESSAGE,
+    );
+  });
+
+  it("rethrows non-404 errors instead of calling notFound()", async () => {
+    getPerson.mockRejectedValue(new ApiError("Internal Server Error", 500));
+    await expect(PersonDetails({ id: person.id })).rejects.toThrow(
+      "Internal Server Error",
     );
   });
 });

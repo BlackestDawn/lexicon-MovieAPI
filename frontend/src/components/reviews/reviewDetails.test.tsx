@@ -4,6 +4,7 @@ import ReviewDetails from "./reviewDetails";
 import CommonContext from "@/context/commonContext";
 import { User } from "@/lib/data/models/userTypes";
 import { NEXT_NOT_FOUND_MESSAGE } from "@/test-utils/nextNavigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 
 // Async Server Component — direct-call pattern (see genreDetails.test.tsx).
 
@@ -101,9 +102,16 @@ describe("ReviewDetails", () => {
   });
 
   it("calls notFound() when the review can't be found", async () => {
-    getReview.mockResolvedValue(null);
+    getReview.mockRejectedValue(new ApiError("Not Found", 404));
     await expect(ReviewDetails({ movieId, id: "missing" })).rejects.toThrow(
       NEXT_NOT_FOUND_MESSAGE,
+    );
+  });
+
+  it("rethrows non-404 errors instead of calling notFound()", async () => {
+    getReview.mockRejectedValue(new ApiError("Internal Server Error", 500));
+    await expect(ReviewDetails({ movieId, id: review.id })).rejects.toThrow(
+      "Internal Server Error",
     );
   });
 });

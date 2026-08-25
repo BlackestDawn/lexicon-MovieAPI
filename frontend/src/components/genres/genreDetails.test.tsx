@@ -3,6 +3,8 @@ import { render, screen } from "@testing-library/react";
 import GenreDetails from "./genreDetails";
 import CommonContext from "@/context/commonContext";
 import { User } from "@/lib/data/models/userTypes";
+import { NEXT_NOT_FOUND_MESSAGE } from "@/test-utils/nextNavigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 
 // Async Server Component — see genreList.test.tsx / frontend_async_server_components
 // memory for why we call the function directly instead of `render(<GenreDetails ... />)`.
@@ -12,7 +14,12 @@ const { getGenre, removeGenre } = vi.hoisted(() => ({
   removeGenre: vi.fn(),
 }));
 vi.mock("@/lib/actions/genre", () => ({ getGenre, removeGenre }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  notFound: vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  }),
+}));
 
 const genre = {
   id: "9c858901-8a57-4791-81fe-4c455b099bc9",
@@ -85,5 +92,19 @@ describe("GenreDetails", () => {
     getGenre.mockResolvedValue({ genre, pagination: null });
     await renderGenreDetails(admin);
     expect(screen.getAllByRole("button")).toHaveLength(2);
+  });
+
+  it("calls notFound() when the genre can't be found", async () => {
+    getGenre.mockRejectedValue(new ApiError("Not Found", 404));
+    await expect(GenreDetails({ id: "missing" })).rejects.toThrow(
+      NEXT_NOT_FOUND_MESSAGE,
+    );
+  });
+
+  it("rethrows non-404 errors instead of calling notFound()", async () => {
+    getGenre.mockRejectedValue(new ApiError("Internal Server Error", 500));
+    await expect(GenreDetails({ id: genre.id })).rejects.toThrow(
+      "Internal Server Error",
+    );
   });
 });

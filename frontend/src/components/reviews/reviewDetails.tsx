@@ -1,5 +1,6 @@
 import { getReview, removeReview } from "@/lib/actions/review";
 import { notFound } from "next/navigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 import { Star, Clock } from "lucide-react";
 import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
@@ -13,8 +14,13 @@ export default async function ReviewDetails({
   movieId: string;
   id: string;
 }) {
-  const review = await getReview(movieId, id);
-  if (!review) notFound();
+  let review;
+  try {
+    review = await getReview(movieId, id);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   return (
     <div className="w-full my-8 space-y-6">

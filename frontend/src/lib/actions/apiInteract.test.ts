@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../data/interfaces/errors";
 
 const { cookies, redirect } = vi.hoisted(() => ({
   cookies: vi.fn(),
@@ -291,6 +292,17 @@ describe("apiGet / apiPost / apiPut / apiDelete", () => {
     await expect(apiGet("/genres")).rejects.toThrow(
       "One or more validation errors occurred. - Name: Name is required",
     );
+  });
+
+  it("throws an ApiError carrying the response status for a 404", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      fakeResponse({ ok: false, status: 404, jsonBody: { title: "Not Found" } }),
+    );
+
+    await expect(apiGet("/genres/missing")).rejects.toMatchObject({
+      status: 404,
+    });
+    await expect(apiGet("/genres/missing")).rejects.toBeInstanceOf(ApiError);
   });
 
   it("refreshes the access token and retries once on a 401", async () => {
