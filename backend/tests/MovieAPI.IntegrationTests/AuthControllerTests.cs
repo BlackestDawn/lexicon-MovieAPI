@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Application.Models;
 using MovieAPI.Domain.Constants;
 using MovieAPI.Infrastructure;
@@ -33,6 +35,13 @@ public class AuthControllerTests(IntegrationTestWebAppFactory factory) : Integra
       new ChangePasswordDto { CurrentPassword = "WrongPassword123!", NewPassword = "NewPassword123!" });
 
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+    var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+    Assert.NotNull(problem);
+    Assert.True(problem.Extensions.TryGetValue("errors", out var errorsValue));
+    var errors = Assert.IsType<JsonElement>(errorsValue);
+    Assert.True(errors.EnumerateObject().Any());
+    Assert.DoesNotContain("Severity", problem.Detail ?? string.Empty);
   }
 
   [Fact]

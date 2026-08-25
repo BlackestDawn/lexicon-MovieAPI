@@ -25,12 +25,24 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
 
     httpContext.Response.StatusCode = statusCode;
 
-    await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
+    var problemDetails = new ProblemDetails
     {
       Status = statusCode,
       Title = title,
-      Detail = exception.Message,
-    }, cancellationToken);
+    };
+
+    if (exception is ValidationException validationException)
+    {
+      problemDetails.Extensions["errors"] = validationException.Errors
+        .GroupBy(error => error.PropertyName)
+        .ToDictionary(group => group.Key, group => group.Select(error => error.ErrorMessage).ToArray());
+    }
+    else
+    {
+      problemDetails.Detail = exception.Message;
+    }
+
+    await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
     return true;
   }
