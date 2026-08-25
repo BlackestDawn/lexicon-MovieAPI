@@ -35,7 +35,9 @@ describe("MovieCard", () => {
     expect(screen.getByText("Die Hard", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("(1988)", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("2h 12m")).toBeInTheDocument();
-    expect(screen.getByText("8.2/10")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "8.2 / 10"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
   });
 

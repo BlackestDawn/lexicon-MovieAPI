@@ -55,7 +55,9 @@ describe("GenreDetails", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Die Hard", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("2h 12m")).toBeInTheDocument();
-    expect(screen.getByText("8.2/10")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "8.2 / 10"),
+    ).toBeInTheDocument();
   });
 
   it("shows an empty state when the genre has no movies", async () => {
