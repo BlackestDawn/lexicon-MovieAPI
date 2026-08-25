@@ -8,6 +8,7 @@ import {
 import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import { notFound } from "next/navigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 import { getMovie, removeMovie } from "@/lib/actions/movie";
 import { fetchReviews } from "@/lib/actions/review";
 import MovieEditButton from "./movieEditButton";
@@ -32,8 +33,13 @@ export default async function MovieDetails({
   minScore?: number;
   maxScore?: number;
 }) {
-  const movie: MovieExtendedDto = await getMovie(id);
-  if (!movie) notFound();
+  let movie: MovieExtendedDto;
+  try {
+    movie = await getMovie(id);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const { reviews, pagination: reviewPagination } = await fetchReviews(
     movie.id,

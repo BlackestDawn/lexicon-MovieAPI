@@ -5,6 +5,7 @@ import CommonContext from "@/context/commonContext";
 import { User } from "@/lib/data/models/userTypes";
 import { PersonRole } from "@/lib/data/models/personRoleTypes";
 import { NEXT_NOT_FOUND_MESSAGE } from "@/test-utils/nextNavigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 
 // Async Server Component — direct-call pattern (see genreDetails.test.tsx).
 // Its nested children (ReviewFilters, ReviewCreateButton, MovieEditButton,
@@ -187,9 +188,16 @@ describe("MovieDetails", () => {
   });
 
   it("calls notFound() when the movie can't be found", async () => {
-    getMovie.mockResolvedValue(null);
+    getMovie.mockRejectedValue(new ApiError("Not Found", 404));
     await expect(MovieDetails({ id: "missing" })).rejects.toThrow(
       NEXT_NOT_FOUND_MESSAGE,
+    );
+  });
+
+  it("rethrows non-404 errors instead of calling notFound()", async () => {
+    getMovie.mockRejectedValue(new ApiError("Internal Server Error", 500));
+    await expect(MovieDetails({ id: "9c858901-8a57-4791-81fe-4c455b099bc9" })).rejects.toThrow(
+      "Internal Server Error",
     );
   });
 });

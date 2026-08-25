@@ -1,4 +1,6 @@
 import { getGenre, removeGenre } from "@/lib/actions/genre";
+import { notFound } from "next/navigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 import Link from "next/link";
 import { Clock, Star, Film } from "lucide-react";
 import PaginationControls from "../general/paginationControls";
@@ -18,7 +20,14 @@ export default async function GenreDetails({
   id: string;
   page?: number;
 }) {
-  const { genre, pagination } = await getGenre(id, { page });
+  let result: Awaited<ReturnType<typeof getGenre>>;
+  try {
+    result = await getGenre(id, { page });
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
+  const { genre, pagination } = result;
 
   return (
     <div className="my-8 space-y-6">

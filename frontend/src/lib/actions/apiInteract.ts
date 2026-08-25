@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { API_BASE_URL, BACKEND_URL, CLIENT_ID } from "../data/consts/general";
 import { ApiInteractOptions, TokenResponse } from "../data/interfaces/api";
+import { ApiError } from "../data/interfaces/errors";
 import {
   parsePaginationHeader,
   PaginationMetadata,
@@ -205,14 +206,14 @@ async function fetchWithAuth(
     });
 
     if (!retryResponse.ok) {
-      throw new Error(await extractErrorMessage(retryResponse));
+      throw new ApiError(await extractErrorMessage(retryResponse), retryResponse.status);
     }
 
     return retryResponse;
   }
 
   if (!response.ok) {
-    throw new Error(await extractErrorMessage(response));
+    throw new ApiError(await extractErrorMessage(response), response.status);
   }
 
   return response;

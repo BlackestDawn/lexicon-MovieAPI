@@ -1,5 +1,6 @@
 import { getPerson, removePerson } from "@/lib/actions/person";
 import { notFound } from "next/navigation";
+import { ApiError } from "@/lib/data/interfaces/errors";
 import RestrictedComponent from "../auth/restrictedComponent";
 import Link from "next/link";
 import { Calendar, Clapperboard } from "lucide-react";
@@ -9,8 +10,13 @@ import PersonEditButton from "./personEditButton";
 import { cardClass, metaClass } from "@/lib/data/consts/styles";
 
 export default async function PersonDetails({ id }: { id: string }) {
-  const person = await getPerson(id);
-  if (!person) notFound();
+  let person;
+  try {
+    person = await getPerson(id);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   return (
     <div className="w-full my-8 space-y-8">
