@@ -2,7 +2,10 @@ import Link from "next/link";
 import { Clock, Star } from "lucide-react";
 import { ReactNode } from "react";
 import GenreBadge from "../genres/genreBadge";
-import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
+import {
+  formatAverageRating,
+  minsToDisplayRuntime,
+} from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import { removeMovie } from "@/lib/actions/movie";
@@ -44,7 +47,7 @@ export default function MovieCard({
           </span>
           <span className={metaClass}>
             <Star className="w-4 h-4 text-primary" />
-            {movie.averageRating}/10
+            {formatAverageRating(movie.averageRating)}/10
           </span>
         </div>
         <p className="text-sm text-muted-foreground line-clamp-2">

@@ -1,7 +1,10 @@
 import { MovieExtendedDto } from "@/lib/data/models/movieTypes";
 import { Calendar, Clock, Star, MessageSquareText, Users } from "lucide-react";
 import GenreBadge from "../genres/genreBadge";
-import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
+import {
+  formatAverageRating,
+  minsToDisplayRuntime,
+} from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import { notFound } from "next/navigation";
@@ -55,7 +58,7 @@ export default async function MovieDetails({
             </span>
             <span className={metaClass}>
               <Star className="w-4 h-4 text-primary" />
-              {movie.averageRating}/10
+              {formatAverageRating(movie.averageRating)}/10
             </span>
           </div>
           <div className="flex flex-wrap gap-2">

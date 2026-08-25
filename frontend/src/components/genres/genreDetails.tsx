@@ -2,7 +2,10 @@ import { getGenre, removeGenre } from "@/lib/actions/genre";
 import Link from "next/link";
 import { Clock, Star, Film } from "lucide-react";
 import PaginationControls from "../general/paginationControls";
-import { minsToDisplayRuntime } from "@/lib/data/utils/converters";
+import {
+  formatAverageRating,
+  minsToDisplayRuntime,
+} from "@/lib/data/utils/converters";
 import RestrictedComponent from "../auth/restrictedComponent";
 import SimpleDeleteButton from "../general/buttons/simpleDeleteButton";
 import GenreEditButton from "./genreEditButton";
@@ -62,7 +65,7 @@ export default async function GenreDetails({
                   </span>
                   <span className={metaClass}>
                     <Star className="w-4 h-4" />
-                    {m.averageRating}/10
+                    {formatAverageRating(m.averageRating)}/10
                   </span>
                 </div>
               </div>
