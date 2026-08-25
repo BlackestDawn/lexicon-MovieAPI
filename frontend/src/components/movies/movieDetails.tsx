@@ -58,7 +58,7 @@ export default async function MovieDetails({
             </span>
             <span className={metaClass}>
               <Star className="w-4 h-4 text-primary" />
-              {formatAverageRating(movie.averageRating)}/10
+              {formatAverageRating(movie.averageRating)} / 10
             </span>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -47,7 +47,7 @@ export default function MovieCard({
           </span>
           <span className={metaClass}>
             <Star className="w-4 h-4 text-primary" />
-            {formatAverageRating(movie.averageRating)}/10
+            {formatAverageRating(movie.averageRating)} / 10
           </span>
         </div>
         <p className="text-sm text-muted-foreground line-clamp-2">

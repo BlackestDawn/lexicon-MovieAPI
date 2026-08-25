@@ -65,7 +65,7 @@ export default async function GenreDetails({
                   </span>
                   <span className={metaClass}>
                     <Star className="w-4 h-4" />
-                    {formatAverageRating(m.averageRating)}/10
+                    {formatAverageRating(m.averageRating)} / 10
                   </span>
                 </div>
               </div>
